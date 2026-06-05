@@ -14,6 +14,9 @@ const C_INTENT := Color(1.0, 0.62, 0.36)
 const C_TARGET := Color(1.0, 0.82, 0.29)
 
 var cm: CombatManager
+var _popups: Control
+var _prev_enemy_hp: Array = []
+var _prev_player_hp := -1
 
 @onready var _turn_banner: Label = $TurnBanner
 @onready var _gold: Label = $GoldLabel
@@ -40,6 +43,10 @@ func _ready() -> void:
 	$ResultPanel/RestartButton.pressed.connect(_to_menu)
 	_result_panel.visible = false
 	set_process_unhandled_input(true)
+	_popups = Control.new()
+	_popups.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_popups)
 	# Standalone fallback (headless / direct scene run).
 	if GameState.map.is_empty():
 		GameState.start_run(&"fire")
@@ -87,6 +94,10 @@ func _start_fight() -> void:
 	cm.changed.connect(_refresh)
 	cm.combat_ended.connect(_on_combat_ended)
 	cm.start_combat(player, encounter, deck, GameState.drip, false, GameState.active_passives(), scales[0], scales[1])
+	_prev_enemy_hp = []
+	for e in cm.enemies:
+		_prev_enemy_hp.append(e.hp)
+	_prev_player_hp = cm.player.hp
 	print("[Combat] node %s row %d: %d enemies, scale %.2f/%.2f"
 		% [node.get("type"), node.get("row"), encounter.size(), scales[0], scales[1]])
 	_refresh()
@@ -114,6 +125,54 @@ func _refresh() -> void:
 
 	_rebuild_enemies(over)
 	_rebuild_hand(over)
+	_emit_popups()
+
+func _emit_popups() -> void:
+	if _popups == null:
+		return
+	for i in cm.enemies.size():
+		if i < _prev_enemy_hp.size():
+			var d: int = int(_prev_enemy_hp[i]) - cm.enemies[i].hp
+			if d > 0:
+				_float_text(_enemy_center(i), "-%d" % d, C_HP.lightened(0.25))
+	if _prev_player_hp >= 0 and cm.player.hp < _prev_player_hp:
+		_float_text(Vector2(180, 320), "-%d" % (_prev_player_hp - cm.player.hp), Color(1, 0.5, 0.4))
+		_hurt_flash()
+	_prev_enemy_hp = []
+	for e in cm.enemies:
+		_prev_enemy_hp.append(e.hp)
+	_prev_player_hp = cm.player.hp
+
+func _enemy_center(i: int) -> Vector2:
+	var n := cm.enemies.size()
+	var wper := 186.0 + 22.0
+	var total := n * 186.0 + (n - 1) * 22.0
+	var start_x := 300.0 + (812.0 - total) * 0.5
+	return Vector2(start_x + i * wper + 93.0, 150.0)
+
+func _float_text(pos: Vector2, text: String, color: Color) -> void:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 30)
+	lbl.add_theme_color_override("font_color", color)
+	lbl.position = pos - Vector2(18, 0)
+	_popups.add_child(lbl)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(lbl, "position:y", lbl.position.y - 48, 0.7).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.7)
+	tw.chain().tween_callback(lbl.queue_free)
+
+func _hurt_flash() -> void:
+	var fl := ColorRect.new()
+	fl.color = Color(0.9, 0.12, 0.12, 0.0)
+	fl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_popups.add_child(fl)
+	var tw := create_tween()
+	tw.tween_property(fl, "color:a", 0.16, 0.05)
+	tw.tween_property(fl, "color:a", 0.0, 0.25)
+	tw.tween_callback(fl.queue_free)
 
 func _rebuild_enemies(over: bool) -> void:
 	for c in _enemies_box.get_children():
@@ -133,14 +192,26 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Control:
 			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 				cm.set_target(index))
 
-	var sprite := Label.new()
-	sprite.text = "☠" if dead else e.data.emoji
-	sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sprite.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sprite.add_theme_font_size_override("font_size", 50)
-	sprite.position = Vector2(43, 6)
-	sprite.size = Vector2(100, 60)
-	panel.add_child(sprite)
+	var tex: Texture2D = null if dead else SpriteBank.texture(e.data.id)
+	if tex != null:
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.position = Vector2(48, 0)
+		tr.size = Vector2(90, 66)
+		panel.add_child(tr)
+	else:
+		var sprite := Label.new()
+		sprite.text = "☠" if dead else e.data.emoji
+		sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		sprite.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sprite.add_theme_font_size_override("font_size", 50)
+		sprite.position = Vector2(43, 6)
+		sprite.size = Vector2(100, 60)
+		panel.add_child(sprite)
 
 	var intent := Label.new()
 	intent.text = "" if (over or dead) else _intent_text_for(e)
@@ -219,13 +290,13 @@ func _intent_text_for(e: Combatant) -> String:
 	var amount := int(round(int(it.get("amount", 0)) * cm.enemy_dmg_scale))
 	match String(it.get("op", "")):
 		"attack":
-			return "⚔ %d" % amount
+			return "Attacks %d" % amount
 		"block":
-			return "🛡 %d" % int(it.get("amount", 0))
+			return "🛡️ %d" % int(it.get("amount", 0))
 		"apply_status":
-			return "☠ %s %d" % [String(it.get("status", &"")).capitalize(), int(it.get("amount", 0))]
+			return "%s %d" % [String(it.get("status", &"")).capitalize(), int(it.get("amount", 0))]
 		"buff":
-			return "↑ Str %d" % int(it.get("amount", 0))
+			return "Str +%d" % int(it.get("amount", 0))
 	return "?"
 
 func _threshold_text() -> String:

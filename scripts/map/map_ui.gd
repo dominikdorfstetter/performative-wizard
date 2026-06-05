@@ -3,7 +3,7 @@ extends Control
 ## shows run status, and routes the chosen node to the right scene.
 
 const TYPE_ICON := {
-	"Combat": "⚔", "Elite": "💀", "Event": "❓", "Shop": "🛒",
+	"Combat": "⚔️", "Elite": "💀", "Event": "❓", "Shop": "🛒",
 	"Rest": "🔥", "Chest": "📦", "Boss": "👑",
 }
 const TYPE_COLOR := {
@@ -114,7 +114,7 @@ func _build_info() -> void:
 	hint.size = Vector2(700, 24)
 	hint.add_theme_font_size_override("font_size", 14)
 	hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.66))
-	hint.text = "Choose a glowing node to advance.  ⚔ fight  💀 elite  ❓ event  🛒 shop  🔥 rest  📦 chest  👑 boss"
+	hint.text = "Choose a glowing node to advance.  ⚔️ fight  💀 elite  ❓ event  🛒 shop  🔥 rest  📦 chest  👑 boss"
 	add_child(hint)
 
 func _artifact_text() -> String:

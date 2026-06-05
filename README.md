@@ -7,11 +7,12 @@ A roguelike deckbuilder (à la *Slay the Spire*) where a wizard's power comes fr
 
 ## Status
 
-**M3 — the wardrobe.** Full loop: class-select → **dressing room** (equip outfit pieces
-filtered to your class) → 3-fight gauntlet → pick-a-card rewards. 12 outfit pieces inject
-cards, add Swag income, and grant passives; the wardrobe is meta-persistent (saved to
-disk, new pieces unlock by clearing runs). Combat engine covered by 28 headless tests.
-Next: M4 (branching map, shops, rest, boss).
+**M4 + roguelite pass.** Full run: class-select → dressing room → **branching map**
+(combat / elite / event / shop / rest / chest / boss) → boss. Multi-enemy encounters with
+click-to-target and AoE, difficulty scaling with depth, a gold economy, shops, events,
+chests, and run-scoped **artefacts** (relics). Meta progression: persistent wardrobe +
+**Clout** currency. Procedural **pixel-art** enemy sprites; floating damage numbers. The
+combat engine is covered by 34 headless tests.
 
 ## Running
 
@@ -40,4 +41,6 @@ data/
 - **M0** skeleton ✅ · **M1** playable Fire combat + Swag system ✅
 - **M2** Necro + class-select + card-reward gauntlet ✅
 - **M3** dressing room + meta-persistent wardrobe (cards/passives/drip) ✅
-- **M4** branching map + shops + rest sites + boss
+- **M4** branching map + shops + rest + events + chests + boss ✅
+- **Roguelite pass** multi-enemy combat, artefacts, gold, Clout, pixel-art ✅
+- **Next** Clout meta-shop, more cards/enemies/events, audio, balance tuning

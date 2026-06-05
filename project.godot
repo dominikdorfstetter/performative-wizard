@@ -12,6 +12,7 @@ config/features=PackedStringArray("4.4", "GL Compatibility")
 [autoload]
 
 Database="*res://scripts/autoload/database.gd"
+SpriteBank="*res://scripts/autoload/sprite_bank.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 
 [display]

@@ -5,12 +5,21 @@
 > just cast spells — you put on a *performance*, and the better dressed and more
 > committed the bit, the harder you hit.
 
-Status: **M3 complete** — data-driven Godot 4 project; combat engine passing 28 headless
-tests. Full loop: class-select → **dressing room (equip wardrobe)** → 3-fight gauntlet →
-card rewards. 12 outfit pieces inject cards / add Swag income / grant 8 passives; wardrobe
-is meta-persistent (saved to user://, pieces unlock by clearing runs). UI scales to
-fullscreen. Next: M4 (branching map, shops, rest, boss). See `README.md` to run.
-Last updated: 2026-06-05.
+Status: **M4 complete + roguelite pass** — data-driven Godot 4 project; combat engine
+passing 34 headless tests. Full roguelite loop: class-select → dressing room → **branching
+map** (Combat / Elite / Event / Shop / Rest / Chest / Boss) → boss. Multi-enemy encounters
+with targeting + AoE; difficulty scales with depth. Gold economy, shops, 4 events, chests,
+11 run-scoped artefacts, 9 enemies + boss. Meta: persistent wardrobe + Clout currency.
+Procedural pixel-art enemy sprites; floating damage numbers. UI scales to fullscreen.
+Last updated: 2026-06-06.
+
+### Implemented beyond the original plan
+- **Multi-enemy encounters** with click-to-target and AoE cards.
+- **Run-scoped artefacts** (relics) — found in chests/elites/events/shops; reuse the
+  passive-hook system, plus economy effects (gold-per-combat).
+- **Procedural pixel-art** sprites (`SpriteBank`) generated at runtime per enemy.
+- **Clout** meta-currency earned per run (spendable meta shop is a TODO).
+- Difficulty scaling by map depth (hp & damage multipliers).
 
 ---
 
