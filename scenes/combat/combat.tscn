@@ -1,0 +1,276 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/combat_ui.gd" id="1_ui"]
+
+[node name="Combat" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_ui")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.06, 0.11, 1)
+
+[node name="TurnBanner" type="Label" parent="."]
+layout_mode = 0
+offset_left = 326.0
+offset_top = 8.0
+offset_right = 826.0
+offset_bottom = 32.0
+theme_override_font_sizes/font_size = 16
+text = "Turn"
+horizontal_alignment = 1
+
+[node name="EnemyPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 326.0
+offset_top = 36.0
+offset_right = 826.0
+offset_bottom = 262.0
+
+[node name="EnemySprite" type="Label" parent="EnemyPanel"]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 10.0
+offset_right = 300.0
+offset_bottom = 96.0
+theme_override_font_sizes/font_size = 64
+text = "🐱"
+horizontal_alignment = 1
+
+[node name="EnemyName" type="Label" parent="EnemyPanel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 98.0
+offset_right = 480.0
+offset_bottom = 128.0
+theme_override_font_sizes/font_size = 26
+text = "Enemy"
+horizontal_alignment = 1
+
+[node name="EnemyHPBar" type="ProgressBar" parent="EnemyPanel"]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 136.0
+offset_right = 410.0
+offset_bottom = 166.0
+show_percentage = false
+
+[node name="EnemyHPText" type="Label" parent="EnemyPanel/EnemyHPBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "HP"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="EnemyStatus" type="Label" parent="EnemyPanel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 174.0
+offset_right = 480.0
+offset_bottom = 202.0
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+
+[node name="IntentBadge" type="Panel" parent="EnemyPanel"]
+layout_mode = 0
+offset_left = 326.0
+offset_top = 12.0
+offset_right = 488.0
+offset_bottom = 50.0
+
+[node name="IntentText" type="Label" parent="EnemyPanel/IntentBadge"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+text = "Intent"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 286.0
+offset_right = 360.0
+offset_bottom = 416.0
+
+[node name="PlayerName" type="Label" parent="PlayerPanel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 10.0
+offset_right = 320.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 22
+text = "Pyromancer"
+
+[node name="PlayerHPBar" type="ProgressBar" parent="PlayerPanel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 48.0
+offset_right = 320.0
+offset_bottom = 76.0
+show_percentage = false
+
+[node name="PlayerHPText" type="Label" parent="PlayerPanel/PlayerHPBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "HP"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerStatus" type="Label" parent="PlayerPanel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 84.0
+offset_right = 320.0
+offset_bottom = 116.0
+theme_override_font_sizes/font_size = 17
+
+[node name="ResourcePanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 380.0
+offset_top = 286.0
+offset_right = 800.0
+offset_bottom = 416.0
+
+[node name="EnergyBadge" type="Label" parent="ResourcePanel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 10.0
+offset_right = 404.0
+offset_bottom = 42.0
+theme_override_font_sizes/font_size = 24
+text = "Energy"
+
+[node name="SwagValue" type="Label" parent="ResourcePanel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 48.0
+offset_right = 404.0
+offset_bottom = 80.0
+theme_override_font_sizes/font_size = 24
+text = "SWAG"
+
+[node name="SwagBar" type="ProgressBar" parent="ResourcePanel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 84.0
+offset_right = 404.0
+offset_bottom = 100.0
+max_value = 20.0
+show_percentage = false
+
+[node name="SwagThresholds" type="Label" parent="ResourcePanel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 104.0
+offset_right = 404.0
+offset_bottom = 126.0
+theme_override_font_sizes/font_size = 13
+text = "thresholds"
+
+[node name="LogPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 820.0
+offset_top = 286.0
+offset_right = 1128.0
+offset_bottom = 416.0
+
+[node name="LogText" type="Label" parent="LogPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = -8.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+text = "log"
+vertical_alignment = 2
+autowrap_mode = 2
+
+[node name="EndTurn" type="Button" parent="."]
+layout_mode = 0
+offset_left = 1000.0
+offset_top = 232.0
+offset_right = 1128.0
+offset_bottom = 278.0
+theme_override_font_sizes/font_size = 20
+text = "End Turn"
+
+[node name="Piles" type="Label" parent="."]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 424.0
+offset_right = 360.0
+offset_bottom = 446.0
+theme_override_font_sizes/font_size = 14
+text = "Draw  Discard"
+
+[node name="HandLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 452.0
+offset_right = 200.0
+offset_bottom = 474.0
+theme_override_font_sizes/font_size = 14
+text = "YOUR HAND"
+
+[node name="Hand" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 110.0
+offset_top = 446.0
+offset_right = 1040.0
+offset_bottom = 644.0
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="ResultPanel" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -120.0
+offset_right = 230.0
+offset_bottom = 120.0
+
+[node name="ResultLabel" type="Label" parent="ResultPanel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 44.0
+offset_right = 440.0
+offset_bottom = 100.0
+theme_override_font_sizes/font_size = 32
+text = "RESULT"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="ResultPanel"]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 140.0
+offset_right = 310.0
+offset_bottom = 188.0
+theme_override_font_sizes/font_size = 20
+text = "Fight Again"

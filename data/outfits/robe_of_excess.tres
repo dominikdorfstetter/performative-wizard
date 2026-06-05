@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"robe_of_excess"
+title = "Robe of Excess"
+slot = "Robe"
+element = "Fire"
+drip = 1
+passive_text = "+1 Energy each turn."
+passive_id = &"energy_plus_1"
+injected_cards = []

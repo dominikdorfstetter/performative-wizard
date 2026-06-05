@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hex"
+title = "Hex"
+description = "Apply 1 Vulnerable. Pose: gain 1 Swag."
+cost = 0
+type = "Skill"
+rarity = "Common"
+swag_gain = 1
+swag_cost = 0
+effects = [{ "op": "apply_status", "status": "vulnerable", "amount": 1, "target": "enemy" }]

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"drip_robe"
+title = "Drip Robe"
+slot = "Robe"
+element = "Neutral"
+drip = 1
+passive_text = "Start each combat with 5 Block."
+passive_id = &"start_block_5"
+injected_cards = []

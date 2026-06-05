@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/wizard_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fire"
+title = "Pyromancer"
+element = "Fire"
+emoji = "🔥"
+blurb = "Ignite & escalate. Burn that snowballs, flashy spells that pose for Swag."
+max_hp = 72
+base_drip = 2
+accent = Color(0.86, 0.3, 0.27, 1)
+starter_deck = [&"ember", &"ember", &"ember", &"ember", &"kindle", &"kindle", &"kindle", &"ignite", &"ignite", &"flashfire"]
+reward_pool = [&"flame_lash", &"inferno", &"flashfire", &"ignite", &"grand_finale"]

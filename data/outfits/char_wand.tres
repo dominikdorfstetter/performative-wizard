@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"char_wand"
+title = "Char Wand"
+slot = "Staff"
+element = "Fire"
+drip = 2
+passive_text = "Your Burn applies +1 stack."
+passive_id = &"burn_plus_1"
+injected_cards = [&"flame_lash", &"flame_lash"]

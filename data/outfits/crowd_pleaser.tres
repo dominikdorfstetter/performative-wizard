@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"crowd_pleaser"
+title = "Crowd-Pleaser Charm"
+slot = "Trinket"
+element = "Neutral"
+drip = 2
+passive_text = "Pose cards grant +1 Swag."
+passive_id = &"pose_plus_1"
+injected_cards = []

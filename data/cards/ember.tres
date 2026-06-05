@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ember"
+title = "Ember"
+description = "Deal 6 damage."
+cost = 1
+type = "Attack"
+rarity = "Common"
+swag_gain = 0
+swag_cost = 0
+effects = [{ "op": "damage", "amount": 6, "target": "enemy" }]

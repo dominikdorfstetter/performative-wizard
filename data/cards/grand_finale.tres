@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"grand_finale"
+title = "Grand Finale"
+description = "Finisher. Spend ALL Swag. Deal Swag x 3 damage."
+cost = 2
+type = "Attack"
+rarity = "Rare"
+swag_gain = 0
+swag_cost = 0
+effects = [{ "op": "finisher_swag_x3", "target": "enemy" }]

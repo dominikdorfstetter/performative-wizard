@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/wizard_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"necro"
+title = "Necromancer"
+element = "Necro"
+emoji = "💀"
+blurb = "Summon & sacrifice. Raise Undead that chip away, then sacrifice them for bursts."
+max_hp = 68
+base_drip = 2
+accent = Color(0.55, 0.78, 0.45, 1)
+starter_deck = [&"bone_dart", &"bone_dart", &"bone_dart", &"bone_dart", &"shroud", &"shroud", &"shroud", &"raise_dead", &"raise_dead", &"drain"]
+reward_pool = [&"macabre_bow", &"hex", &"raise_dead", &"drain", &"grand_finale"]

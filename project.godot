@@ -1,0 +1,29 @@
+; Engine configuration file.
+; Performative Wizard — see DESIGN.md
+
+config_version=5
+
+[application]
+
+config/name="Performative Wizard"
+run/main_scene="res://scenes/hub/class_select.tscn"
+config/features=PackedStringArray("4.4", "GL Compatibility")
+
+[autoload]
+
+Database="*res://scripts/autoload/database.gd"
+GameState="*res://scripts/autoload/game_state.gd"
+
+[display]
+
+window/size/viewport_width=1152
+window/size/viewport_height=648
+window/size/mode=2
+window/size/resizable=true
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

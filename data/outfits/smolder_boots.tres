@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"smolder_boots"
+title = "Smolder Boots"
+slot = "Boots"
+element = "Fire"
+drip = 1
+passive_text = "Your first spell each turn deals +3."
+passive_id = &"first_spell_plus_3"
+injected_cards = []

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"pointed_hat_swag"
+title = "Pointed Hat of Swag"
+slot = "Hat"
+element = "Neutral"
+drip = 1
+passive_text = "Start each combat with 3 Swag."
+passive_id = &"swag_start_3"
+injected_cards = []

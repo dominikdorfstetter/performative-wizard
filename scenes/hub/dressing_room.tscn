@@ -1,0 +1,82 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/dressing_room.gd" id="1_dr"]
+
+[node name="DressingRoom" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_dr")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.06, 0.11, 1)
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_top = 26.0
+offset_right = 1152.0
+offset_bottom = 72.0
+theme_override_font_sizes/font_size = 34
+text = "THE DRESSING ROOM"
+horizontal_alignment = 1
+
+[node name="WizardLabel" type="Label" parent="."]
+layout_mode = 0
+offset_top = 78.0
+offset_right = 1152.0
+offset_bottom = 106.0
+theme_override_font_sizes/font_size = 20
+text = "Wizard"
+horizontal_alignment = 1
+
+[node name="Slots" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 124.0
+offset_right = 764.0
+offset_bottom = 556.0
+theme_override_constants/separation = 12
+
+[node name="SummaryPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 786.0
+offset_top = 124.0
+offset_right = 1112.0
+offset_bottom = 500.0
+
+[node name="SummaryText" type="Label" parent="SummaryPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 14.0
+offset_right = -16.0
+offset_bottom = -14.0
+theme_override_font_sizes/font_size = 16
+text = "Loadout"
+vertical_alignment = 0
+autowrap_mode = 2
+
+[node name="EnterButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 786.0
+offset_top = 512.0
+offset_right = 1112.0
+offset_bottom = 562.0
+theme_override_font_sizes/font_size = 22
+text = "Enter the Gauntlet →"
+
+[node name="BackButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 572.0
+offset_right = 200.0
+offset_bottom = 608.0
+theme_override_font_sizes/font_size = 16
+text = "← Back"
