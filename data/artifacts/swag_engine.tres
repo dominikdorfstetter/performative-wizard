@@ -1,0 +1,12 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"swag_engine"
+title = "Fog Machine"
+emoji = "🌫️"
+description = "+2 Swag income each turn."
+passive_id = &"swag_income_2"
+gold_per_combat = 0

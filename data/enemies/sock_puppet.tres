@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"sock_puppet"
+title = "Sock Puppet"
+emoji = "🧦"
+max_hp = 20
+intents = [{ "op": "attack", "amount": 5 }, { "op": "attack", "amount": 5 }, { "op": "apply_status", "status": "weak", "amount": 1, "target": "player" }]

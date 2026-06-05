@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"haunted_umbrella"
+title = "Haunted Umbrella"
+emoji = "☂"
+max_hp = 36
+intents = [{ "op": "block", "amount": 6 }, { "op": "attack", "amount": 9 }, { "op": "attack", "amount": 13 }]

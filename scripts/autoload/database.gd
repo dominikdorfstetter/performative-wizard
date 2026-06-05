@@ -5,14 +5,16 @@ var cards: Dictionary = {}      # StringName -> CardData
 var outfits: Dictionary = {}    # StringName -> OutfitData
 var enemies: Dictionary = {}    # StringName -> EnemyData
 var wizards: Dictionary = {}    # StringName -> WizardData
+var artifacts: Dictionary = {}  # StringName -> ArtifactData
 
 func _ready() -> void:
 	_load_dir("res://data/cards", cards)
 	_load_dir("res://data/outfits", outfits)
 	_load_dir("res://data/enemies", enemies)
 	_load_dir("res://data/wizards", wizards)
-	print("[Database] loaded %d cards, %d outfits, %d enemies, %d wizards"
-		% [cards.size(), outfits.size(), enemies.size(), wizards.size()])
+	_load_dir("res://data/artifacts", artifacts)
+	print("[Database] loaded %d cards, %d outfits, %d enemies, %d wizards, %d artifacts"
+		% [cards.size(), outfits.size(), enemies.size(), wizards.size(), artifacts.size()])
 
 func _load_dir(path: String, into: Dictionary) -> void:
 	var dir := DirAccess.open(path)
@@ -40,3 +42,9 @@ func get_enemy(id: StringName) -> EnemyData:
 
 func get_wizard(id: StringName) -> WizardData:
 	return wizards.get(id)
+
+func get_artifact(id: StringName) -> ArtifactData:
+	return artifacts.get(id)
+
+func all_artifact_ids() -> Array:
+	return artifacts.keys()

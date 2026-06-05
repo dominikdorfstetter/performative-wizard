@@ -8,6 +8,10 @@ var max_hp: int = 0
 var block: int = 0
 var statuses: Dictionary = {}    # StringName -> int (stacks)
 
+# Enemy-only: its data + its own place in the intent pattern.
+var data: EnemyData = null
+var intent_index: int = 0
+
 func take_damage(amount: int, pierce: bool = false) -> void:
 	var remaining := amount
 	if block > 0 and not pierce:

@@ -1,0 +1,140 @@
+extends Control
+## The run map. Draws the branching node graph (connections via _draw, nodes as buttons),
+## shows run status, and routes the chosen node to the right scene.
+
+const TYPE_ICON := {
+	"Combat": "⚔", "Elite": "💀", "Event": "❓", "Shop": "🛒",
+	"Rest": "🔥", "Chest": "📦", "Boss": "👑",
+}
+const TYPE_COLOR := {
+	"Combat": Color(0.86, 0.30, 0.27), "Elite": Color(0.85, 0.4, 0.95),
+	"Event": Color(0.4, 0.7, 0.9), "Shop": Color(0.95, 0.8, 0.3),
+	"Rest": Color(0.4, 0.85, 0.55), "Chest": Color(0.9, 0.7, 0.4),
+	"Boss": Color(0.95, 0.25, 0.25),
+}
+const SCENE := {
+	"Combat": "res://scenes/combat/combat.tscn", "Elite": "res://scenes/combat/combat.tscn",
+	"Boss": "res://scenes/combat/combat.tscn", "Rest": "res://scenes/nodes/rest.tscn",
+	"Shop": "res://scenes/nodes/shop.tscn", "Event": "res://scenes/nodes/event.tscn",
+	"Chest": "res://scenes/nodes/chest.tscn",
+}
+const LEFT := 150.0
+const RIGHT := 1010.0
+const TOP := 116.0
+const BOT := 600.0
+const NODE := 50.0
+
+var _pos := {}
+var _info: Label
+
+func _ready() -> void:
+	if GameState.map.is_empty():           # standalone fallback
+		GameState.start_run(GameState.wizard_id)
+		GameState.finalize_loadout()
+	_compute_positions()
+	_build_info()
+	_build_nodes()
+	if GameState.message != "":
+		_info.text += "\n" + GameState.message
+		GameState.message = ""
+	queue_redraw()
+
+func _compute_positions() -> void:
+	var rows := GameState.map
+	var n := rows.size()
+	for r in n:
+		var y: float = BOT - float(r) / float(n - 1) * (BOT - TOP)
+		var row: Array = rows[r]
+		var w := row.size()
+		for c in w:
+			var x: float = LEFT + (float(c) + 0.5) / float(w) * (RIGHT - LEFT)
+			_pos["%d_%d" % [r, c]] = Vector2(x, y)
+
+func _draw() -> void:
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0.08, 0.06, 0.11))
+	var rows := GameState.map
+	for r in rows.size() - 1:
+		for node in rows[r]:
+			var a: Vector2 = _pos["%d_%d" % [r, node.col]]
+			var from_current: bool = r == GameState.pos_row and node.col == GameState.pos_col
+			for l in node.links:
+				var b: Vector2 = _pos["%d_%d" % [r + 1, l]]
+				var hot: bool = from_current or GameState.pos_row < 0 and r == 0
+				draw_line(a, b, Color(0.95, 0.78, 0.35) if hot else Color(0.28, 0.26, 0.34), 3.0 if hot else 2.0)
+
+func _build_nodes() -> void:
+	var rows := GameState.map
+	for r in rows.size():
+		for node in rows[r]:
+			_add_node_button(r, node)
+
+func _add_node_button(r: int, node: Dictionary) -> void:
+	var c: int = node.col
+	var type: String = node.type
+	var avail := GameState.can_enter(r, c)
+	var current := r == GameState.pos_row and c == GameState.pos_col
+	var col: Color = TYPE_COLOR.get(type, Color.GRAY)
+	var border := Color(0.95, 0.78, 0.35) if avail else (Color(0.5, 0.9, 0.6) if current else col.darkened(0.2))
+	var b := Button.new()
+	b.size = Vector2(NODE, NODE)
+	b.position = _pos["%d_%d" % [r, c]] - Vector2(NODE, NODE) * 0.5
+	b.disabled = not avail
+	var bg := Color(0.17, 0.15, 0.21) if (avail or current) else Color(0.11, 0.10, 0.13)
+	b.add_theme_stylebox_override("normal", _circle(bg, border, 3 if (avail or current) else 2))
+	b.add_theme_stylebox_override("hover", _circle(col.darkened(0.4), Color(1, 1, 0.7), 3))
+	b.add_theme_stylebox_override("pressed", _circle(col.darkened(0.3), border, 3))
+	b.add_theme_stylebox_override("disabled", _circle(bg, border, 2))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	if avail:
+		b.pressed.connect(_enter.bind(r, c, type))
+
+	var icon := Label.new()
+	icon.text = TYPE_ICON.get(type, "?")
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.add_theme_font_size_override("font_size", 24)
+	icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.45)
+	b.add_child(icon)
+	add_child(b)
+
+func _build_info() -> void:
+	_info = Label.new()
+	_info.position = Vector2(20, 14)
+	_info.size = Vector2(1112, 80)
+	_info.add_theme_font_size_override("font_size", 18)
+	var w := Database.get_wizard(GameState.wizard_id)
+	_info.text = "%s %s    ❤ %d/%d    💰 %d    ✦ Clout %d    🃏 %d cards    %s" % [
+		w.emoji, w.title, GameState.player_hp, GameState.player_max_hp,
+		GameState.gold, GameState.clout, GameState.deck.size(), _artifact_text()]
+	add_child(_info)
+	var hint := Label.new()
+	hint.position = Vector2(20, 612)
+	hint.size = Vector2(700, 24)
+	hint.add_theme_font_size_override("font_size", 14)
+	hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.66))
+	hint.text = "Choose a glowing node to advance.  ⚔ fight  💀 elite  ❓ event  🛒 shop  🔥 rest  📦 chest  👑 boss"
+	add_child(hint)
+
+func _artifact_text() -> String:
+	if GameState.run_artifacts.is_empty():
+		return ""
+	var parts: Array[String] = []
+	for aid in GameState.run_artifacts:
+		var a := Database.get_artifact(aid)
+		if a != null:
+			parts.append(a.emoji)
+	return "🎒 " + " ".join(parts)
+
+func _enter(r: int, c: int, type: String) -> void:
+	GameState.enter(r, c)
+	get_tree().change_scene_to_file(SCENE.get(type, "res://scenes/combat/combat.tscn"))
+
+func _circle(bg: Color, border: Color, bw: int) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.set_border_width_all(bw)
+	s.border_color = border
+	s.set_corner_radius_all(25)
+	return s

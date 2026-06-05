@@ -1,15 +1,11 @@
 extends Node
-## Autoload. Holds the current run (reset each run), the equipped outfit, and meta
-## progression (the unlocked wardrobe), persisted to user://save.json.
+## Autoload. Holds the current run (map, deck, gold, artefacts, equipped outfit) plus
+## meta progression (unlocked wardrobe + Clout), persisted to user://save.json.
 
 const SAVE_PATH := "user://save.json"
 
-# The fixed enemy gauntlet for the mini-run (M4 replaces this with a map).
-const RUN_ENEMIES: Array[StringName] = [&"alley_cat", &"disgruntled_pigeon", &"possessed_wardrobe"]
-
 const SLOTS: Array[String] = ["Hat", "Robe", "Staff", "Boots", "Trinket"]
 
-# Wardrobe you own from the very start.
 const DEFAULT_OWNED: Array[StringName] = [
 	&"apprentice_hat", &"pointed_hat_swag",
 	&"drip_robe", &"robe_of_excess",
@@ -17,7 +13,6 @@ const DEFAULT_OWNED: Array[StringName] = [
 	&"worn_boots", &"smolder_boots",
 	&"lucky_charm", &"crowd_pleaser",
 ]
-# The modest starting loadout (so progression is felt as you swap pieces in).
 const DEFAULT_EQUIP := {
 	"Hat": &"apprentice_hat", "Robe": &"drip_robe", "Staff": &"plain_wand",
 	"Boots": &"worn_boots", "Trinket": &"lucky_charm",
@@ -25,16 +20,21 @@ const DEFAULT_EQUIP := {
 
 # --- Meta: persists across runs ---
 var unlocked_outfits: Array[StringName] = []
-var equipped: Dictionary = {}                 # slot (String) -> outfit id (StringName)
+var equipped: Dictionary = {}
+var clout := 0                               # meta currency, spent in the Boutique
 
-# --- Current run: reset on new run ---
+# --- Current run ---
 var wizard_id: StringName = &"fire"
 var deck: Array[StringName] = []
-var passives: Array[StringName] = []
+var passives: Array[StringName] = []         # outfit passives
 var player_max_hp := 0
 var player_hp := 0
 var drip := 0
-var fight_index := 0
+var gold := 0
+var run_artifacts: Array[StringName] = []    # artefact ids held this run
+var map: Array = []
+var pos_row := -1                            # -1 = haven't entered row 0 yet
+var pos_col := -1
 
 var message := ""
 
@@ -95,10 +95,13 @@ func start_run(wid: StringName) -> void:
 	wizard_id = wid
 	player_max_hp = w.max_hp
 	player_hp = w.max_hp
-	fight_index = 0
+	gold = 30
+	run_artifacts = []
 	_validate_equip_for(w.element)
+	map = MapGenerator.generate(randi())
+	pos_row = -1
+	pos_col = -1
 
-## Make sure every slot holds a piece that's owned and legal for this class.
 func _validate_equip_for(element: String) -> void:
 	for slot in SLOTS:
 		var id: StringName = equipped.get(slot, &"")
@@ -110,7 +113,6 @@ func _validate_equip_for(element: String) -> void:
 			var opts := owned_for(slot, element)
 			equipped[slot] = opts[0] if opts.size() > 0 else &""
 
-## Bake the equipped outfit into the run's deck, Swag income, and passives.
 func finalize_loadout() -> void:
 	var w := Database.get_wizard(wizard_id)
 	deck = w.starter_deck.duplicate()
@@ -123,14 +125,89 @@ func finalize_loadout() -> void:
 		for cid in p.injected_cards:
 			deck.append(cid)
 
-func current_enemy() -> StringName:
-	return RUN_ENEMIES[fight_index] if fight_index < RUN_ENEMIES.size() else &""
+# Outfit passives + artefact passives, for combat.
+func active_passives() -> Array[StringName]:
+	var out: Array[StringName] = passives.duplicate()
+	for aid in run_artifacts:
+		var a := Database.get_artifact(aid)
+		if a != null and a.passive_id != &"" and a.passive_id not in out:
+			out.append(a.passive_id)
+	return out
 
-func advance_fight() -> void:
-	fight_index += 1
+func gold_income() -> int:
+	var g := 0
+	for aid in run_artifacts:
+		var a := Database.get_artifact(aid)
+		if a != null:
+			g += a.gold_per_combat
+	return g
 
-func run_complete() -> bool:
-	return fight_index >= RUN_ENEMIES.size()
+func add_artifact(id: StringName) -> bool:
+	if id in run_artifacts:
+		return false
+	run_artifacts.append(id)
+	return true
+
+func has_artifact(id: StringName) -> bool:
+	return id in run_artifacts
+
+# --- map navigation ------------------------------------------------------
+
+func node_at(row: int, col: int) -> Dictionary:
+	if row < 0 or row >= map.size():
+		return {}
+	for n in map[row]:
+		if n.col == col:
+			return n
+	return {}
+
+func current_node() -> Dictionary:
+	return node_at(pos_row, pos_col)
+
+## Which nodes can the player move to next?
+func available() -> Array:
+	if pos_row < 0:
+		return map[0] if map.size() > 0 else []
+	var node := current_node()
+	var out: Array = []
+	if pos_row + 1 < map.size():
+		for col in node.get("links", []):
+			out.append(node_at(pos_row + 1, col))
+	return out
+
+func can_enter(row: int, col: int) -> bool:
+	for n in available():
+		if n.get("row") == row and n.get("col") == col:
+			return true
+	return false
+
+func enter(row: int, col: int) -> Dictionary:
+	pos_row = row
+	pos_col = col
+	var n := current_node()
+	n["visited"] = true
+	return n
+
+func node_scales(node: Dictionary) -> Array:
+	if node.get("type") == "Boss":
+		return [1.0, 1.0]
+	var r: int = node.get("row", 0)
+	return [1.0 + 0.09 * r, 1.0 + 0.07 * r]
+
+func combat_reward(node: Dictionary) -> int:
+	var base := 9 + int(node.get("row", 0)) * 2
+	if node.get("type") == "Elite":
+		base += 25
+	base += (node.get("enemies", []).size() - 1) * 6
+	return base
+
+func finish_run(victory: bool) -> void:
+	var earned := 20 + int(gold / 3)
+	if victory:
+		earned += 80
+	clout += earned
+	message = "Run over. +%d Clout (total %d)." % [earned, clout]
+	save_meta()
 
 # --- meta save -----------------------------------------------------------
 
@@ -155,6 +232,7 @@ func load_meta() -> void:
 		unlocked_outfits.append(StringName(o))
 	for slot in data.get("equipped", {}):
 		equipped[slot] = StringName(data["equipped"][slot])
+	clout = int(data.get("clout", 0))
 
 func save_meta() -> void:
 	var owned: Array[String] = []
@@ -167,4 +245,4 @@ func save_meta() -> void:
 	if f == null:
 		push_warning("[GameState] could not open save file for writing")
 		return
-	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq}, "\t"))
+	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout}, "\t"))

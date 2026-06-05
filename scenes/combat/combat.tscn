@@ -14,90 +14,45 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.08, 0.06, 0.11, 1)
+color = Color(0.09, 0.07, 0.13, 1)
 
 [node name="TurnBanner" type="Label" parent="."]
 layout_mode = 0
-offset_left = 326.0
-offset_top = 8.0
-offset_right = 826.0
-offset_bottom = 32.0
-theme_override_font_sizes/font_size = 16
-text = "Turn"
-horizontal_alignment = 1
-
-[node name="EnemyPanel" type="Panel" parent="."]
-layout_mode = 0
-offset_left = 326.0
-offset_top = 36.0
-offset_right = 826.0
-offset_bottom = 262.0
-
-[node name="EnemySprite" type="Label" parent="EnemyPanel"]
-layout_mode = 0
-offset_left = 200.0
+offset_left = 16.0
 offset_top = 10.0
-offset_right = 300.0
-offset_bottom = 96.0
-theme_override_font_sizes/font_size = 64
-text = "🐱"
-horizontal_alignment = 1
+offset_right = 500.0
+offset_bottom = 36.0
+theme_override_font_sizes/font_size = 18
+text = "Turn"
 
-[node name="EnemyName" type="Label" parent="EnemyPanel"]
+[node name="GoldLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 20.0
-offset_top = 98.0
-offset_right = 480.0
-offset_bottom = 128.0
-theme_override_font_sizes/font_size = 26
-text = "Enemy"
-horizontal_alignment = 1
+offset_left = 760.0
+offset_top = 10.0
+offset_right = 1136.0
+offset_bottom = 36.0
+theme_override_font_sizes/font_size = 18
+text = "Gold"
+horizontal_alignment = 2
 
-[node name="EnemyHPBar" type="ProgressBar" parent="EnemyPanel"]
+[node name="ArtifactsLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 90.0
-offset_top = 136.0
-offset_right = 410.0
-offset_bottom = 166.0
-show_percentage = false
-
-[node name="EnemyHPText" type="Label" parent="EnemyPanel/EnemyHPBar"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 16
-text = "HP"
+offset_left = 16.0
+offset_top = 38.0
+offset_right = 1136.0
+offset_bottom = 62.0
+theme_override_font_sizes/font_size = 18
+text = ""
 horizontal_alignment = 1
-vertical_alignment = 1
 
-[node name="EnemyStatus" type="Label" parent="EnemyPanel"]
+[node name="Enemies" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 20.0
-offset_top = 174.0
-offset_right = 480.0
-offset_bottom = 202.0
-theme_override_font_sizes/font_size = 17
-horizontal_alignment = 1
-
-[node name="IntentBadge" type="Panel" parent="EnemyPanel"]
-layout_mode = 0
-offset_left = 326.0
-offset_top = 12.0
-offset_right = 488.0
-offset_bottom = 50.0
-
-[node name="IntentText" type="Label" parent="EnemyPanel/IntentBadge"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 17
-text = "Intent"
-horizontal_alignment = 1
-vertical_alignment = 1
+offset_left = 300.0
+offset_top = 72.0
+offset_right = 1112.0
+offset_bottom = 268.0
+theme_override_constants/separation = 22
+alignment = 1
 
 [node name="PlayerPanel" type="Panel" parent="."]
 layout_mode = 0
@@ -229,10 +184,10 @@ text = "Draw  Discard"
 layout_mode = 0
 offset_left = 24.0
 offset_top = 452.0
-offset_right = 200.0
+offset_right = 300.0
 offset_bottom = 474.0
 theme_override_font_sizes/font_size = 14
-text = "YOUR HAND"
+text = "YOUR HAND  ·  click an enemy to target"
 
 [node name="Hand" type="HBoxContainer" parent="."]
 layout_mode = 0
@@ -273,4 +228,4 @@ offset_top = 140.0
 offset_right = 310.0
 offset_bottom = 188.0
 theme_override_font_sizes/font_size = 20
-text = "Fight Again"
+text = "Back to Menu"

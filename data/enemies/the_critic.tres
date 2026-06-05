@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"the_critic"
+title = "The Critic"
+emoji = "👹"
+max_hp = 160
+intents = [{ "op": "attack", "amount": 12 }, { "op": "apply_status", "status": "vulnerable", "amount": 2, "target": "player" }, { "op": "attack", "amount": 20 }, { "op": "block", "amount": 18 }, { "op": "buff", "status": "strength", "amount": 3 }]

@@ -1,8 +1,8 @@
 class_name CombatManager
 extends RefCounted
-## The combat engine: turn loop, energy, the banked-Swag economy, draw/discard,
-## enemy intents, and win/lose. Pure logic (no UI) so it can be unit-tested headless.
-## A view layer connects to `changed` and re-renders.
+## The combat engine: turn loop, energy, banked-Swag economy, draw/discard, an encounter
+## of one-or-more enemies with their own intents, targeting, and win/lose. Pure logic
+## (no UI) so it can be unit-tested headless. A view connects to `changed` and re-renders.
 
 signal changed
 signal combat_ended(victory: bool)
@@ -13,41 +13,45 @@ const HAND_SIZE := 5
 const MAX_ENERGY := 3
 const LOG_KEEP := 6
 
-# Swag thresholds (banked pool -> passive bonus). Tuned by playtest.
-const THRESHOLD_DAMAGE := 5      # >= : spells +2 damage
-const THRESHOLD_DRAW := 10       # >= : draw +1 each turn
-const THRESHOLD_PIERCE := 15     # >= : first spell each turn pierces Block
+const THRESHOLD_DAMAGE := 5
+const THRESHOLD_DRAW := 10
+const THRESHOLD_PIERCE := 15
 const SWAG_DAMAGE_BONUS := 2
 
 var state: State = State.PLAYER_TURN
 var player: Combatant
-var enemy: Combatant
-var enemy_data: EnemyData
-var intent_index := 0
+var enemies: Array[Combatant] = []
+var target_index := 0
 var turn := 0
 
 var energy := 0
 var max_energy := MAX_ENERGY
 var swag := 0
-var drip := 0                    # outfit Swag income per turn
+var drip := 0
 var spells_this_turn := 0
 
 var draw_pile: Array[CardData] = []
 var hand: Array[CardData] = []
 var discard_pile: Array[CardData] = []
 
-var passives: Array[StringName] = []         # outfit passive ids active this combat
+var passives: Array[StringName] = []
+var enemy_dmg_scale := 1.0
 var log_lines: Array[String] = []
 
 # --- setup ---------------------------------------------------------------
 
-func start_combat(p: Combatant, edata: EnemyData, deck: Array[CardData], drip_value: int, deterministic := false, outfit_passives: Array[StringName] = []) -> void:
+func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_value: int, deterministic := false, outfit_passives: Array[StringName] = [], hp_scale := 1.0, dmg_scale := 1.0) -> void:
 	player = p
-	enemy_data = edata
-	enemy = Combatant.new()
-	enemy.display_name = edata.title
-	enemy.max_hp = edata.max_hp
-	enemy.hp = edata.max_hp
+	enemies.clear()
+	for edata in encounter:
+		var e := Combatant.new()
+		e.display_name = edata.title
+		e.data = edata
+		e.max_hp = int(round(edata.max_hp * hp_scale))
+		e.hp = e.max_hp
+		enemies.append(e)
+	target_index = 0
+	enemy_dmg_scale = dmg_scale
 	drip = drip_value
 	passives = outfit_passives
 	draw_pile = deck.duplicate()
@@ -56,12 +60,14 @@ func start_combat(p: Combatant, edata: EnemyData, deck: Array[CardData], drip_va
 	draw_pile.shuffle()
 	hand.clear()
 	discard_pile.clear()
-	intent_index = 0
 	turn = 0
 	log_lines.clear()
 	state = State.PLAYER_TURN
 	_apply_combat_start_passives()
-	_say("A wild %s appears!" % enemy.display_name)
+	var names := []
+	for e in enemies:
+		names.append(e.display_name)
+	_say("Encounter: %s" % ", ".join(names))
 	_start_player_turn()
 
 func has_passive(id: StringName) -> bool:
@@ -74,6 +80,33 @@ func _apply_combat_start_passives() -> void:
 		player.block += 5
 	if has_passive(&"swag_start_3"):
 		swag += 3
+	# artefact passives
+	if has_passive(&"swag_income_2"):
+		drip += 2
+	if has_passive(&"strength_start_2"):
+		player.add_status(&"strength", 2)
+
+# --- targeting -----------------------------------------------------------
+
+func living_enemies() -> Array[Combatant]:
+	return enemies.filter(func(e): return not e.is_dead())
+
+func target() -> Combatant:
+	if target_index < enemies.size() and not enemies[target_index].is_dead():
+		return enemies[target_index]
+	for i in enemies.size():
+		if not enemies[i].is_dead():
+			target_index = i
+			return enemies[i]
+	return null
+
+func set_target(i: int) -> void:
+	if i >= 0 and i < enemies.size() and not enemies[i].is_dead():
+		target_index = i
+		_emit()
+
+func all_dead() -> bool:
+	return living_enemies().is_empty()
 
 # --- Swag economy --------------------------------------------------------
 
@@ -97,11 +130,16 @@ func _start_player_turn() -> void:
 	turn += 1
 	energy = max_energy
 	var before := swag
-	gain_swag(drip)                         # the performance income
+	gain_swag(drip)
 	if has_passive(&"strength_at_10_swag") and swag >= 10:
 		player.add_status(&"strength", 1)
 		_say("Catwalk Heels: +1 Strength")
-	_draw(HAND_SIZE + swag_extra_draw())
+	if has_passive(&"heal_3_per_turn") and turn > 1:
+		player.heal(3)
+	var draw_n := HAND_SIZE + swag_extra_draw()
+	if has_passive(&"draw_plus_1"):
+		draw_n += 1
+	_draw(draw_n)
 	if drip > 0:
 		_say("— Your turn %d  (+%d swag → %d) —" % [turn, swag - before, swag])
 	else:
@@ -124,6 +162,7 @@ func play_card(card: CardData) -> bool:
 		if has_passive(&"pose_plus_1"):
 			gain_swag(1)
 
+	var tgt := target()
 	var is_attack := card.type == "Attack"
 	var first_spell := spells_this_turn == 0
 	var pierced := is_attack and first_spell and swag_pierces()
@@ -132,19 +171,18 @@ func play_card(card: CardData) -> bool:
 		atk_bonus += 3
 	var ctx := {
 		"source": player,
-		"target": enemy,
+		"target": tgt,
+		"enemies": enemies,
 		"combat": self,
 		"passives": passives,
 		"bonus_damage": atk_bonus,
 		"pierce": pierced,
 	}
 
-	# Snapshot for the combat log.
-	var ehp0 := enemy.hp
+	var hp0 := _total_enemy_hp()
 	var pblk0 := player.block
-	var eburn0 := enemy.status(&"burn")
+	var tburn0 := tgt.status(&"burn") if tgt != null else 0
 
-	# Finishers spend the whole pool; resolve them separately from generic effects.
 	var normal: Array = []
 	for e in card.effects:
 		if String(e.get("op", "")).begins_with("finisher"):
@@ -156,35 +194,21 @@ func play_card(card: CardData) -> bool:
 	if is_attack:
 		spells_this_turn += 1
 
-	_log_card(card, ehp0 - enemy.hp, player.block - pblk0, enemy.status(&"burn") - eburn0, swag - swag0, pierced)
-	_check_end()
+	var tburn1 := tgt.status(&"burn") if tgt != null else 0
+	_log_card(card, hp0 - _total_enemy_hp(), player.block - pblk0, tburn1 - tburn0, swag - swag0, pierced)
+	if all_dead():
+		_finish(true)
 	_emit()
 	return true
 
-func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: int, pierced: bool) -> void:
-	var parts: Array[String] = []
-	if dmg > 0:
-		parts.append("%d dmg" % dmg)
-	if blk > 0:
-		parts.append("%d block" % blk)
-	if burn_added > 0:
-		parts.append("%d burn" % burn_added)
-	if swag_delta > 0:
-		parts.append("+%d swag" % swag_delta)
-	elif swag_delta < 0:
-		parts.append("spent %d swag" % -swag_delta)
-	if pierced and dmg > 0:
-		parts.append("pierced!")
-	var msg := "You play %s" % card.title
-	if not parts.is_empty():
-		msg += "  →  " + ", ".join(parts)
-	_say(msg)
-
 func _resolve_finisher(e: Dictionary, ctx: Dictionary) -> void:
+	var tgt: Combatant = ctx.get("target")
+	if tgt == null:
+		return
 	match String(e.get("op", "")):
 		"finisher_swag_x3":
 			var raw := swag * 3 + int(ctx.get("bonus_damage", 0))
-			enemy.take_damage(EffectResolver.compute_damage(raw, player, enemy), ctx.get("pierce", false))
+			tgt.take_damage(EffectResolver.compute_damage(raw, player, tgt), ctx.get("pierce", false))
 			swag = 0
 		_:
 			push_warning("[CombatManager] unknown finisher: " + String(e.get("op", "")))
@@ -194,15 +218,15 @@ func end_turn() -> void:
 		return
 	discard_pile.append_array(hand)
 	hand.clear()
-	# Undead strike at the end of your turn.
 	var undead := player.status(&"undead")
 	if undead > 0:
-		var dealt := undead * 2
-		enemy.take_damage(dealt)
-		_say("Your %d Undead strike for %d" % [undead, dealt])
-		if enemy.is_dead():
-			_finish(true)
-			return
+		var tgt := target()
+		if tgt != null:
+			tgt.take_damage(undead * 2)
+			_say("Your %d Undead strike for %d" % [undead, undead * 2])
+			if all_dead():
+				_finish(true)
+				return
 	player.block = 0
 	_decay(player)
 	_enemy_turn()
@@ -210,32 +234,43 @@ func end_turn() -> void:
 func _enemy_turn() -> void:
 	state = State.ENEMY_TURN
 	_emit()
-	var burned := _tick_burn(enemy)
-	if burned > 0:
-		_say("%s takes %d burn" % [enemy.display_name, burned])
-	if enemy.is_dead():
+	for e in enemies:
+		if e.is_dead():
+			continue
+		var burned := _tick_burn(e)
+		if burned > 0:
+			_say("%s takes %d burn" % [e.display_name, burned])
+		if e.is_dead():
+			continue
+		if e.data == null or e.data.intents.is_empty():
+			continue
+		var intent: Dictionary = e.data.intents[e.intent_index % e.data.intents.size()]
+		_resolve_intent(e, intent)
+		e.intent_index += 1
+		_decay(e)
+		e.block = 0
+		if player.is_dead():
+			_finish(false)
+			return
+	if all_dead():
 		_finish(true)
-		return
-	var intent: Dictionary = enemy_data.intents[intent_index % enemy_data.intents.size()]
-	_resolve_intent(intent)
-	intent_index += 1
-	_decay(enemy)
-	enemy.block = 0
-	if player.is_dead():
-		_finish(false)
 		return
 	_start_player_turn()
 
-func _resolve_intent(intent: Dictionary) -> void:
+func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 	var amount := int(intent.get("amount", 0))
-	var name := enemy.display_name
+	var name := src.display_name
 	match String(intent.get("op", "")):
 		"attack":
+			var dmg := int(round(amount * enemy_dmg_scale))
 			var hp0 := player.hp
-			player.take_damage(EffectResolver.compute_damage(amount, enemy, player))
+			player.take_damage(EffectResolver.compute_damage(dmg, src, player))
 			_say("%s hits you for %d" % [name, hp0 - player.hp])
+			if not src.is_dead() and has_passive(&"thorns_3"):
+				src.take_damage(3)
+				_say("Thorns! %s takes 3" % name)
 		"block":
-			enemy.block += amount
+			src.block += amount
 			_say("%s braces (Block %d)" % [name, amount])
 		"apply_status":
 			var s := StringName(intent.get("status", &""))
@@ -243,23 +278,29 @@ func _resolve_intent(intent: Dictionary) -> void:
 			_say("%s inflicts %s %d" % [name, String(s).capitalize(), amount])
 		"buff":
 			var s2 := StringName(intent.get("status", &""))
-			enemy.add_status(s2, amount)
+			src.add_status(s2, amount)
 			_say("%s gains %s %d" % [name, String(s2).capitalize(), amount])
 		_:
 			push_warning("[CombatManager] unknown intent: " + String(intent.get("op", "")))
 
-func peek_intent() -> Dictionary:
-	if enemy_data == null or enemy_data.intents.is_empty():
+func peek_intent(e: Combatant) -> Dictionary:
+	if e == null or e.data == null or e.data.intents.is_empty():
 		return {}
-	return enemy_data.intents[intent_index % enemy_data.intents.size()]
+	return e.data.intents[e.intent_index % e.data.intents.size()]
 
 # --- helpers -------------------------------------------------------------
+
+func _total_enemy_hp() -> int:
+	var t := 0
+	for e in enemies:
+		t += e.hp
+	return t
 
 func _tick_burn(c: Combatant) -> int:
 	var b := c.status(&"burn")
 	if b <= 0:
 		return 0
-	c.take_damage(b, true)                   # Burn pierces Block
+	c.take_damage(b, true)
 	if b - 1 <= 0:
 		c.statuses.erase(&"burn")
 	else:
@@ -285,9 +326,24 @@ func _draw(n: int) -> void:
 			draw_pile.shuffle()
 		hand.append(draw_pile.pop_back())
 
-func _check_end() -> void:
-	if enemy.is_dead():
-		_finish(true)
+func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: int, pierced: bool) -> void:
+	var parts: Array[String] = []
+	if dmg > 0:
+		parts.append("%d dmg" % dmg)
+	if blk > 0:
+		parts.append("%d block" % blk)
+	if burn_added > 0:
+		parts.append("%d burn" % burn_added)
+	if swag_delta > 0:
+		parts.append("+%d swag" % swag_delta)
+	elif swag_delta < 0:
+		parts.append("spent %d swag" % -swag_delta)
+	if pierced and dmg > 0:
+		parts.append("pierced!")
+	var msg := "You play %s" % card.title
+	if not parts.is_empty():
+		msg += "  →  " + ", ".join(parts)
+	_say(msg)
 
 func _finish(victory: bool) -> void:
 	state = State.WIN if victory else State.LOSE

@@ -7,5 +7,5 @@ script = ExtResource("1")
 id = &"possessed_wardrobe"
 title = "Possessed Wardrobe"
 emoji = "🚪"
-max_hp = 52
-intents = [{ "op": "attack", "amount": 8 }, { "op": "apply_status", "status": "weak", "amount": 1, "target": "player" }, { "op": "attack", "amount": 14 }]
+max_hp = 70
+intents = [{ "op": "attack", "amount": 10 }, { "op": "apply_status", "status": "weak", "amount": 2, "target": "player" }, { "op": "attack", "amount": 17 }, { "op": "buff", "status": "strength", "amount": 2 }]

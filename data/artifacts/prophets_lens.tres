@@ -1,0 +1,12 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"prophets_lens"
+title = "Cat-Eye Glasses"
+emoji = "🕶️"
+description = "Draw +1 card each turn."
+passive_id = &"draw_plus_1"
+gold_per_combat = 0

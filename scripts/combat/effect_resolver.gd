@@ -28,6 +28,10 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 		"damage":
 			if target != null:
 				target.take_damage(compute_damage(amount + bonus, source, target), pierce)
+		"damage_all":
+			for en in ctx.get("enemies", []):
+				if not en.is_dead():
+					en.take_damage(compute_damage(amount + bonus, source, en), pierce)
 		"damage_if_status":
 			if target != null:
 				var dmg := amount

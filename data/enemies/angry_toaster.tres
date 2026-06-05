@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"angry_toaster"
+title = "Angry Toaster"
+emoji = "🍞"
+max_hp = 30
+intents = [{ "op": "attack", "amount": 6 }, { "op": "apply_status", "status": "vulnerable", "amount": 1, "target": "player" }, { "op": "attack", "amount": 11 }]

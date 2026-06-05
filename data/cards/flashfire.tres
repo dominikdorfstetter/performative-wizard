@@ -6,10 +6,10 @@
 script = ExtResource("1")
 id = &"flashfire"
 title = "Flashfire"
-description = "Deal 8. Pose: gain 2 Swag."
+description = "Deal 8 to ALL enemies. Pose: gain 2 Swag."
 cost = 2
 type = "Attack"
 rarity = "Common"
 swag_gain = 2
 swag_cost = 0
-effects = [{ "op": "damage", "amount": 8, "target": "enemy" }]
+effects = [{ "op": "damage_all", "amount": 8 }]

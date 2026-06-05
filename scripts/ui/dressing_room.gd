@@ -103,7 +103,7 @@ func _update_summary() -> void:
 
 func _enter() -> void:
 	GameState.finalize_loadout()
-	get_tree().change_scene_to_file("res://scenes/combat/combat.tscn")
+	get_tree().change_scene_to_file("res://scenes/map/map.tscn")
 
 # --- helpers ---
 func _lbl(parent: Control, text: String, pos: Vector2, sz: Vector2, fs: int, color: Color) -> void:
