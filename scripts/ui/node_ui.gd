@@ -39,7 +39,7 @@ static func sub(parent: Control, text: String, y: float = 108.0) -> Label:
 ## A large choice card-button with a title and description.
 static func choice(text: String, desc: String, accent: Color, cb: Callable, enabled := true) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(300, 150)
+	b.custom_minimum_size = Vector2(300, 178)
 	b.disabled = not enabled
 	b.add_theme_stylebox_override("normal", box(Color(0.14, 0.12, 0.18), accent))
 	b.add_theme_stylebox_override("hover", box(Color(0.20, 0.17, 0.26), accent.lightened(0.25)))
@@ -48,8 +48,8 @@ static func choice(text: String, desc: String, accent: Color, cb: Callable, enab
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	if enabled and cb.is_valid():
 		b.pressed.connect(cb)
-	_label(b, text, Vector2(14, 18), Vector2(272, 30), 22, accent.lightened(0.35))
-	_label(b, desc, Vector2(16, 60), Vector2(268, 80), 16, Color(0.82, 0.82, 0.88))
+	_label(b, text, Vector2(14, 14), Vector2(272, 30), 22, accent.lightened(0.35))
+	_label(b, desc, Vector2(16, 52), Vector2(268, 116), 16, Color(0.82, 0.82, 0.88))
 	return b
 
 static func small_button(text: String, cb: Callable, accent: Color = Color(0.4, 0.6, 0.8)) -> Button:

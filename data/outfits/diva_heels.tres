@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"diva_heels"
+title = "Diva Heels"
+slot = "Boots"
+element = "Neutral"
+drip = 3
+passive_text = "Draw +1 card each turn."
+passive_id = &"draw_plus_1"
+injected_cards = []

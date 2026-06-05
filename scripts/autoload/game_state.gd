@@ -18,6 +18,14 @@ const DEFAULT_EQUIP := {
 	"Boots": &"worn_boots", "Trinket": &"lucky_charm",
 }
 
+# Premium pieces unlockable in the Boutique for Clout (meta progression sink).
+const BOUTIQUE: Array[Dictionary] = [
+	{"id": &"influencer_ring", "cost": 90},
+	{"id": &"showstopper_hat", "cost": 110},
+	{"id": &"phoenix_gown", "cost": 130},
+	{"id": &"diva_heels", "cost": 160},
+]
+
 # --- Meta: persists across runs ---
 var unlocked_outfits: Array[StringName] = []
 var equipped: Dictionary = {}
@@ -210,6 +218,14 @@ func finish_run(victory: bool) -> void:
 	save_meta()
 
 # --- meta save -----------------------------------------------------------
+
+func buy_boutique(id: StringName, cost: int) -> bool:
+	if id in unlocked_outfits or clout < cost:
+		return false
+	clout -= cost
+	unlocked_outfits.append(id)
+	save_meta()
+	return true
 
 func unlock_outfit(id: StringName) -> bool:
 	if id in unlocked_outfits:

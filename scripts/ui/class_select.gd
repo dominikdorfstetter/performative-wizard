@@ -17,6 +17,13 @@ func _ready() -> void:
 		var w := Database.get_wizard(id)
 		if w != null:
 			_choices.add_child(_make_wizard_button(w))
+	var boutique := Button.new()
+	boutique.text = "✦ Boutique  (spend Clout)"
+	boutique.add_theme_font_size_override("font_size", 18)
+	boutique.position = Vector2(456, 548)
+	boutique.size = Vector2(240, 42)
+	boutique.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/boutique.tscn"))
+	add_child(boutique)
 
 func _make_wizard_button(w: WizardData) -> Button:
 	var b := Button.new()

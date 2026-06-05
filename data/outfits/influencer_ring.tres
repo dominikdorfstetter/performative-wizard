@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"influencer_ring"
+title = "Influencer Ring"
+slot = "Trinket"
+element = "Neutral"
+drip = 2
+passive_text = "When an enemy hits you, deal 3 back."
+passive_id = &"thorns_3"
+injected_cards = []
