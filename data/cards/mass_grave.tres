@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"mass_grave"
+title = "Mass Grave"
+description = "Summon 2 Undead. Pose: gain 1 Swag."
+cost = 2
+type = "Skill"
+rarity = "Rare"
+swag_gain = 1
+swag_cost = 0
+effects = [{ "op": "summon", "amount": 2 }]

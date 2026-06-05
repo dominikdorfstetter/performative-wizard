@@ -16,6 +16,18 @@ const DEF := {
 	&"possessed_wardrobe": {"c": "8a5a3a", "shape": "square", "feat": "doors", "eye": "ff6b6b", "angry": true},
 	&"taxidermy_owl": {"c": "9a6b3f", "shape": "round", "feat": "tufts", "eye": "ffd24a", "angry": false},
 	&"the_critic": {"c": "b23b3b", "shape": "round", "feat": "horns", "eye": "ffd24a", "angry": true},
+	&"feral_houseplant": {"c": "4e9a48", "shape": "round", "feat": "tufts", "eye": "ffffff", "angry": true},
+	&"cursed_mirror": {"c": "acc4d4", "shape": "square", "feat": "none", "eye": "c08ce0", "angry": false},
+	&"possessed_mannequin": {"c": "d8c2a2", "shape": "round", "feat": "none", "eye": "241a30", "angry": true},
+	&"rabid_roomba": {"c": "4a4f57", "shape": "round", "feat": "antenna", "eye": "ff5a5a", "angry": true},
+	&"goblin_gremlin": {"c": "6f9a3a", "shape": "round", "feat": "ears", "eye": "ffd24a", "angry": true},
+	&"gargoyle_cherub": {"c": "9aa0a8", "shape": "round", "feat": "horns", "eye": "ffffff", "angry": true},
+}
+
+# wizards: humanoid sprites (pointy hat, face, robe)
+const WIZ := {
+	&"fire": {"hat": "b5302b", "robe": "e0883c", "skin": "eec8a4", "trim": "ffd24a"},
+	&"necro": {"hat": "2e2440", "robe": "57804a", "skin": "cdd2dd", "trim": "8fd96b"},
 }
 
 var _cache := {}
@@ -100,6 +112,11 @@ func _feature(img: Image, d: Dictionary, body: Color) -> void:
 				for hx in range(7 - hw + 1, 8 + hw):
 					if hx >= 0 and hx < SIZE:
 						img.set_pixel(hx, hy, Color("c2342f"))
+		"antenna":
+			for ax in [5, 10]:
+				img.set_pixel(ax, 3, OUTLINE)
+				img.set_pixel(ax, 2, OUTLINE)
+				img.set_pixel(ax, 1, Color("ffd24a"))
 		"slots":
 			_blot(img, 5, 4, 2, 1, Color("3a3f47"))
 			_blot(img, 9, 4, 2, 1, Color("3a3f47"))
@@ -119,6 +136,54 @@ func _blot(img: Image, x: int, y: int, w: int, h: int, c: Color) -> void:
 		for xx in range(x, x + w):
 			if xx >= 0 and xx < SIZE and yy >= 0 and yy < SIZE:
 				img.set_pixel(xx, yy, c)
+
+func wizard_texture(id: StringName) -> Texture2D:
+	var key := "wiz_" + String(id)
+	if _cache.has(key):
+		return _cache[key]
+	var img := wizard_image(id)
+	var tex: Texture2D = ImageTexture.create_from_image(img) if img != null else null
+	_cache[key] = tex
+	return tex
+
+func wizard_image(id: StringName) -> Image:
+	var d = WIZ.get(id)
+	if d == null:
+		return null
+	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var hat := Color(d.hat)
+	var robe := Color(d.robe)
+	var skin := Color(d.skin)
+	var trim := Color(d.trim)
+
+	# pointy hat
+	for r in range(1, 6):
+		var half := r - 1
+		for x in range(8 - half, 9 + half):
+			img.set_pixel(x, r, hat if x != 8 - half else hat.darkened(0.12))
+	# brim
+	for x in range(3, 13):
+		img.set_pixel(x, 6, hat.darkened(0.1))
+	img.set_pixel(8, 3, trim)            # hat star
+
+	# face
+	for y in range(7, 10):
+		for x in range(5, 11):
+			img.set_pixel(x, y, skin)
+	img.set_pixel(6, 8, Color("241a2e"))
+	img.set_pixel(9, 8, Color("241a2e"))
+
+	# robe
+	for y in range(10, 16):
+		var half: int = min(2 + (y - 10), 6)
+		var shade := robe if y < 13 else robe.darkened(0.16)
+		for x in range(8 - half, 9 + half):
+			if x >= 0 and x < SIZE:
+				img.set_pixel(x, y, shade)
+	img.set_pixel(8, 12, trim)           # robe gem
+	_outline(img)
+	return img
 
 func _outline(img: Image) -> void:
 	var to_set: Array = []

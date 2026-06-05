@@ -73,9 +73,19 @@ func _start_fight() -> void:
 	player.display_name = w.title
 	player.max_hp = GameState.player_max_hp
 	player.hp = GameState.player_hp
-	_player_name.text = "%s  %s" % [w.title, w.emoji]
+	_player_name.text = w.pname
 	_player_name.add_theme_color_override("font_color", w.accent.lightened(0.3))
 	_player_hp_bar.max_value = player.max_hp
+	var wtex := SpriteBank.wizard_texture(GameState.wizard_id)
+	if wtex != null:
+		var ptr := TextureRect.new()
+		ptr.texture = wtex
+		ptr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ptr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ptr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ptr.position = Vector2(268, 4)
+		ptr.size = Vector2(62, 62)
+		$PlayerPanel.add_child(ptr)
 
 	var deck: Array[CardData] = []
 	for id in GameState.deck:
@@ -191,6 +201,17 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Control:
 		panel.gui_input.connect(func(ev: InputEvent):
 			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 				cm.set_target(index))
+
+	if not dead:
+		var shadow := Panel.new()
+		var ss := StyleBoxFlat.new()
+		ss.bg_color = Color(0, 0, 0, 0.25)
+		ss.set_corner_radius_all(12)
+		shadow.add_theme_stylebox_override("panel", ss)
+		shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		shadow.position = Vector2(56, 62)
+		shadow.size = Vector2(74, 12)
+		panel.add_child(shadow)
 
 	var tex: Texture2D = null if dead else SpriteBank.texture(e.data.id)
 	if tex != null:

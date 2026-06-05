@@ -34,10 +34,20 @@ func _make_wizard_button(w: WizardData) -> Button:
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.pressed.connect(func(): _choose(w.id))
 
-	_label(b, w.emoji, Vector2(15, 24), Vector2(300, 90), 64, Color.WHITE)
-	_label(b, w.title, Vector2(15, 120), Vector2(300, 40), 28, w.accent.lightened(0.35))
-	_label(b, "❤ %d HP    ✦ +%d Swag/turn" % [w.max_hp, w.base_drip], Vector2(15, 166), Vector2(300, 26), 16, Color(0.8, 0.8, 0.85))
-	_label(b, w.blurb, Vector2(24, 204), Vector2(282, 96), 16, Color(0.78, 0.78, 0.82))
+	var tex := SpriteBank.wizard_texture(w.id)
+	if tex != null:
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.position = Vector2(115, 10)
+		tr.size = Vector2(100, 100)
+		b.add_child(tr)
+	_label(b, w.pname, Vector2(15, 114), Vector2(300, 32), 25, w.accent.lightened(0.35))
+	_label(b, "the " + w.title, Vector2(15, 148), Vector2(300, 24), 17, Color(0.7, 0.7, 0.78))
+	_label(b, "❤ %d HP" % w.max_hp, Vector2(15, 176), Vector2(300, 24), 16, Color(0.8, 0.8, 0.85))
+	_label(b, w.blurb, Vector2(24, 204), Vector2(282, 104), 16, Color(0.78, 0.78, 0.82))
 	return b
 
 func _choose(id: StringName) -> void:

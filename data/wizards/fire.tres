@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"fire"
 title = "Pyromancer"
+pname = "Vesper Vermillion"
 element = "Fire"
 emoji = "🔥"
 blurb = "Ignite & escalate. Burn that snowballs, flashy spells that pose for Swag."
@@ -13,4 +14,4 @@ max_hp = 72
 base_drip = 2
 accent = Color(0.86, 0.3, 0.27, 1)
 starter_deck = [&"ember", &"ember", &"ember", &"ember", &"kindle", &"kindle", &"kindle", &"ignite", &"ignite", &"flashfire"]
-reward_pool = [&"flame_lash", &"inferno", &"flashfire", &"ignite", &"grand_finale"]
+reward_pool = [&"flame_lash", &"inferno", &"flashfire", &"ignite", &"grand_finale", &"cinder_spray", &"combust", &"hot_streak", &"strike_a_pose", &"flourish"]

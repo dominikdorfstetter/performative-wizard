@@ -6,6 +6,7 @@ extends Resource
 
 @export var id: StringName
 @export var title: String = ""
+@export var pname: String = ""               # the performer's stage name
 @export_enum("Fire", "Necro", "Neutral") var element: String = "Neutral"
 @export var emoji: String = "🧙"
 @export var blurb: String = ""

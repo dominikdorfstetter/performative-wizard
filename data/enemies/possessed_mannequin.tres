@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"possessed_mannequin"
+title = "Possessed Mannequin"
+emoji = "🧍"
+max_hp = 40
+intents = [{ "op": "block", "amount": 8 }, { "op": "attack", "amount": 11 }, { "op": "apply_status", "status": "weak", "amount": 1, "target": "player" }]

@@ -19,8 +19,18 @@ func _ready() -> void:
 	$Title.add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
 	$SummaryPanel.add_theme_stylebox_override("panel", _panel(Color(0.13, 0.11, 0.17), Color(0.28, 0.24, 0.36)))
 	_wizard = Database.get_wizard(GameState.wizard_id)
-	$WizardLabel.text = "%s  %s    —    pick your drip" % [_wizard.emoji, _wizard.title]
+	$WizardLabel.text = "%s, the %s    —    pick your drip" % [_wizard.pname, _wizard.title]
 	$WizardLabel.add_theme_color_override("font_color", _wizard.accent.lightened(0.3))
+	var tex := SpriteBank.wizard_texture(_wizard.id)
+	if tex != null:
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.position = Vector2(548, 54)
+		tr.size = Vector2(56, 56)
+		add_child(tr)
 	$EnterButton.pressed.connect(_enter)
 	$BackButton.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
 	$EnterButton.add_theme_stylebox_override("normal", _panel(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
