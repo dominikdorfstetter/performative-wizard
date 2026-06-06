@@ -31,7 +31,41 @@ func _ready() -> void:
 	NodeUI.gradient_bg(self)
 	set_process_unhandled_input(true)
 	Audio.play_music("menu")
+	_add_decor()
 	_build()
+
+func _add_decor() -> void:
+	var p := CPUParticles2D.new()
+	p.amount = 40
+	p.lifetime = 9.0
+	p.preprocess = 6.0
+	p.position = Vector2(576, 660)
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	p.emission_rect_extents = Vector2(600, 6)
+	p.direction = Vector2(0, -1)
+	p.spread = 20.0
+	p.gravity = Vector2(0, -4)
+	p.initial_velocity_min = 8.0
+	p.initial_velocity_max = 22.0
+	p.scale_amount_min = 2.0
+	p.scale_amount_max = 4.0
+	p.color = Color(1.0, 0.5, 0.85, 0.5)
+	p.add_to_group("decor")
+	add_child(p)
+	var i := 0
+	for pos in [[140, 120], [320, 90], [560, 100], [760, 80], [900, 140], [220, 170], [680, 160], [430, 70], [1000, 110]]:
+		var c := ColorRect.new()
+		c.color = Color(1, 1, 1)
+		c.size = Vector2(3, 3)
+		c.position = Vector2(pos[0], pos[1])
+		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		c.add_to_group("decor")
+		add_child(c)
+		var tw := c.create_tween().set_loops()
+		tw.tween_interval(0.28 * i)
+		tw.tween_property(c, "modulate:a", 0.12, 0.95).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(c, "modulate:a", 1.0, 0.95).set_trans(Tween.TRANS_SINE)
+		i += 1
 
 func _build() -> void:
 	_clear()
@@ -55,7 +89,12 @@ func _title() -> void:
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	t.position = Vector2(0, 76)
 	t.size = Vector2(1152, 64)
+	t.pivot_offset = Vector2(576, 32)
 	add_child(t)
+	# gentle glow pulse so the title feels alive
+	var tw := t.create_tween().set_loops()
+	tw.tween_property(t, "modulate", Color(1.15, 1.0, 1.2), 1.6).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(t, "modulate", Color.WHITE, 1.6).set_trans(Tween.TRANS_SINE)
 	var s := Label.new()
 	s.text = "a roguelike deckbuilder about drip"
 	s.add_theme_font_size_override("font_size", 20)
@@ -245,6 +284,8 @@ func _footer(text: String) -> void:
 
 func _clear() -> void:
 	for c in get_children():
+		if c.is_in_group("decor"):
+			continue
 		if not (c is TextureRect and c.texture is GradientTexture2D):
 			c.queue_free()
 

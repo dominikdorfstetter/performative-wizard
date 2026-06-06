@@ -36,6 +36,7 @@ var _enemy_sprites: Array = []
 var _prev_enemy_hp: Array = []
 var _prev_player_hp := -1
 var _prev_player_str := 0
+var _prev_pstatus: Dictionary = {}
 var _prev_swag := 0
 var _prev_state := -1
 var _player_home := Vector2.ZERO
@@ -657,6 +658,13 @@ func _emit_popups() -> void:
 	if str_now > _prev_player_str:
 		Audio.play("buff", -7.0)
 	_prev_player_str = str_now
+	# debuff "tell": float the status name above the wizard when one newly lands
+	for sid in [&"weak", &"vulnerable", &"jinx", &"frail", &"poison"]:
+		var now: int = cm.player.status(sid)
+		if now > int(_prev_pstatus.get(sid, 0)):
+			_float_text(Vector2(150, 205), STATUS_NAME.get(sid, String(sid)) + "!", Color(0.95, 0.55, 0.85))
+			Audio.play("debuff", -8.0)
+		_prev_pstatus[sid] = now
 	_prev_enemy_hp = []
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
