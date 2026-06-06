@@ -66,6 +66,7 @@ func _ready() -> void:
 	_popups.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_popups)
+	_add_sparkles()
 	if GameState.map.is_empty():
 		GameState.start_run(&"fire")
 		GameState.finalize_loadout()
@@ -127,6 +128,7 @@ func _build_player_widget(w: WizardData) -> void:
 	_player_sprite.size = Vector2(150, 150)
 	_player_home = _player_sprite.position
 	add_child(_player_sprite)
+	_idle_bob(_player_sprite, 0.0, 7.0)
 
 	_player_hp_bar = ProgressBar.new()
 	_player_hp_bar.show_percentage = false
@@ -289,6 +291,8 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 		skull.add_theme_font_size_override("font_size", 40)
 		sprite.add_child(skull)
 	w.add_child(sprite)
+	if not dead:
+		_idle_bob(sprite, index * 0.3, 5.0)
 
 	if targeted:
 		var arrow := Label.new()
@@ -338,6 +342,33 @@ func _play_card(card: CardData, btn: Button) -> void:
 		_block_flash()
 
 # --- animations ----------------------------------------------------------
+
+func _idle_bob(node: Control, delay: float, amp: float) -> void:
+	var y := node.position.y
+	var tw := node.create_tween().set_loops()
+	if delay > 0.0:
+		tw.tween_interval(delay)
+	tw.tween_property(node, "position:y", y - amp, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(node, "position:y", y, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _add_sparkles() -> void:
+	var p := CPUParticles2D.new()
+	p.amount = 44
+	p.lifetime = 8.0
+	p.preprocess = 5.0
+	p.position = Vector2(576, 656)
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	p.emission_rect_extents = Vector2(600, 8)
+	p.direction = Vector2(0, -1)
+	p.spread = 22.0
+	p.gravity = Vector2(0, -5)
+	p.initial_velocity_min = 9.0
+	p.initial_velocity_max = 24.0
+	p.scale_amount_min = 2.0
+	p.scale_amount_max = 4.0
+	p.color = Color(1.0, 0.6, 0.88, 0.55)
+	add_child(p)
+	move_child(p, 1)
 
 func _lunge(node: Control) -> void:
 	if node == null:
