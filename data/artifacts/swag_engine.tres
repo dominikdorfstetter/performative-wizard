@@ -10,3 +10,5 @@ emoji = "🌫️"
 description = "+2 Aura income each turn."
 passive_id = &"swag_income_2"
 gold_per_combat = 0
+
+unlock_clout = 70

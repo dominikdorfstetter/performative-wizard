@@ -13,3 +13,5 @@ rarity = "Rare"
 swag_gain = 0
 swag_cost = 0
 effects = [{ "op": "finisher_swag_x3", "target": "enemy" }]
+
+unlock_clout = 60

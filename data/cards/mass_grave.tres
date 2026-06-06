@@ -13,3 +13,5 @@ rarity = "Rare"
 swag_gain = 1
 swag_cost = 0
 effects = [{ "op": "summon", "amount": 2 }]
+
+unlock_clout = 60

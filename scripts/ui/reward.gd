@@ -25,7 +25,7 @@ func _ready() -> void:
 			(%Banner as Label).add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
 
 	var w := Database.get_wizard(GameState.wizard_id)
-	var pool := w.reward_pool.duplicate()
+	var pool := GameState.unlocked_cards(w.reward_pool)
 	pool.shuffle()
 	for id in pool.slice(0, min(3, pool.size())):
 		var card := Database.get_card(id)
@@ -49,7 +49,7 @@ func _random_unowned_artifact() -> StringName:
 	var all := Database.all_artifact_ids().duplicate()
 	all.shuffle()
 	for aid in all:
-		if not GameState.has_artifact(aid):
+		if not GameState.has_artifact(aid) and GameState.artifact_unlocked(aid):
 			return aid
 	return &""
 

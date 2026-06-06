@@ -10,3 +10,4 @@ extends Resource
 @export_multiline var description: String = ""
 @export var passive_id: StringName = &""     # combat passive granted (may be empty)
 @export var gold_per_combat: int = 0         # economy: gold gained after each won combat
+@export var unlock_clout: int = 0            # lifetime Clout to appear in pools (0 = always)

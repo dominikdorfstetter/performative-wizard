@@ -9,7 +9,7 @@ var _art_stock := {}             # {id, price, sold} or empty
 func _ready() -> void:
 	NodeUI.background(self)
 	var w := Database.get_wizard(GameState.wizard_id)
-	var pool := w.reward_pool.duplicate()
+	var pool := GameState.unlocked_cards(w.reward_pool)
 	pool.shuffle()
 	for id in pool.slice(0, min(3, pool.size())):
 		var c := Database.get_card(id)
@@ -113,7 +113,7 @@ func _unowned() -> StringName:
 	var all := Database.all_artifact_ids().duplicate()
 	all.shuffle()
 	for aid in all:
-		if not GameState.has_artifact(aid):
+		if not GameState.has_artifact(aid) and GameState.artifact_unlocked(aid):
 			return aid
 	return &""
 

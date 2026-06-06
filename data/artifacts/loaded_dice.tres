@@ -10,3 +10,5 @@ emoji = "🎲"
 description = "Your attacks crit 15% of the time (x2 damage)."
 passive_id = &"crit_15"
 gold_per_combat = 0
+
+unlock_clout = 100

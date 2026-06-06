@@ -93,7 +93,7 @@ func _unowned(rng: RandomNumberGenerator) -> StringName:
 	var all := Database.all_artifact_ids().duplicate()
 	all.shuffle()
 	for aid in all:
-		if not GameState.has_artifact(aid):
+		if not GameState.has_artifact(aid) and GameState.artifact_unlocked(aid):
 			return aid
 	return &""
 

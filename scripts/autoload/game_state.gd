@@ -159,6 +159,22 @@ func locked_wizard_hint(id: StringName) -> String:
 		return ""
 	return "🔒  Unlock at ✦ %d  (you have ✦ %d earned)" % [w.unlock_clout, clout_earned]
 
+func card_unlocked(id: StringName) -> bool:
+	var c := Database.get_card(id)
+	return c != null and clout_earned >= c.unlock_clout
+
+func artifact_unlocked(id: StringName) -> bool:
+	var a := Database.get_artifact(id)
+	return a != null and clout_earned >= a.unlock_clout
+
+## Filter a card-id list down to what the player has unlocked (for reward/shop pools).
+func unlocked_cards(ids: Array) -> Array:
+	var out: Array = []
+	for id in ids:
+		if card_unlocked(id):
+			out.append(id)
+	return out
+
 func _validate_equip_for(element: String) -> void:
 	for slot in SLOTS:
 		var id: StringName = equipped.get(slot, &"")

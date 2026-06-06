@@ -9,6 +9,7 @@ extends Resource
 @export var cost: int = 1
 @export_enum("Attack", "Skill", "Power") var type: String = "Attack"
 @export var rarity: String = "Common"
+@export var unlock_clout: int = 0            # lifetime Clout to appear in pools (0 = always)
 
 ## "Pose" value — Swag gained when this card is played.
 @export var swag_gain: int = 0

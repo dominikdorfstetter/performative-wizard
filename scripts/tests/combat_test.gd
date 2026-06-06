@@ -261,6 +261,14 @@ func _ready() -> void:
 	_check("rizz still locked at 120", GameState.wizard_unlocked(&"rizz"), false)
 	GameState.clout_earned = 320
 	_check("rizz unlocks at 320", GameState.wizard_unlocked(&"rizz"), true)
+	GameState.clout_earned = 0
+	_check("ember always unlocked", GameState.card_unlocked(&"ember"), true)
+	_check("inferno locked at 0", GameState.card_unlocked(&"inferno"), false)
+	GameState.clout_earned = 50
+	_check("inferno unlocks (40<=50)", GameState.card_unlocked(&"inferno"), true)
+	_check("combust still locked (90>50)", GameState.card_unlocked(&"combust"), false)
+	var fpool: Array = GameState.unlocked_cards([&"ember", &"inferno", &"combust"])
+	_check("pool filters to unlocked", fpool.size(), 2)
 	GameState.act = 1
 	_check("boss 1 -> act 2", GameState.advance_act(), true)
 	_check("act is 2", GameState.act, 2)

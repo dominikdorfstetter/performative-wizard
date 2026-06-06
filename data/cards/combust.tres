@@ -13,3 +13,5 @@ rarity = "Rare"
 swag_gain = 1
 swag_cost = 0
 effects = [{ "op": "damage_x_burn", "mult": 2, "target": "enemy" }]
+
+unlock_clout = 90
