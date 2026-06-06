@@ -13,6 +13,7 @@ config/features=PackedStringArray("4.4", "GL Compatibility")
 
 Database="*res://scripts/autoload/database.gd"
 SpriteBank="*res://scripts/autoload/sprite_bank.gd"
+Audio="*res://scripts/autoload/audio.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 
 [display]
@@ -28,3 +29,4 @@ window/stretch/aspect="keep"
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

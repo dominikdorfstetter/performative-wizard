@@ -69,6 +69,7 @@ func _ready() -> void:
 	add_child(_popups)
 	_add_sparkles()
 	_add_twinkles()
+	Audio.play_music()
 	if GameState.map.is_empty():
 		GameState.start_run(&"fire")
 		GameState.finalize_loadout()
@@ -339,6 +340,7 @@ func _play_card(card: CardData, btn: Button) -> void:
 	var is_attack := card.type == "Attack"
 	var blk0 := cm.player.block
 	var ti := cm.target_index
+	Audio.play("card")
 	cm.play_card(card)
 	if is_attack:
 		_lunge(_player_sprite)
@@ -346,8 +348,10 @@ func _play_card(card: CardData, btn: Button) -> void:
 	if cm.last_crit:
 		_crit_popup(_enemy_center(ti))
 		_shake(10.0)
+		Audio.play("crit", -3.0)
 	if cm.player.block > blk0:
 		_block_flash()
+		Audio.play("block")
 
 # --- animations ----------------------------------------------------------
 
@@ -506,22 +510,31 @@ func _emit_popups() -> void:
 	if _popups == null:
 		return
 	var max_dmg := 0
+	var enemy_hit := false
+	var any_death := false
 	for i in cm.enemies.size():
 		if i < _prev_enemy_hp.size():
 			var d: int = int(_prev_enemy_hp[i]) - cm.enemies[i].hp
 			if d > 0:
 				max_dmg = max(max_dmg, d)
+				enemy_hit = true
 				_float_text(_enemy_center(i), "-%d" % d, C_HP.lightened(0.25))
 				_hit_spark(_enemy_center(i))
 				if i < _enemy_sprites.size() and is_instance_valid(_enemy_sprites[i]):
 					_punch(_enemy_sprites[i])
 				if int(_prev_enemy_hp[i]) > 0 and cm.enemies[i].hp <= 0:
 					_death_poof(_enemy_center(i))
+					any_death = true
+	if enemy_hit:
+		Audio.play("hit")
+	if any_death:
+		Audio.play("death", -3.0)
 	if _prev_player_hp >= 0 and cm.player.hp < _prev_player_hp:
 		max_dmg = max(max_dmg, _prev_player_hp - cm.player.hp)
 		_float_text(Vector2(150, 250), "-%d" % (_prev_player_hp - cm.player.hp), Color(1, 0.5, 0.4))
 		_hurt_flash()
 		_punch(_player_sprite)
+		Audio.play("hurt")
 	if max_dmg >= 14:
 		_shake(7.0)
 	_prev_enemy_hp = []
@@ -535,6 +548,7 @@ func _banter() -> void:
 	for thr in [12, 18]:
 		if _prev_swag < thr and cm.swag >= thr:
 			_say_bubble(Vector2(150, 130), PLAYER_LINES[randi() % PLAYER_LINES.size()], C_SWAG)
+			Audio.play("aura", -5.0)
 			break
 	_prev_swag = cm.swag
 	if cm.state == CombatManager.State.ENEMY_TURN and _prev_state != CombatManager.State.ENEMY_TURN:
@@ -720,6 +734,7 @@ func _on_end_turn() -> void:
 	cm.end_turn()
 
 func _on_combat_ended(victory: bool) -> void:
+	Audio.play("win" if victory else "lose", -2.0)
 	if victory:
 		GameState.player_hp = cm.player.hp
 		var node := GameState.current_node()

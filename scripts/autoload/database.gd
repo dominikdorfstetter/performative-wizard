@@ -24,10 +24,15 @@ func _load_dir(path: String, into: Dictionary) -> void:
 	dir.list_dir_begin()
 	var file_name := dir.get_next()
 	while file_name != "":
-		if not dir.current_is_dir() and (file_name.ends_with(".tres") or file_name.ends_with(".res")):
-			var res: Resource = load(path + "/" + file_name)
-			if res != null and ("id" in res) and res.id != &"":
-				into[res.id] = res
+		if not dir.current_is_dir():
+			# Exported PCKs list resources as "name.tres.remap"; strip it and load the original.
+			var fn := file_name
+			if fn.ends_with(".remap"):
+				fn = fn.substr(0, fn.length() - 6)
+			if fn.ends_with(".tres") or fn.ends_with(".res"):
+				var res: Resource = load(path + "/" + fn)
+				if res != null and ("id" in res) and res.id != &"":
+					into[res.id] = res
 		file_name = dir.get_next()
 	dir.list_dir_end()
 

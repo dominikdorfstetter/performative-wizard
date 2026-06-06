@@ -63,6 +63,7 @@ static func choice(text: String, desc: String, accent: Color, cb: Callable, enab
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	if enabled and cb.is_valid():
 		b.pressed.connect(cb)
+		b.pressed.connect(Audio.play.bind("click", -7.0))
 	var vb := VBoxContainer.new()
 	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
 	vb.offset_left = 16
@@ -101,6 +102,7 @@ static func menu_button(text: String, cb: Callable, accent := Color(0.5, 0.55, 0
 	b.text = text
 	if cb.is_valid():
 		b.pressed.connect(cb)
+		b.pressed.connect(Audio.play.bind("click", -7.0))
 	return b
 
 static func small_button(text: String, cb: Callable, accent: Color = Color(0.4, 0.6, 0.8)) -> Button:
@@ -113,6 +115,7 @@ static func small_button(text: String, cb: Callable, accent: Color = Color(0.4, 
 	b.text = text
 	if cb.is_valid():
 		b.pressed.connect(cb)
+		b.pressed.connect(Audio.play.bind("click", -7.0))
 	return b
 
 static func hbox(parent: Control, y: float, sep := 30) -> HBoxContainer:
