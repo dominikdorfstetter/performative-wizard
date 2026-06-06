@@ -837,6 +837,10 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 			icon = "star"
 			text = "−%d" % int(it.get("amount", 0))
 			col = Color(0.95, 0.85, 0.45)
+		"summon_ally":
+			icon = "bones"
+			text = "backup"
+			col = Color(0.8, 0.7, 0.95)
 		_:
 			text = "?"
 	if icon != "":

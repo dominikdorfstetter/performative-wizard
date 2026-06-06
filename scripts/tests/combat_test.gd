@@ -249,6 +249,18 @@ func _ready() -> void:
 	cmf.play_card(cmf.hand[0])
 	_check("frail softens block (9->6)", cmf.player.block, 6)
 
+	# --- enemy summoners -----------------------------------------------------
+	print("--- summoners ---")
+	var cms := CombatManager.new()
+	var psm := Combatant.new()
+	psm.max_hp = 72
+	psm.hp = 72
+	cms.start_combat(psm, [Database.get_enemy(&"possessed_wardrobe")], [Database.get_card(&"ember")], 0, true)
+	cms.enemies[0].intent_index = 1            # summon_ally sock_puppet
+	var n0: int = cms.enemies.size()
+	cms.end_turn()
+	_check("wardrobe summoned backup", cms.enemies.size(), n0 + 1)
+
 	# --- second-tier statuses: poison + enrage -------------------------------
 	print("--- poison / enrage ---")
 	# poison ramps down and ticks at the victim's turn start

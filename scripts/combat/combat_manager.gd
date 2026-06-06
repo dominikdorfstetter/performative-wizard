@@ -39,6 +39,7 @@ var discard_pile: Array[CardData] = []
 
 var passives: Array[StringName] = []
 var enemy_dmg_scale := 1.0
+var enemy_hp_scale := 1.0
 var crit_chance := 0.0
 var last_crit := false
 var log_lines: Array[String] = []
@@ -48,13 +49,9 @@ var log_lines: Array[String] = []
 func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_value: int, deterministic := false, outfit_passives: Array[StringName] = [], hp_scale := 1.0, dmg_scale := 1.0) -> void:
 	player = p
 	enemies.clear()
+	enemy_hp_scale = hp_scale
 	for edata in encounter:
-		var e := Combatant.new()
-		e.display_name = edata.title
-		e.data = edata
-		e.max_hp = int(round(edata.max_hp * hp_scale))
-		e.hp = e.max_hp
-		enemies.append(e)
+		enemies.append(_make_enemy(edata))
 	target_index = 0
 	enemy_dmg_scale = dmg_scale
 	drip = drip_value
@@ -301,7 +298,8 @@ func end_turn() -> void:
 func _enemy_turn() -> void:
 	state = State.ENEMY_TURN
 	_emit()
-	for e in enemies:
+	# snapshot so an ally summoned mid-turn doesn't also act this turn
+	for e in enemies.duplicate():
 		if e.is_dead():
 			continue
 		var burned := _tick_burn(e)
@@ -326,6 +324,14 @@ func _enemy_turn() -> void:
 		_finish(true)
 		return
 	_start_player_turn()
+
+func _make_enemy(edata: EnemyData) -> Combatant:
+	var e := Combatant.new()
+	e.display_name = edata.title
+	e.data = edata
+	e.max_hp = int(round(edata.max_hp * enemy_hp_scale))
+	e.hp = e.max_hp
+	return e
 
 func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 	var amount := int(intent.get("amount", 0))
@@ -363,6 +369,12 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 			var before := swag
 			swag = max(0, swag - amount)
 			_say("%s drained %d of your Aura 😤" % [name, before - swag])
+		"summon_ally":
+			var sid := StringName(intent.get("enemy", &""))
+			var ed := Database.get_enemy(sid)
+			if ed != null and living_enemies().size() < 4:
+				enemies.append(_make_enemy(ed))
+				_say("%s called backup: %s pulled up!" % [name, ed.title])
 		_:
 			push_warning("[CombatManager] unknown intent: " + String(intent.get("op", "")))
 
