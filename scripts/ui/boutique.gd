@@ -12,17 +12,22 @@ func _build() -> void:
 	NodeUI.title(self, "✦ The Boutique", NodeUI.PINK)
 	NodeUI.sub(self, "Spend Clout on permanent drip. You have ✦ %d Clout." % GameState.clout)
 
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(252, 166)
+	scroll.custom_minimum_size = Vector2(652, 400)
+	scroll.size = Vector2(652, 400)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
 	var grid := GridContainer.new()
 	grid.columns = 2
-	grid.position = Vector2(264, 178)
 	grid.add_theme_constant_override("h_separation", 24)
-	grid.add_theme_constant_override("v_separation", 24)
-	add_child(grid)
+	grid.add_theme_constant_override("v_separation", 20)
+	scroll.add_child(grid)
 	for entry in GameState.BOUTIQUE:
 		grid.add_child(_stall(entry))
 
 	var back := NodeUI.small_button("← Back", _to_menu, Color(0.4, 0.85, 0.55))
-	back.position = Vector2(486, 600)
+	back.position = Vector2(486, 596)
 	add_child(back)
 
 func _stall(entry: Dictionary) -> Control:

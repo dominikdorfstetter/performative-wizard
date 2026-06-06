@@ -2,15 +2,16 @@ extends Node
 ## Dev tool: render several screens to PNGs for inspection.
 
 const SCENES := [
+	["res://scenes/hub/main_menu.tscn", "/tmp/pw_menu.png"],
 	["res://scenes/hub/dressing_room.tscn", "/tmp/pw_dress.png"],
-	["res://scenes/nodes/shop.tscn", "/tmp/pw_shop.png"],
-	["res://scenes/nodes/rest.tscn", "/tmp/pw_rest.png"],
+	["res://scenes/hub/boutique.tscn", "/tmp/pw_boutique.png"],
 ]
 
 func _ready() -> void:
-	GameState.start_run(&"fire")
+	GameState.start_run(&"necro")
 	GameState.finalize_loadout()
 	GameState.gold = 120
+	GameState.clout = 220
 	for pair in SCENES:
 		var s: Node = load(pair[0]).instantiate()
 		add_child(s)

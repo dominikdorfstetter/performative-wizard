@@ -47,11 +47,11 @@ func _rebuild() -> void:
 
 func _make_slot_row(slot: String) -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
+	row.add_theme_constant_override("separation", 8)
 
 	var label := Label.new()
 	label.text = slot
-	label.custom_minimum_size = Vector2(80, 78)
+	label.custom_minimum_size = Vector2(70, 80)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 18)
 	label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.76))
@@ -72,7 +72,7 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 	var ec: Color = ELEM_COLOR.get(piece.element, Color.GRAY)
 	var border := Color(1.0, 0.82, 0.29) if equipped else ec.darkened(0.1)
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(222, 78)
+	b.custom_minimum_size = Vector2(196, 80)
 	b.add_theme_stylebox_override("normal", _panel(Color(0.18, 0.16, 0.22) if equipped else Color(0.12, 0.11, 0.15), border, 3 if equipped else 1))
 	b.add_theme_stylebox_override("hover", _panel(Color(0.22, 0.19, 0.27), border.lightened(0.2), 3 if equipped else 1))
 	b.add_theme_stylebox_override("pressed", _panel(Color(0.2, 0.18, 0.25), border, 3))
@@ -83,13 +83,13 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 		_rebuild())
 
 	var title := ("✓ " if equipped else "") + piece.title
-	_lbl(b, title, Vector2(8, 6), Vector2(206, 20), 14, ec.lightened(0.35))
+	_lbl(b, title, Vector2(8, 6), Vector2(180, 20), 14, ec.lightened(0.35))
 	var sub := "✦ +%d" % piece.drip
 	if not piece.injected_cards.is_empty():
 		sub += "   +%d card" % piece.injected_cards.size()
-	_lbl(b, sub, Vector2(8, 28), Vector2(206, 16), 12, Color(0.8, 0.8, 0.85))
+	_lbl(b, sub, Vector2(8, 28), Vector2(180, 16), 12, Color(0.8, 0.8, 0.85))
 	var pt := piece.passive_text if piece.passive_text != "" else "—"
-	_lbl(b, pt, Vector2(8, 46), Vector2(208, 30), 11, Color(0.66, 0.66, 0.72))
+	_lbl(b, pt, Vector2(8, 44), Vector2(182, 34), 11, Color(0.66, 0.66, 0.72))
 	return b
 
 func _update_summary() -> void:

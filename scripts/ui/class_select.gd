@@ -25,6 +25,13 @@ func _ready() -> void:
 	boutique.size = Vector2(240, 42)
 	boutique.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/boutique.tscn"))
 	add_child(boutique)
+	var menu := Button.new()
+	menu.text = "← Menu"
+	menu.add_theme_font_size_override("font_size", 16)
+	menu.position = Vector2(24, 24)
+	menu.size = Vector2(120, 38)
+	menu.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/main_menu.tscn"))
+	add_child(menu)
 
 func _make_wizard_button(w: WizardData) -> Button:
 	var b := Button.new()

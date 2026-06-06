@@ -6,21 +6,25 @@ const SAVE_PATH := "user://save.json"
 
 const SLOTS: Array[String] = ["Hat", "Robe", "Staff", "Boots", "Trinket"]
 
-const DEFAULT_OWNED: Array[StringName] = [
-	&"apprentice_hat", &"pointed_hat_swag",
-	&"drip_robe", &"robe_of_excess",
-	&"plain_wand", &"char_wand", &"bone_scepter",
-	&"worn_boots", &"smolder_boots",
-	&"lucky_charm", &"crowd_pleaser",
+# The bare wardrobe a fresh run starts with — one basic piece per slot.
+const STARTER_OWNED: Array[StringName] = [
+	&"apprentice_hat", &"drip_robe", &"plain_wand", &"worn_boots", &"lucky_charm",
 ]
 const DEFAULT_EQUIP := {
 	"Hat": &"apprentice_hat", "Robe": &"drip_robe", "Staff": &"plain_wand",
 	"Boots": &"worn_boots", "Trinket": &"lucky_charm",
 }
 
-# Premium pieces unlockable in the Boutique for Clout (meta progression sink).
+# Every other piece is unlocked in the Boutique with Clout (the meta-progression sink).
 const BOUTIQUE: Array[Dictionary] = [
+	{"id": &"pointed_hat_swag", "cost": 40},
+	{"id": &"smolder_boots", "cost": 50},
+	{"id": &"char_wand", "cost": 60},
+	{"id": &"bone_scepter", "cost": 60},
+	{"id": &"robe_of_excess", "cost": 70},
+	{"id": &"crowd_pleaser", "cost": 70},
 	{"id": &"influencer_ring", "cost": 90},
+	{"id": &"catwalk_heels", "cost": 100},
 	{"id": &"showstopper_hat", "cost": 110},
 	{"id": &"phoenix_gown", "cost": 130},
 	{"id": &"diva_heels", "cost": 160},
@@ -52,7 +56,7 @@ func _ready() -> void:
 
 func _ensure_defaults() -> void:
 	var changed := false
-	for id in DEFAULT_OWNED:
+	for id in STARTER_OWNED:
 		if id not in unlocked_outfits:
 			unlocked_outfits.append(id)
 			changed = true
@@ -60,6 +64,18 @@ func _ensure_defaults() -> void:
 		save_meta()
 	if equipped.is_empty():
 		equipped = DEFAULT_EQUIP.duplicate()
+
+## Wipe meta progression — a brand-new game with only the basic wardrobe.
+func new_game() -> void:
+	unlocked_outfits = STARTER_OWNED.duplicate()
+	equipped = DEFAULT_EQUIP.duplicate()
+	clout = 0
+	run_artifacts = []
+	map = []
+	save_meta()
+
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
 
 # --- wardrobe ------------------------------------------------------------
 

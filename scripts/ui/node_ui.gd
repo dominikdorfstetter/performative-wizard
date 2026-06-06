@@ -67,6 +67,19 @@ static func choice(text: String, desc: String, accent: Color, cb: Callable, enab
 	_label(b, desc, Vector2(16, 52), Vector2(268, 116), 16, Color(0.82, 0.82, 0.88))
 	return b
 
+static func menu_button(text: String, cb: Callable, accent := Color(0.5, 0.55, 0.7), w := 340.0) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(w, 52)
+	b.add_theme_font_size_override("font_size", 22)
+	b.add_theme_stylebox_override("normal", box(Color(0.15, 0.13, 0.2), accent))
+	b.add_theme_stylebox_override("hover", box(Color(0.22, 0.19, 0.3), accent.lightened(0.3)))
+	b.add_theme_stylebox_override("pressed", box(Color(0.2, 0.17, 0.27), accent))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	b.text = text
+	if cb.is_valid():
+		b.pressed.connect(cb)
+	return b
+
 static func small_button(text: String, cb: Callable, accent: Color = Color(0.4, 0.6, 0.8)) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(180, 44)
