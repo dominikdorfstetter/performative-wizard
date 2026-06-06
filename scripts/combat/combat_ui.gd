@@ -91,8 +91,8 @@ func _start_fight() -> void:
 		ptr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		ptr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		ptr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ptr.position = Vector2(268, 4)
-		ptr.size = Vector2(62, 62)
+		ptr.position = Vector2(288, 6)
+		ptr.size = Vector2(42, 42)
 		$PlayerPanel.add_child(ptr)
 
 	var deck: Array[CardData] = []
@@ -120,7 +120,30 @@ func _start_fight() -> void:
 	_prev_state = cm.state
 	print("[Combat] node %s row %d: %d enemies, scale %.2f/%.2f"
 		% [node.get("type"), node.get("row"), encounter.size(), scales[0], scales[1]])
+	_build_fit_strip()
 	_refresh()
+
+func _build_fit_strip() -> void:
+	var lbl := Label.new()
+	lbl.text = "fit:"
+	lbl.position = Vector2(16, 44)
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.66))
+	add_child(lbl)
+	var x := 52.0
+	for p in GameState.equipped_pieces():
+		var tex := SpriteBank.item_texture(p.id)
+		if tex == null:
+			continue
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.position = Vector2(x, 38)
+		tr.size = Vector2(26, 26)
+		add_child(tr)
+		x += 30
 
 # --- rendering -----------------------------------------------------------
 
@@ -418,7 +441,7 @@ func _intent_text_for(e: Combatant) -> String:
 		"attack":
 			return "Attacks %d" % amount
 		"block":
-			return "🛡️ %d" % int(it.get("amount", 0))
+			return "Block %d" % int(it.get("amount", 0))
 		"apply_status":
 			var sid := StringName(it.get("status", &""))
 			return "%s %d" % [STATUS_NAME.get(sid, String(sid).capitalize()), int(it.get("amount", 0))]

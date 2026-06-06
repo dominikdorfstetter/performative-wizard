@@ -3,8 +3,8 @@ extends Control
 ## shows run status, and routes the chosen node to the right scene.
 
 const TYPE_ICON := {
-	"Combat": "⚔️", "Elite": "💀", "Event": "❓", "Shop": "🛒",
-	"Rest": "🔥", "Chest": "📦", "Boss": "👑",
+	"Combat": "👊", "Elite": "💀", "Event": "❓", "Shop": "🛒",
+	"Rest": "🛋", "Chest": "📦", "Boss": "👑",
 }
 const TYPE_COLOR := {
 	"Combat": Color(0.86, 0.30, 0.27), "Elite": Color(0.85, 0.4, 0.95),
@@ -97,6 +97,19 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 	icon.add_theme_font_size_override("font_size", 24)
 	icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.45)
 	b.add_child(icon)
+	# enemy-count badge so you can read the encounter before entering
+	if type == "Combat" or type == "Elite":
+		var cnt: int = node.get("enemies", []).size()
+		if cnt > 0:
+			var badge := Label.new()
+			badge.text = str(cnt)
+			badge.position = Vector2(NODE - 16, NODE - 18)
+			badge.size = Vector2(16, 16)
+			badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			badge.add_theme_font_size_override("font_size", 13)
+			badge.add_theme_color_override("font_color", Color(1, 1, 1) if (avail or current) else Color(1, 1, 1, 0.4))
+			b.add_child(badge)
 	add_child(b)
 
 func _build_info() -> void:
@@ -105,16 +118,23 @@ func _build_info() -> void:
 	_info.size = Vector2(1112, 80)
 	_info.add_theme_font_size_override("font_size", 18)
 	var w := Database.get_wizard(GameState.wizard_id)
-	_info.text = "%s %s    ❤ %d/%d    💰 %d    ✦ Clout %d    🃏 %d cards    %s" % [
+	_info.text = "%s %s    ❤ %d/%d    💰 %d    ✦ Clout %d    %s" % [
 		w.emoji, w.title, GameState.player_hp, GameState.player_max_hp,
-		GameState.gold, GameState.clout, GameState.deck.size(), _artifact_text()]
+		GameState.gold, GameState.clout, _artifact_text()]
 	add_child(_info)
+	var deck_btn := Button.new()
+	deck_btn.text = "🃏 deck (%d)" % GameState.deck.size()
+	deck_btn.add_theme_font_size_override("font_size", 16)
+	deck_btn.position = Vector2(968, 12)
+	deck_btn.size = Vector2(164, 34)
+	deck_btn.pressed.connect(_show_deck)
+	add_child(deck_btn)
 	var hint := Label.new()
 	hint.position = Vector2(20, 612)
 	hint.size = Vector2(700, 24)
 	hint.add_theme_font_size_override("font_size", 14)
 	hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.66))
-	hint.text = "Choose a glowing node to advance.  ⚔️ fight  💀 elite  ❓ event  🛒 shop  🔥 rest  📦 chest  👑 boss"
+	hint.text = "tap a glowing node to advance.  👊 fight  💀 elite  ❓ event  🛒 shop  🛋 rest  📦 chest  👑 boss"
 	add_child(hint)
 
 func _artifact_text() -> String:
@@ -126,6 +146,40 @@ func _artifact_text() -> String:
 		if a != null:
 			parts.append(a.emoji)
 	return "🎒 " + " ".join(parts)
+
+func _show_deck() -> void:
+	var overlay := Control.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var bg := ColorRect.new()
+	bg.color = Color(0.04, 0.03, 0.07, 0.93)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(bg)
+	var title := Label.new()
+	title.text = "your deck  (%d cards)" % GameState.deck.size()
+	title.position = Vector2(0, 36)
+	title.size = Vector2(1152, 36)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
+	overlay.add_child(title)
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(70, 90)
+	scroll.size = Vector2(1012, 470)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 12)
+	scroll.add_child(grid)
+	for id in GameState.deck:
+		var card := Database.get_card(id)
+		if card != null:
+			grid.add_child(CardView.build(card, true, Callable()))
+	overlay.add_child(scroll)
+	var close := NodeUI.menu_button("Close", func(): overlay.queue_free(), Color(0.9, 0.4, 0.5), 200.0)
+	close.position = Vector2(476, 580)
+	overlay.add_child(close)
+	add_child(overlay)
 
 func _enter(r: int, c: int, type: String) -> void:
 	GameState.enter(r, c)

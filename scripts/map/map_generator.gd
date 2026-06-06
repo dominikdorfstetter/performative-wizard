@@ -67,7 +67,7 @@ static func _connect(cur: Array, nxt: Array, rng: RandomNumberGenerator) -> void
 		var rel := 0.0 if cur.size() == 1 else float(i) / float(cur.size() - 1)
 		var center := int(round(rel * (nxt.size() - 1)))
 		var links := {center: true}
-		if rng.randf() < 0.45 and nxt.size() > 1:
+		if rng.randf() < 0.28 and nxt.size() > 1:
 			var off: int = clamp(center + (1 if rng.randf() < 0.5 else -1), 0, nxt.size() - 1)
 			links[off] = true
 		cur[i].links = links.keys()
