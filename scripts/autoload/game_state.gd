@@ -35,6 +35,8 @@ const BOUTIQUE: Array[Dictionary] = [
 var unlocked_outfits: Array[StringName] = []
 var equipped: Dictionary = {}
 var clout := 0                               # meta currency, spent in the Boutique
+var sfx_on := true
+var music_on := true
 
 # --- Current run ---
 var wizard_id: StringName = &"fire"
@@ -54,6 +56,15 @@ var message := ""
 func _ready() -> void:
 	load_meta()
 	_ensure_defaults()
+	Audio.set_sfx_muted(not sfx_on)
+	Audio.set_music_muted(not music_on)
+
+func set_audio(sfx: bool, music: bool) -> void:
+	sfx_on = sfx
+	music_on = music
+	Audio.set_sfx_muted(not sfx)
+	Audio.set_music_muted(not music)
+	save_meta()
 
 func _ensure_defaults() -> void:
 	var changed := false
@@ -271,6 +282,8 @@ func load_meta() -> void:
 	for slot in data.get("equipped", {}):
 		equipped[slot] = StringName(data["equipped"][slot])
 	clout = int(data.get("clout", 0))
+	sfx_on = bool(data.get("sfx_on", true))
+	music_on = bool(data.get("music_on", true))
 
 func save_meta() -> void:
 	var owned: Array[String] = []
@@ -283,4 +296,4 @@ func save_meta() -> void:
 	if f == null:
 		push_warning("[GameState] could not open save file for writing")
 		return
-	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout}, "\t"))
+	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout, "sfx_on": sfx_on, "music_on": music_on}, "\t"))

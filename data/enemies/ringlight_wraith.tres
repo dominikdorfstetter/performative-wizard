@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ringlight_wraith"
+title = "Ring-Light Wraith"
+emoji = "💡"
+max_hp = 95
+intents = [{ "op": "apply_status", "status": "jinx", "amount": 2, "target": "player" }, { "op": "attack", "amount": 14 }, { "op": "apply_status", "status": "vulnerable", "amount": 2, "target": "player" }, { "op": "block", "amount": 12 }, { "op": "attack", "amount": 18 }]

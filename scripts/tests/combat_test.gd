@@ -189,5 +189,17 @@ func _ready() -> void:
 	cmw.play_card(cmw.hand[0])
 	_check("quick read drew 2", cmw.hand.size(), 2)
 
+	# jinx lowers crit chance (luck debuff)
+	var cmj := CombatManager.new()
+	var pj := Combatant.new()
+	pj.max_hp = 72
+	pj.hp = 72
+	cmj.start_combat(pj, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true, [&"crit_100"])
+	_check("crit before jinx", cmj.live_crit_chance(), 1.0)
+	cmj.player.add_status(&"jinx", 4)
+	_check("jinx -40% crit", cmj.live_crit_chance(), 0.6)
+	cmj.player.add_status(&"jinx", 20)
+	_check("crit floored at 0", cmj.live_crit_chance(), 0.0)
+
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

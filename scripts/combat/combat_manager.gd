@@ -19,7 +19,7 @@ const THRESHOLD_PIERCE := 18
 const SWAG_DAMAGE_BONUS := 2
 
 # Gen-Z display names for the internal status keywords.
-const _DISP := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons"}
+const _DISP := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed"}
 
 var state: State = State.PLAYER_TURN
 var player: Combatant
@@ -92,7 +92,8 @@ func live_crit_chance() -> float:
 	var cc := crit_chance
 	if has_passive(&"rizz_crit"):
 		cc += player.status(&"strength") * 0.06
-	return cc
+	cc -= player.status(&"jinx") * 0.10
+	return max(0.0, cc)
 
 func _apply_combat_start_passives() -> void:
 	if has_passive(&"energy_plus_1"):
@@ -340,7 +341,7 @@ func _tick_burn(c: Combatant) -> int:
 	return b
 
 func _decay(c: Combatant) -> void:
-	for s in [&"weak", &"vulnerable"]:
+	for s in [&"weak", &"vulnerable", &"jinx"]:
 		var v := c.status(s)
 		if v > 0:
 			if v - 1 <= 0:

@@ -12,8 +12,8 @@ const C_GOLD := Color(1.0, 0.82, 0.29)
 const C_INTENT := Color(1.0, 0.62, 0.36)
 const C_TARGET := Color(1.0, 0.82, 0.29)
 
-const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons"}
-const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid"}
+const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed"}
+const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl"}
 const PLAYER_LINES := ["aura farming fr 🧿", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy ✨", "locked TF in", "we mogging rn 😤"]
 const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you? 💀", "stay mad bestie"]
 
@@ -219,15 +219,15 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 				cm.set_target(index))
 
-	# info above the monster
-	var intent := Label.new()
-	intent.text = "" if (over or dead) else _intent_text_for(e)
+	# intent chip above the monster (icon + amount)
+	var intent := HBoxContainer.new()
 	intent.position = Vector2(0, 0)
-	intent.size = Vector2(150, 22)
+	intent.custom_minimum_size = Vector2(150, 22)
+	intent.alignment = BoxContainer.ALIGNMENT_CENTER
+	intent.add_theme_constant_override("separation", 4)
 	intent.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	intent.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	intent.add_theme_font_size_override("font_size", 17)
-	intent.add_theme_color_override("font_color", C_INTENT)
+	if not (over or dead):
+		_fill_intent(intent, e)
 	w.add_child(intent)
 
 	var nm := Label.new()
@@ -674,24 +674,53 @@ func _status_text(c: Combatant) -> String:
 			parts.append("%s %d" % [STATUS_NAME.get(k, String(k).capitalize()), c.statuses[k]])
 	return "  ".join(parts)
 
-func _intent_text_for(e: Combatant) -> String:
+func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 	var it := cm.peek_intent(e)
 	if it.is_empty():
-		return ""
-	var amount := int(round(int(it.get("amount", 0)) * cm.enemy_dmg_scale))
+		return
+	var icon := ""
+	var text := ""
+	var col := C_INTENT
 	match String(it.get("op", "")):
 		"attack":
-			return "Attacks %d" % amount
+			var amount := int(round(int(it.get("amount", 0)) * cm.enemy_dmg_scale))
+			icon = "sword"
+			text = str(amount)
+			col = Color(0.95, 0.5, 0.45)
 		"block":
-			return "Block %d" % int(it.get("amount", 0))
+			icon = "shield"
+			text = str(int(it.get("amount", 0)))
+			col = Color(0.55, 0.78, 0.95)
 		"apply_status":
 			var sid := StringName(it.get("status", &""))
-			return "%s %d" % [STATUS_NAME.get(sid, String(sid).capitalize()), int(it.get("amount", 0))]
+			icon = STATUS_ICON.get(sid, "cooked")
+			text = str(int(it.get("amount", 0)))
+			col = Color(0.95, 0.7, 0.4)
 		"buff":
-			return "Rizz +%d" % int(it.get("amount", 0))
+			icon = "rizz"
+			text = "+%d" % int(it.get("amount", 0))
+			col = Color(0.95, 0.6, 0.85)
 		"drain_swag":
-			return "✦ −%d" % int(it.get("amount", 0))
-	return "?"
+			icon = "star"
+			text = "−%d" % int(it.get("amount", 0))
+			col = Color(0.95, 0.85, 0.45)
+		_:
+			text = "?"
+	if icon != "":
+		var tr := TextureRect.new()
+		tr.texture = SpriteBank.icon_texture(icon)
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.custom_minimum_size = Vector2(20, 20)
+		box.add_child(tr)
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 17)
+	lbl.add_theme_color_override("font_color", col)
+	box.add_child(lbl)
 
 func _threshold_text() -> String:
 	var d := func(n): return "●" if cm.swag >= n else "○"

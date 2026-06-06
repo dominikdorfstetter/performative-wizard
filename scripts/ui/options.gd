@@ -17,6 +17,8 @@ func _build() -> void:
 	add_child(vb)
 	var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 	vb.add_child(NodeUI.menu_button("Fullscreen:   %s" % ("On" if fs else "Off"), _toggle_fs))
+	vb.add_child(NodeUI.menu_button("Sound FX:   %s" % ("On" if GameState.sfx_on else "Off"), _toggle_sfx))
+	vb.add_child(NodeUI.menu_button("Music:   %s" % ("On" if GameState.music_on else "Off"), _toggle_music))
 	vb.add_child(NodeUI.menu_button("Confirm Reset?" if _confirm_reset else "Reset All Progress", _reset, Color(0.9, 0.4, 0.42)))
 	vb.add_child(NodeUI.menu_button("← Back to Menu", _back, Color(0.45, 0.82, 0.55)))
 	if _confirm_reset:

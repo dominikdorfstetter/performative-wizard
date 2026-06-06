@@ -8,7 +8,8 @@ var _players: Array[AudioStreamPlayer] = []
 var _next := 0
 var _music: AudioStreamPlayer
 var _sfx := {}
-var muted := false
+var sfx_muted := false
+var music_muted := false
 
 func _ready() -> void:
 	for i in 8:
@@ -22,7 +23,7 @@ func _ready() -> void:
 	_build_music()
 
 func play(name: String, vol_db := -7.0) -> void:
-	if muted:
+	if sfx_muted:
 		return
 	var s = _sfx.get(name)
 	if s == null:
@@ -34,14 +35,17 @@ func play(name: String, vol_db := -7.0) -> void:
 	p.play()
 
 func play_music() -> void:
-	if not muted and _music.stream != null and not _music.playing:
+	if not music_muted and _music.stream != null and not _music.playing:
 		_music.play()
 
 func stop_music() -> void:
 	_music.stop()
 
-func set_muted(m: bool) -> void:
-	muted = m
+func set_sfx_muted(m: bool) -> void:
+	sfx_muted = m
+
+func set_music_muted(m: bool) -> void:
+	music_muted = m
 	if m:
 		_music.stop()
 	else:
