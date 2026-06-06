@@ -15,6 +15,7 @@ const C_TARGET := Color(1.0, 0.82, 0.29)
 
 var cm: CombatManager
 var _popups: Control
+var _enemy_panels: Array = []
 var _prev_enemy_hp: Array = []
 var _prev_player_hp := -1
 
@@ -146,9 +147,12 @@ func _emit_popups() -> void:
 			var d: int = int(_prev_enemy_hp[i]) - cm.enemies[i].hp
 			if d > 0:
 				_float_text(_enemy_center(i), "-%d" % d, C_HP.lightened(0.25))
+				if i < _enemy_panels.size() and is_instance_valid(_enemy_panels[i]):
+					_punch(_enemy_panels[i])
 	if _prev_player_hp >= 0 and cm.player.hp < _prev_player_hp:
 		_float_text(Vector2(180, 320), "-%d" % (_prev_player_hp - cm.player.hp), Color(1, 0.5, 0.4))
 		_hurt_flash()
+		_punch($PlayerPanel)
 	_prev_enemy_hp = []
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
@@ -174,6 +178,18 @@ func _float_text(pos: Vector2, text: String, color: Color) -> void:
 	tw.tween_property(lbl, "modulate:a", 0.0, 0.7)
 	tw.chain().tween_callback(lbl.queue_free)
 
+func _punch(node: Control) -> void:
+	if node == null:
+		return
+	var sz := node.size if node.size != Vector2.ZERO else node.custom_minimum_size
+	node.pivot_offset = sz * 0.5
+	node.scale = Vector2(1.08, 1.08)
+	node.modulate = Color(1.6, 1.6, 1.6)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(node, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(node, "modulate", Color.WHITE, 0.2)
+
 func _hurt_flash() -> void:
 	var fl := ColorRect.new()
 	fl.color = Color(0.9, 0.12, 0.12, 0.0)
@@ -188,8 +204,11 @@ func _hurt_flash() -> void:
 func _rebuild_enemies(over: bool) -> void:
 	for c in _enemies_box.get_children():
 		c.queue_free()
+	_enemy_panels = []
 	for i in cm.enemies.size():
-		_enemies_box.add_child(_make_enemy_widget(cm.enemies[i], i, over))
+		var w := _make_enemy_widget(cm.enemies[i], i, over)
+		_enemy_panels.append(w)
+		_enemies_box.add_child(w)
 
 func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Control:
 	var dead := e.is_dead()
