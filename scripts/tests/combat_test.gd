@@ -249,5 +249,25 @@ func _ready() -> void:
 	cmf.play_card(cmf.hand[0])
 	_check("frail softens block (9->6)", cmf.player.block, 6)
 
+	# --- progression: wizard unlock + multi-act ------------------------------
+	print("--- progression ---")
+	var saved_ce: int = GameState.clout_earned
+	var saved_act: int = GameState.act
+	GameState.clout_earned = 0
+	_check("fire unlocked at 0", GameState.wizard_unlocked(&"fire"), true)
+	_check("necro locked at 0", GameState.wizard_unlocked(&"necro"), false)
+	GameState.clout_earned = 120
+	_check("necro unlocks at 120", GameState.wizard_unlocked(&"necro"), true)
+	_check("rizz still locked at 120", GameState.wizard_unlocked(&"rizz"), false)
+	GameState.clout_earned = 320
+	_check("rizz unlocks at 320", GameState.wizard_unlocked(&"rizz"), true)
+	GameState.act = 1
+	_check("boss 1 -> act 2", GameState.advance_act(), true)
+	_check("act is 2", GameState.act, 2)
+	GameState.advance_act()                       # -> act 3
+	_check("no act past max", GameState.advance_act(), false)
+	GameState.clout_earned = saved_ce
+	GameState.act = saved_act
+
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

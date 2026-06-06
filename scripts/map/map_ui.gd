@@ -135,8 +135,10 @@ func _build_info() -> void:
 	_info.size = Vector2(1112, 80)
 	_info.add_theme_font_size_override("font_size", 18)
 	var w := Database.get_wizard(GameState.wizard_id)
-	_info.text = "%s %s    ❤ %d/%d    💰 %d    ✦ Clout %d    %s" % [
-		w.emoji, w.title, GameState.player_hp, GameState.player_max_hp,
+	var asc := "  🔥asc%d" % GameState.asc_level if GameState.asc_level > 0 else ""
+	_info.text = "%s %s    Act %d/%d%s    ❤ %d/%d    💰 %d    ✦ Clout %d    %s" % [
+		w.emoji, w.title, GameState.act, GameState.MAX_ACTS, asc,
+		GameState.player_hp, GameState.player_max_hp,
 		GameState.gold, GameState.clout, _artifact_text()]
 	add_child(_info)
 	var deck_btn := Button.new()

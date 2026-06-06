@@ -35,8 +35,12 @@ const BOUTIQUE: Array[Dictionary] = [
 var unlocked_outfits: Array[StringName] = []
 var equipped: Dictionary = {}
 var clout := 0                               # meta currency, spent in the Boutique
+var clout_earned := 0                        # lifetime Clout (never spent down) — gates unlocks
+var ascension := 0                           # highest cleared difficulty tier
 var sfx_on := true
 var music_on := true
+
+const MAX_ACTS := 3
 
 # --- Current run ---
 var wizard_id: StringName = &"fire"
@@ -46,6 +50,8 @@ var player_max_hp := 0
 var player_hp := 0
 var drip := 0
 var gold := 0
+var act := 1                                 # 1..MAX_ACTS
+var asc_level := 0                           # ascension modifiers active this run
 var run_artifacts: Array[StringName] = []    # artefact ids held this run
 var map: Array = []
 var pos_row := -1                            # -1 = haven't entered row 0 yet
@@ -82,6 +88,8 @@ func new_game() -> void:
 	unlocked_outfits = STARTER_OWNED.duplicate()
 	equipped = DEFAULT_EQUIP.duplicate()
 	clout = 0
+	clout_earned = 0
+	ascension = 0
 	run_artifacts = []
 	map = []
 	save_meta()
@@ -132,11 +140,24 @@ func start_run(wid: StringName) -> void:
 	player_max_hp = w.max_hp
 	player_hp = w.max_hp
 	gold = 30
+	act = 1
 	run_artifacts = []
 	_validate_equip_for(w.element)
 	map = MapGenerator.generate(randi())
 	pos_row = -1
 	pos_col = -1
+
+# --- wizard unlocking ----------------------------------------------------
+
+func wizard_unlocked(id: StringName) -> bool:
+	var w := Database.get_wizard(id)
+	return w != null and clout_earned >= w.unlock_clout
+
+func locked_wizard_hint(id: StringName) -> String:
+	var w := Database.get_wizard(id)
+	if w == null or wizard_unlocked(id):
+		return ""
+	return "🔒  Unlock at ✦ %d  (you have ✦ %d earned)" % [w.unlock_clout, clout_earned]
 
 func _validate_equip_for(element: String) -> void:
 	for slot in SLOTS:
@@ -230,10 +251,13 @@ func enter(row: int, col: int) -> Dictionary:
 	return n
 
 func node_scales(node: Dictionary) -> Array:
+	# deeper acts and ascension make everything tougher
+	var act_hp := 1.0 + 0.35 * (act - 1) + 0.08 * asc_level
+	var act_dmg := 1.0 + 0.22 * (act - 1) + 0.06 * asc_level
 	if node.get("type") == "Boss":
-		return [1.0, 1.0]
+		return [act_hp, act_dmg]
 	var r: int = node.get("row", 0)
-	return [1.0 + 0.09 * r, 1.0 + 0.07 * r]
+	return [act_hp + 0.09 * r, act_dmg + 0.07 * r]
 
 func combat_reward(node: Dictionary) -> int:
 	var base := 9 + int(node.get("row", 0)) * 2
@@ -245,10 +269,38 @@ func combat_reward(node: Dictionary) -> int:
 func finish_run(victory: bool) -> void:
 	var earned := 20 + int(gold / 3)
 	if victory:
-		earned += 80
+		earned += 80 + asc_level * 10
+	var before := clout_earned
 	clout += earned
+	clout_earned += earned
+	if victory and asc_level >= ascension:
+		ascension = asc_level + 1   # banked a new difficulty tier
 	message = "Run over. +%d Clout (total %d)." % [earned, clout]
+	var unlocked := _wizards_unlocked_between(before, clout_earned)
+	if not unlocked.is_empty():
+		message += "\n✦ NEW FIT UNLOCKED: %s!" % ", ".join(unlocked)
 	save_meta()
+
+## Names of wizards whose unlock threshold falls in (lo, hi] — i.e. just unlocked.
+func _wizards_unlocked_between(lo: int, hi: int) -> Array:
+	var names: Array = []
+	for wid in [&"fire", &"necro", &"rizz"]:
+		var w := Database.get_wizard(wid)
+		if w != null and w.unlock_clout > lo and w.unlock_clout <= hi:
+			names.append(w.pname)
+	return names
+
+## Called when a boss dies. Returns true if the run continues into a new act.
+func advance_act() -> bool:
+	if act >= MAX_ACTS:
+		return false
+	act += 1
+	gold += 15
+	map = MapGenerator.generate(randi())
+	pos_row = -1
+	pos_col = -1
+	message = "✦ ACT %d ✦  the gauntlet escalates." % act
+	return true
 
 # --- meta save -----------------------------------------------------------
 
@@ -282,6 +334,9 @@ func load_meta() -> void:
 	for slot in data.get("equipped", {}):
 		equipped[slot] = StringName(data["equipped"][slot])
 	clout = int(data.get("clout", 0))
+	# legacy saves: treat current Clout as already-earned so nothing re-locks
+	clout_earned = int(data.get("clout_earned", clout))
+	ascension = int(data.get("ascension", 0))
 	sfx_on = bool(data.get("sfx_on", true))
 	music_on = bool(data.get("music_on", true))
 
@@ -296,4 +351,4 @@ func save_meta() -> void:
 	if f == null:
 		push_warning("[GameState] could not open save file for writing")
 		return
-	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout, "sfx_on": sfx_on, "music_on": music_on}, "\t"))
+	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "sfx_on": sfx_on, "music_on": music_on}, "\t"))

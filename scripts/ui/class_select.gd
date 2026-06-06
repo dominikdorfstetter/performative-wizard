@@ -27,13 +27,18 @@ func _ready() -> void:
 	add_child(menu)
 
 func _make_wizard_button(w: WizardData) -> Button:
+	var locked := not GameState.wizard_unlocked(w.id)
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(300, 320)
-	b.add_theme_stylebox_override("normal", _box(Color(0.14, 0.12, 0.18), w.accent))
-	b.add_theme_stylebox_override("hover", _box(Color(0.20, 0.17, 0.26), w.accent.lightened(0.25)))
-	b.add_theme_stylebox_override("pressed", _box(Color(0.22, 0.19, 0.28), w.accent))
+	b.disabled = locked
+	var border: Color = Color(0.4, 0.4, 0.46) if locked else w.accent
+	b.add_theme_stylebox_override("normal", _box(Color(0.14, 0.12, 0.18), border))
+	b.add_theme_stylebox_override("hover", _box(Color(0.20, 0.17, 0.26), border.lightened(0.25)))
+	b.add_theme_stylebox_override("pressed", _box(Color(0.22, 0.19, 0.28), border))
+	b.add_theme_stylebox_override("disabled", _box(Color(0.10, 0.09, 0.12), Color(0.32, 0.30, 0.36)))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.pressed.connect(func(): _choose(w.id))
+	if not locked:
+		b.pressed.connect(func(): _choose(w.id))
 
 	var tex := SpriteBank.wizard_texture(w.id)
 	if tex != null:
@@ -44,11 +49,16 @@ func _make_wizard_button(w: WizardData) -> Button:
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tr.position = Vector2(100, 10)
 		tr.size = Vector2(100, 100)
+		tr.modulate = Color(0.25, 0.25, 0.3) if locked else Color.WHITE
 		b.add_child(tr)
-	_label(b, w.pname, Vector2(12, 114), Vector2(276, 32), 24, w.accent.lightened(0.35))
+	var nm: Color = Color(0.6, 0.6, 0.66) if locked else w.accent.lightened(0.35)
+	_label(b, w.pname, Vector2(12, 114), Vector2(276, 32), 24, nm)
 	_label(b, "the " + w.title, Vector2(12, 148), Vector2(276, 24), 17, Color(0.7, 0.7, 0.78))
-	_label(b, "❤ %d HP" % w.max_hp, Vector2(12, 176), Vector2(276, 24), 16, Color(0.8, 0.8, 0.85))
-	_label(b, w.blurb, Vector2(18, 204), Vector2(264, 104), 16, Color(0.78, 0.78, 0.82))
+	if locked:
+		_label(b, GameState.locked_wizard_hint(w.id), Vector2(14, 184), Vector2(272, 110), 16, Color(0.85, 0.7, 0.4))
+	else:
+		_label(b, "❤ %d HP" % w.max_hp, Vector2(12, 176), Vector2(276, 24), 16, Color(0.8, 0.8, 0.85))
+		_label(b, w.blurb, Vector2(18, 204), Vector2(264, 104), 16, Color(0.78, 0.78, 0.82))
 	return b
 
 func _choose(id: StringName) -> void:

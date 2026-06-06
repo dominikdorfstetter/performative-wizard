@@ -16,3 +16,4 @@ extends Resource
 @export var starter_deck: Array[StringName] = []
 @export var reward_pool: Array[StringName] = []
 @export var innate_passives: Array[StringName] = []   # always-on class passives (e.g. Rizz crit)
+@export var unlock_clout: int = 0             # lifetime Clout needed to unlock (0 = from start)

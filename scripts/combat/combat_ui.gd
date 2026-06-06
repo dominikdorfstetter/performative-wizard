@@ -893,8 +893,12 @@ func _on_combat_ended(victory: bool) -> void:
 		GameState.player_hp = cm.player.hp
 		var node := GameState.current_node()
 		if node.get("type") == "Boss":
-			GameState.finish_run(true)
-			get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn")
+			if GameState.advance_act():
+				# act cleared, but the run continues — push into the next act's map
+				get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+			else:
+				GameState.finish_run(true)
+				get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn")
 		else:
 			get_tree().change_scene_to_file("res://scenes/reward.tscn")
 		return
