@@ -2,7 +2,7 @@ extends Node
 ## Dev tool: render several screens to PNGs for inspection.
 
 const SCENES := [
-	["res://scenes/hub/main_menu.tscn", "/tmp/pw_menu.png"],
+	["res://scenes/reward.tscn", "/tmp/pw_reward.png"],
 	["res://scenes/hub/dressing_room.tscn", "/tmp/pw_dress.png"],
 	["res://scenes/hub/boutique.tscn", "/tmp/pw_boutique.png"],
 ]
@@ -10,6 +10,7 @@ const SCENES := [
 func _ready() -> void:
 	GameState.start_run(&"necro")
 	GameState.finalize_loadout()
+	GameState.enter(0, 0)
 	GameState.gold = 120
 	GameState.clout = 220
 	for pair in SCENES:
