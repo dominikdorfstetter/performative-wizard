@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"slow_burn_robe"
+title = "Slow-Burn Robe"
+slot = "Robe"
+element = "Neutral"
+drip = 3
+passive_text = "High drip: a fat, steady Aura income. Live in the thresholds; hoard, don't dump."
+passive_id = &""
+injected_cards = []

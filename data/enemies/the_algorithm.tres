@@ -8,4 +8,4 @@ id = &"the_algorithm"
 title = "The Algorithm"
 emoji = "📱"
 max_hp = 155
-intents = [{ "op": "buff", "status": "strength", "amount": 2 }, { "op": "attack", "amount": 14 }, { "op": "summon_ally", "enemy": "rabid_roomba" }, { "op": "heal", "amount": 16 }, { "op": "drain_swag", "amount": 5 }, { "op": "attack", "amount": 9, "hits": 2 }, { "op": "apply_status", "status": "frail", "amount": 2, "target": "player" }, { "op": "block", "amount": 16 }]
+intents = [{ "op": "buff", "status": "strength", "amount": 2 }, { "op": "attack", "amount": 14 }, { "op": "tax", "amount": 7, "threshold": 12 }, { "op": "summon_ally", "enemy": "rabid_roomba" }, { "op": "heal", "amount": 16 }, { "op": "drain_swag", "amount": 5 }, { "op": "attack", "amount": 9, "hits": 2 }, { "op": "apply_status", "status": "frail", "amount": 2, "target": "player" }, { "op": "block", "amount": 16 }]

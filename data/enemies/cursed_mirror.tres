@@ -8,4 +8,4 @@ id = &"cursed_mirror"
 title = "Cursed Mirror"
 emoji = "🪞"
 max_hp = 46
-intents = [{ "op": "drain_swag", "amount": 4 }, { "op": "attack", "amount": 9 }, { "op": "buff", "status": "strength", "amount": 2 }, { "op": "attack", "amount": 11 }]
+intents = [{ "op": "drain_swag", "amount": 4 }, { "op": "attack", "amount": 9 }, { "op": "tax", "amount": 5, "threshold": 12 }, { "op": "attack", "amount": 11 }]

@@ -14,7 +14,7 @@ max_hp = 70
 base_drip = 0
 accent = Color(0.96, 0.5, 0.72, 1)
 starter_deck = [&"finger_guns", &"finger_guns", &"finger_guns", &"finger_guns", &"composure", &"composure", &"composure", &"flex", &"flex", &"wink"]
-reward_pool = [&"smooth_talk", &"lucky_strike", &"pickup_line", &"rizz_up", &"wink", &"quick_read", &"grand_finale", &"touch_grass", &"delulu"]
+reward_pool = [&"smooth_talk", &"lucky_strike", &"pickup_line", &"rizz_up", &"wink", &"quick_read", &"grand_finale", &"touch_grass", &"delulu", &"take_a_bow", &"encore_for_fans", &"soak_it_in"]
 innate_passives = [&"rizz_crit"]
 
 unlock_clout = 320

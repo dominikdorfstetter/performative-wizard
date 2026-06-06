@@ -435,6 +435,144 @@ func _ready() -> void:
 	GameState.critic_score = saved_cs
 	GameState.pending_critic = saved_pending
 	GameState.save_meta()
+	_check("clean finisher names its style", cmcr.style_signature(), &"swag_x3")
+
+	# --- Commit to the Bit: encore / booed / tax (P3) ------------------------
+	print("--- commit to the bit ---")
+	var cmen := CombatManager.new()
+	var pen := Combatant.new()
+	pen.max_hp = 72
+	pen.hp = 72
+	cmen.start_combat(pen, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
+	cmen.swag = 26                              # above the spotlight line (24)
+	cmen.end_turn()
+	_check("encore builds in the spotlight", cmen.encore, 1)
+	cmen.end_turn()
+	_check("encore keeps building", cmen.encore, 2)
+	cmen.energy = 9
+	cmen.set_target(0)
+	cmen.hand = [Database.get_card(&"take_a_bow")]
+	cmen.play_card(cmen.hand[0])               # 26 × (2+2) = 104, lethal
+	_check("take a bow zeroed Aura", cmen.swag, 0)
+	_check("take a bow reset encore", cmen.encore, 0)
+	_check("take a bow is a clean finish", cmen.enemies[0].is_dead(), true)
+	_check("take a bow signature = encore", cmen.finisher_kind, &"encore")
+
+	# booed: knocked out of the spotlight applies a soft loss, not a cascade
+	var cmbo := CombatManager.new()
+	var pbo := Combatant.new()
+	pbo.max_hp = 72
+	pbo.hp = 72
+	cmbo.start_combat(pbo, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
+	cmbo.swag = 26
+	cmbo.end_turn()
+	_check("in the spotlight", cmbo.encore, 1)
+	cmbo.swag = 10                             # knocked below the line
+	cmbo.end_turn()
+	_check("booed cleared the encore", cmbo.encore, 0)
+	_check("booed flag set", cmbo.booed, true)
+	_check("booed soft loss (−4)", cmbo.swag, 6)
+
+	# tax: punishes hoarding only while you're sitting on a pile
+	var cmtx := CombatManager.new()
+	var ptx := Combatant.new()
+	ptx.max_hp = 72
+	ptx.hp = 72
+	cmtx.start_combat(ptx, [Database.get_enemy(&"cursed_mirror")], [Database.get_card(&"ember")], 0, true)
+	cmtx.swag = 20
+	cmtx.enemies[0].intent_index = 2          # the tax intent
+	cmtx.end_turn()
+	_check("tax skims a hoard above threshold", cmtx.swag, 15)
+	cmtx.swag = 5
+	cmtx.enemies[0].intent_index = 2
+	cmtx.end_turn()
+	_check("tax no-ops when you're broke", cmtx.swag, 5)
+
+	# --- new finishers + flash persona (P4) ----------------------------------
+	print("--- finishers ---")
+	var cmsp := CombatManager.new()
+	var psp := Combatant.new()
+	psp.max_hp = 72
+	psp.hp = 72
+	cmsp.start_combat(psp, [Database.get_enemy(&"alley_cat"), Database.get_enemy(&"alley_cat")], [Database.get_card(&"encore_for_fans")], 0, true)
+	cmsp.swag = 10
+	cmsp.energy = 9
+	cmsp.hand = [Database.get_card(&"encore_for_fans")]
+	cmsp.play_card(cmsp.hand[0])              # 10 × 1.5 = 15, +2 threshold bonus = 17 to ALL
+	_check("spread finisher hits enemy0", cmsp.enemies[0].hp, 11)
+	_check("spread finisher hits enemy1", cmsp.enemies[1].hp, 11)
+	_check("spread finisher signature", cmsp.style_signature(), &"spread")
+
+	var cmdr := CombatManager.new()
+	var pdr := Combatant.new()
+	pdr.max_hp = 72
+	pdr.hp = 40
+	cmdr.start_combat(pdr, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"soak_it_in")], 0, true)
+	cmdr.swag = 10
+	cmdr.energy = 9
+	cmdr.hand = [Database.get_card(&"soak_it_in")]
+	cmdr.play_card(cmdr.hand[0])             # 10×2=20, +2 threshold = 22 dmg, heal 11
+	_check("drain finisher dealt 22", cmdr.enemies[0].hp, 6)
+	_check("drain finisher healed half", cmdr.player.hp, 51)
+
+	var cmfb := CombatManager.new()
+	var pfb := Combatant.new()
+	pfb.max_hp = 72
+	pfb.hp = 72
+	cmfb.start_combat(pfb, [Database.get_enemy(&"the_critic")], [Database.get_card(&"grand_finale")], 0, true, [&"finisher_boost"])
+	cmfb.swag = 10
+	cmfb.energy = 9
+	var vhp := cmfb.enemies[0].hp
+	cmfb.hand = [Database.get_card(&"grand_finale")]
+	cmfb.play_card(cmfb.hand[0])             # 10×3×1.5 flash boost = 45, +2 threshold = 47
+	_check("finisher_boost scales ×1.5", vhp - cmfb.enemies[0].hp, 47)
+
+	# --- The Critic: drifting taste (P2) -------------------------------------
+	print("--- critic: drifting taste ---")
+	var saved_cs2: int = GameState.critic_score
+	var saved_fat: Dictionary = GameState.critic_fatigue.duplicate()
+	GameState.critic_fatigue = {}
+	GameState.critic_score = 0
+	GameState.pending_critic = ""
+	GameState.record_show_rating({"rating": "S", "signature": &"swag_x3"})
+	_check("first serve is fresh", GameState.critic_last_freshness, 1.0)
+	var dn1 := {"type": "Combat", "enemies": [&"alley_cat"]}
+	GameState.apply_critic_mutation(dn1)
+	_check("fresh S → full VIP bonus", int(dn1.get("critic_bonus_gold", 0)), 20)
+	GameState.record_show_rating({"rating": "S", "signature": &"swag_x3"})
+	_check("repeating a style cools it", GameState.critic_last_freshness < 1.0, true)
+	GameState.record_show_rating({"rating": "S", "signature": &"swag_x3"})
+	GameState.record_show_rating({"rating": "S", "signature": &"swag_x3"})
+	_check("spammed style goes stale", GameState.critic_last_freshness, 0.0)
+	var dn2 := {"type": "Combat", "enemies": [&"alley_cat"]}
+	GameState.apply_critic_mutation(dn2)
+	_check("stale S → no VIP bonus", int(dn2.get("critic_bonus_gold", 0)), 0)
+	_check("stale verdict nags for novelty", GameState.critic_quip("S"), Loc.t("again? 🥱 serve me something NEW."))
+	GameState.record_show_rating({"rating": "S", "signature": &"spread"})
+	_check("a fresh new style pays out again", GameState.critic_last_freshness, 1.0)
+	GameState.critic_fatigue = saved_fat
+	GameState.critic_score = saved_cs2
+	GameState.pending_critic = ""
+	GameState.save_meta()
+
+	# --- The Feed: rotating Trend (P4) ---------------------------------------
+	print("--- the feed ---")
+	var saved_act2: int = GameState.act
+	var saved_drip: int = GameState.drip
+	GameState.act = 1
+	GameState._roll_trend()
+	_check("act 1 trend = it's giving", GameState.trend, &"its_giving")
+	_check("its-giving = +1 income", GameState.trend_drip_mod(), 1)
+	GameState.drip = 2
+	_check("trend re-prices income", GameState.effective_drip(), 3)
+	GameState.act = 2
+	GameState._roll_trend()
+	_check("act 2 trend = flop era", GameState.trend, &"flop_era")
+	GameState.drip = 0
+	_check("income never goes negative", GameState.effective_drip(), 0)
+	GameState.act = saved_act2
+	GameState.drip = saved_drip
+	GameState._roll_trend()
 
 	# --- localization --------------------------------------------------------
 	print("--- localization ---")
@@ -453,6 +591,10 @@ func _ready() -> void:
 	_check("de translates meter tier", Loc.t("PIERCE"), "DURCHBRUCH")
 	_check("de translates critic quip", Loc.t("S — serve. obsessed. devastating. 💅"), "S — serve. besessen. vernichtend. 💅")
 	_check("de translates heckler", Loc.t("Heckler"), "Zwischenrufer")
+	_check("de translates encore line", Loc.t("🎤 ENCORE ×%d — the crowd wants MORE"), "🎤 ENCORE ×%d — der Saal will MEHR")
+	_check("de translates trend", Loc.t("📉 TREND: flop era  (−1 Aura/turn)"), "📉 TREND: flop era  (−1 Aura/Zug)")
+	Loc.set_locale("es")
+	_check("es translates finisher desc", Loc.t("Finisher. Spend ALL Aura. Deal Aura × 1.5 to ALL enemies."), "Finisher. Gasta TODA la Aura. Inflige Aura × 1,5 a TODOS los enemigos.")
 	Loc.set_locale("en")
 	_check("en is passthrough", Loc.t("Deal 5."), "Deal 5.")
 	_check("en critic passthrough", Loc.t("The Critic"), "The Critic")

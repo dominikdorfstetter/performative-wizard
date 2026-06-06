@@ -88,10 +88,17 @@ highest-scoring style fingerprint the Critic rewards.
 
 ## The roadmap (leverage-ordered, gated)
 
+> **Status (2026-06-06): P0–P4 all shipped.** The Critic is live — tiered Aura meter +
+> finisher cash-out; live in-combat S/A/B/C grade; post-fight room mutation (VIP gold /
+> heckler); the **drifting-taste anti-solve** (P2); **Commit-to-the-Bit** encore + booed +
+> a `tax` enemy verb (P3); four finishers, flash/slow-burn outfit personas, and **The
+> Feed** per-act Trend (P4). EN/DE/ES throughout. **139 headless tests green.** See the
+> Build log at the bottom of this doc.
+
 Each phase has a **gate**: a "is it fun, do we continue?" check. Do not pass a gate on
 faith. Maintain the green test suite and the macOS build per slice (existing DoD).
 
-### P0 — Make the Aura meter the loudest thing on screen · **M**
+### P0 ✅ — Make the Aura meter the loudest thing on screen · **M**
 Before *any* USP: fix the named failure "burying the signature mechanic." The threshold
 meter and the finisher cash-out must be the juiciest element in fight one, Critic or not.
 - Redesign the swag bar into a **tiered meter with visibly LIT/UNLIT tiers at 6/12/18** —
@@ -103,7 +110,7 @@ meter and the finisher cash-out must be the juiciest element in fight one, Criti
   finisher turns all my buffs off"* **unprompted**. If they say "StS with a second
   energy," stop and re-juice before building the Critic.
 
-### P1 — The Critic MVP (the run frame + the live grade) · **L**
+### P1 ✅ — The Critic MVP (the run frame + the live grade) · **L**
 Prove the scored-rival loop: a **live** rating during combat, a **visible** map reaction
 after, computed primarily from Aura behavior.
 - `peak_swag` tracking in `gain_swag()`; clean-finisher-kill flag on `finisher_swag_x3`.
@@ -122,7 +129,7 @@ after, computed primarily from Aura behavior.
   better review? If the rating reads as a passive results screen they ignore, fix
   presentation before adding depth.
 
-### P2 — Anti-solve: the drifting taste (the make-or-break) · **L**
+### P2 ✅ — Anti-solve: the drifting taste (the make-or-break) · **L**
 This is **the whole ball game**, not a nice-to-have. Defend against "collapses to one
 dominant line" — specifically the degenerate *hoard-then-single-Grand-Finale-every-fight*
 that a naive scorer actively *teaches*.
@@ -136,7 +143,7 @@ that a naive scorer actively *teaches*.
   a 2-state alternating script? If solvable in ~1 hour by alternating two memorized lines,
   the fingerprint isn't rich enough.
 
-### P3 — In-combat tension layer (fold in *Commit to the Bit*) · **M**
+### P3 ✅ — In-combat tension layer (fold in *Commit to the Bit*) · **M**
 Make the turn-by-turn loop novel even when the Critic is off-screen.
 - `THRESHOLD_ENCORE` (~24) + encore counter in `_tick_powers()`.
 - Voluntary **Take a Bow** `finisher_encore` op (`swag × (2 + encore)`) — visibly distinct
@@ -149,7 +156,7 @@ Make the turn-by-turn loop novel even when the Critic is off-screen.
 - **GATE:** Does holding the encore zone vs bowing feel like a real gamble the Critic
   rewards — without bricking runs via Booed?
 
-### P4 — Longevity & depth siblings · **XL**
+### P4 ✅ — Longevity & depth siblings · **XL**
 - Add 3–4 finishers so "which cash-out style" is real fingerprint variety (also powers P2/P3).
 - Make more outfits genuinely **reshape the Aura curve** (high-drip slow-burn vs low-drip
   flash) so outfit choice = "which hoard-vs-spend identity am I touring."
@@ -200,3 +207,40 @@ Make the turn-by-turn loop novel even when the Critic is off-screen.
 The banked-Aura hoard-vs-spend decision, outfit-as-power, the Gen-Z voice, and the
 procedural art/audio pipeline. **Every change above must feed the Aura decision, not bypass
 it.**
+
+---
+
+## Build log
+
+**P0 + P1 — shipped 2026-06-06 (PR #9).** Tiered lit/unlit Aura meter (6/12/18) with live
+effect labels + finisher cash-out trailer shot (shake, full→empty drain, FINALE banner,
+crowd SFX). `CombatManager.compute_show_rating()` / `live_rating()` (peak-swag + clean-
+finisher), the live in-combat grade, `GameState.critic_score` + `apply_critic_mutation()`
+on `enter()` (S→bonus gold, C→heckler; room-only), the boss retitled **The Critic** with
+reward-screen verdict quips, EN/DE/ES.
+
+**P2 + P3 + P4 — shipped 2026-06-06 (branch `feat/critic-phases-2-4`).**
+- **P2 (drift).** A **style fingerprint** — `style_signature()` over which cash-out / spread
+  vs single / flex-while-hoarding / hoard / grind — and `GameState.critic_fatigue`: the
+  style you just served cools (its VIP bonus shrinks toward zero), styles you lay off
+  recover. Spamming hoard-then-one-finisher goes stale and stops paying out; the verdict
+  nags *"again? 🥱 serve me something NEW."* Variety is the meta.
+- **P3 (Commit to the Bit).** `THRESHOLD_ENCORE` (24) + an **Encore** counter that builds
+  each turn held in the spotlight; **Take a Bow** (`finisher_encore`, Aura×(2+Encore));
+  a soft-floored **Booed** when you fall out of the spotlight; a new **`tax`** enemy verb
+  (on Cursed Mirror + The Algorithm) that skims a hoard only while you sit on one.
+- **P4 (longevity).** Four finishers (`finisher_swag_x3` / `_encore` / `_spread` / `_drain`)
+  so *which cash-out* is real fingerprint variety; **flash** (`finisher_boost`, low drip)
+  vs **slow-burn** (high drip) outfit personas; **The Feed** — a per-act Trend that
+  re-prices Aura income (never below 0); expanded Critic mood lines.
+- Content added: 3 finisher cards, 2 outfits, 1 heckler enemy; `tax` on 2 enemies.
+  **139/139 headless tests** (`godot --headless scenes/test_combat.tscn`).
+
+### Still open / honest gaps
+- The fingerprint is solid but finite; a determined optimiser could still cycle a handful of
+  fresh styles. Watch playtests for a short memorised rotation and widen the signature if so.
+- **The Feed** is intentionally light (±1 income, telegraphed per act) — the market read was
+  that its trailer moment is borrowed from the finisher, so it's a depth/longevity beat, not
+  a headline. Revisit only if runs feel same-y once outfits diverge more.
+- Cold-streak balance (heckler frequency, `tax`/`drain` density) wants a real playtest pass;
+  penalties are deliberately room-only so an A/B run stays winnable.
