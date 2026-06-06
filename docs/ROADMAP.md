@@ -56,7 +56,13 @@ The missing roguelite hook.
 
 ---
 **Roadmap complete (2026-06-06).** Roster: 38 cards, 23 enemies + 2 bosses, 3 wizards,
-17 outfits, 14 artifacts. 73/73 tests. Future ideas live in `DESIGN_REVIEW.md`.
+17 outfits, 14 artifacts. **81/81 tests.** Future ideas live in `DESIGN_REVIEW.md` /
+`REVIEW_2.md`.
+
+**Post-roadmap (user requests, also shipped):** German + Spanish localization
+(`Loc` autoload + `loc_de.gd`/`loc_es.gd`, language picker in Options) covering UI,
+content, combat HUD, banter, and log lines; plus a Review #2 pass (`REVIEW_2.md`) that
+re-decoupled `CombatManager` and fixed a latent Options-screen parse bug.
 
 ## Definition of done per slice
 Each slice: data/code change → `godot --headless scenes/test_combat.tscn` green →

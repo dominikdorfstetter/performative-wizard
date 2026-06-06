@@ -5,21 +5,43 @@
 > just cast spells — you put on a *performance*, and the better dressed and more
 > committed the bit, the harder you hit.
 
-Status: **M4 complete + roguelite pass** — data-driven Godot 4 project; combat engine
-passing 34 headless tests. Full roguelite loop: class-select → dressing room → **branching
-map** (Combat / Elite / Event / Shop / Rest / Chest / Boss) → boss. Multi-enemy encounters
-with targeting + AoE; difficulty scales with depth. Gold economy, shops, 4 events, chests,
-11 run-scoped artefacts, 9 enemies + boss. Meta: persistent wardrobe + Clout currency.
-Procedural pixel-art enemy sprites; floating damage numbers. UI scales to fullscreen.
+Status: **Feature-complete roguelite** — data-driven Godot 4 project; combat engine
+passing **81 headless tests**. Full loop: main menu → class-select → dressing room →
+**3-act branching map** (Combat / Elite / Event / Shop / Rest / Chest / Boss) → ascension.
 Last updated: 2026-06-06.
 
+> **Note on this document.** The sections below were written as the original *vision/plan*
+> (POC framing, "two wizards", a first-pass roster, an M0–M4 milestone plan). The shipped
+> game has grown well past that — see the snapshot just below and the living docs in
+> [`docs/`](docs/) (`REVIEW_2.md`, `ROADMAP.md`, `ENEMY_REDESIGN.md`) for the current state.
+> The design *rationale* here (pillars, the Aura economy, the wardrobe system) is still the
+> source of truth for *why* things are the way they are.
+
+### Current snapshot (2026-06-06)
+- **Content:** 38 cards, 23 enemies + **2 bosses** (The Hater, The Algorithm), **3 wizards**
+  (Fire / Necro / Rizzard), 17 outfits, 14 artifacts.
+- **Progression:** wizards, cards, and relics unlock via lifetime **Clout**; **3 acts** with
+  per-act scaling; an **ascension** hard-mode ladder banked on each clear.
+- **Combat depth:** the banked-Aura economy (thresholds 6/12/18), crit/luck, **Power** cards
+  (persistent per-turn effects: ritual / aura-engine / hive-mind / barrier), and a full
+  status set — Roasted (burn), Cooked (vulnerable), Mid (weak), Jinxed, **Exposed** (frail),
+  **Toxic** (poison ramp), Rizz (strength), Goons (undead). Enemies multi-hit, heal, drain
+  Aura, **enrage**, and **summon adds** mid-fight.
+- **Presentation:** procedural pixel-art (`SpriteBank`) — varied enemy silhouettes, per-class
+  wizards, summoned-goon minions, 5 biome backdrops; a pixel battle scene with idle bob,
+  projectiles, hit sparks, crits, screen shake.
+- **Audio:** 5 synthesized drum-backed music tracks selected per encounter, + SFX.
+- **Localization:** English / Deutsch / Español (Options), keeping the international Gen-Z
+  slang and translating the rest (`Loc` autoload + `loc_de.gd` / `loc_es.gd`).
+
 ### Implemented beyond the original plan
-- **Multi-enemy encounters** with click-to-target and AoE cards.
-- **Run-scoped artefacts** (relics) — found in chests/elites/events/shops; reuse the
-  passive-hook system, plus economy effects (gold-per-combat).
-- **Procedural pixel-art** sprites (`SpriteBank`) generated at runtime per enemy.
-- **Clout** meta-currency earned per run (spendable meta shop is a TODO).
-- Difficulty scaling by map depth (hp & damage multipliers).
+- **Multi-enemy encounters** with click-to-target and AoE cards; **enemy summoners**.
+- **Run-scoped artefacts** (relics) + **meta unlocks** (wizards/cards/relics by Clout).
+- **Procedural pixel-art + procedural audio** generated at runtime.
+- **3-act runs + ascension** difficulty ladder (the original plan was "one act, POC").
+- **Power cards** and second-tier statuses (frail, poison, enrage) past the first-pass spec.
+- **Three wizards** (the doc's §7 still says "two"); the Rizzard adds a crit/Rizz playstyle.
+- **Localization** (EN/DE/ES).
 
 ---
 

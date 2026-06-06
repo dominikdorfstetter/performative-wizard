@@ -1,50 +1,62 @@
 # Performative Wizard
 
 A roguelike deckbuilder (à la *Slay the Spire*) where a wizard's power comes from
-**swag** — the outfit you wear and the style you build up mid-fight.
+**swag** — the outfit you wear and the style ("Aura") you bank up mid-fight. Gen-Z
+wizardry: you fight ordinary modern things turned hostile (an Angry Toaster, a
+Possessed Router, The Algorithm) and win by serving looks.
 
-📄 **Design:** see [`DESIGN.md`](DESIGN.md) for the full design document.
+📄 **Design:** [`DESIGN.md`](DESIGN.md) (vision) · **Reviews & roadmap:** [`docs/`](docs/)
 
 ## Status
 
-**M4 + roguelite pass.** Full run: class-select → dressing room → **branching map**
-(combat / elite / event / shop / rest / chest / boss) → boss. Multi-enemy encounters with
-click-to-target and AoE, difficulty scaling with depth, a gold economy, shops, events,
-chests, and run-scoped **artefacts** (relics). Meta progression: persistent wardrobe +
-**Clout** currency. Procedural **pixel-art** enemy sprites; floating damage numbers. The
-combat engine is covered by 40 headless tests. Content: 32 cards, 15 enemy types, 17
-outfits, 12 artefacts, three wizards — Vesper Vermillion (Hot Girl / fire), Morticia
-Graves (Goth Bestie / necro), and Chadwick Suave (the Rizzard / crit-on-Rizz). Combat is
-a pixel battle scene with idle animation, projectiles, hit sparks, crits, and screen
-shake. Systems: banked Aura economy, crit/luck, enemy aura-drain, run-scoped artefacts.
+**Feature-complete roguelite.** Full run: main menu → class-select → dressing room →
+**3-act branching map** (combat / elite / event / shop / rest / chest / boss) → ascension.
+
+- **Content:** 38 cards, 23 enemies + **2 bosses**, 3 wizards, 17 outfits, 14 artifacts.
+- **Wizards:** Vesper Vermillion (Hot Girl / fire), Morticia Graves (Goth Bestie / necro,
+  summon-and-sacrifice), Chadwick Suave (the Rizzard / crit-on-Rizz).
+- **Progression:** wizards, cards, and relics unlock via lifetime Clout; **3 acts** with
+  per-act scaling; an **ascension** (hard-mode) ladder banked on each clear.
+- **Combat systems:** the banked-Aura economy (hoard vs. spend at thresholds 6/12/18),
+  crit/luck, **Power** cards (persistent per-turn effects), and statuses — Roasted (burn),
+  Cooked (vulnerable), Mid (weak), Jinxed, Exposed (frail), Toxic (poison), Rizz
+  (strength), Goons (undead). Enemies multi-hit, heal, drain Aura, **enrage**, and
+  **summon adds**.
+- **Presentation:** pixel battle scene with idle animation, projectiles, hit sparks,
+  crits, screen shake, summoned-goon minions; 5 procedural biome backdrops; 5 synthesized
+  drum-backed music tracks (per-encounter) + SFX.
+- **Localization:** English / Deutsch / Español (switch in Options) — keeps the
+  international Gen-Z slang, translates the rest.
+- **Build:** universal macOS `.app` export. Combat engine covered by **81 headless tests**.
 
 ## Running
 
-1. Install **Godot 4.4** (GDScript): https://godotengine.org/download
+1. Install **Godot 4.4+** (developed on 4.6.3, GDScript): https://godotengine.org/download
 2. Open this folder in Godot (import `project.godot`).
-3. Press **Play** (F5). You should see one card rendered, and the console should print:
-   `[Database] loaded N cards, 1 outfits, 1 enemies`.
+3. Press **Play** (F5). The console should print
+   `[Database] loaded 38 cards, 17 outfits, 23 enemies, 3 wizards, 14 artifacts`.
+4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `81 passed`).
 
 ## Layout
 
 ```
-DESIGN.md            full design doc + milestone plan (M0–M4)
-project.godot        Godot config + autoloads (Database, GameState)
-scenes/main.tscn     M0 entry scene (renders one card)
+DESIGN.md            design vision (some sections predate the current build — see docs/)
+docs/                living review + roadmap (DESIGN_REVIEW, REVIEW_2, ROADMAP, ENEMY_REDESIGN)
+project.godot        Godot config + autoloads (Loc, Database, SpriteBank, Audio, GameState)
+scenes/              hub/ combat/ map/ nodes/ + tools/ (dev preview scenes) + test_combat
 scripts/
-  autoload/          Database (loads all data) + GameState (run + meta save)
-  combat/            Combatant, EffectResolver, CombatManager (M0 shell)
-  data/              CardData / OutfitData / EnemyData / StatusEffect resources
-  main.gd            M0 entry script
+  autoload/          Loc (i18n) · Database · SpriteBank (procedural art) · Audio (synth) · GameState
+  combat/            Combatant · EffectResolver · CombatManager (pure logic) · combat_ui
+  data/              CardData / OutfitData / EnemyData / WizardData / ArtifactData resources
+  map/ run/ ui/      map generation, encounters, and all screen scripts
+  tests/             combat_test.gd (81 checks)
 data/
-  cards/ outfits/ enemies/   authored .tres content
+  cards/ enemies/ outfits/ wizards/ artifacts/   authored .tres content
+builds/              exported macOS .app (gitignored)
 ```
 
 ## Roadmap
 
-- **M0** skeleton ✅ · **M1** playable Fire combat + Swag system ✅
-- **M2** Necro + class-select + card-reward gauntlet ✅
-- **M3** dressing room + meta-persistent wardrobe (cards/passives/drip) ✅
-- **M4** branching map + shops + rest + events + chests + boss ✅
-- **Roguelite pass** multi-enemy combat, artefacts, gold, Clout, pixel-art ✅
-- **Next** Clout meta-shop, more cards/enemies/events, audio, balance tuning
+All planned phases are shipped — see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the checklist
+and [`docs/REVIEW_2.md`](docs/REVIEW_2.md) for the latest design review. Future ideas
+(codex/bestiary screen, per-card stat upgrades, outfit-passive variety) are parked there.
