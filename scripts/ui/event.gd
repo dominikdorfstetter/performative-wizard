@@ -6,11 +6,13 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.randomize()
 	NodeUI.background(self)
-	match _rng.randi_range(0, 3):
+	match _rng.randi_range(0, 5):
 		0: _mannequin()
 		1: _merchant()
 		2: _fountain()
-		_: _wardrobe()
+		3: _wardrobe()
+		4: _therapist()
+		_: _bargain()
 
 # --- events --------------------------------------------------------------
 
@@ -44,10 +46,65 @@ func _merchant() -> void:
 func _merchant_buy() -> void:
 	GameState.gold -= 20
 	var w := Database.get_wizard(GameState.wizard_id)
-	var pool := w.reward_pool.duplicate()
+	var pool := GameState.unlocked_cards(w.reward_pool)
 	pool.shuffle()
+	if pool.is_empty():
+		pool = [&"ember"]
 	GameState.deck.append(pool[0])
 	_outcome("You bought a %s!" % Database.get_card(pool[0]).title)
+
+# --- build-shaping events (deterministic choices, not coin flips) ----------
+
+func _therapist() -> void:
+	NodeUI.title(self, "❓  The Therapist", Color(0.55, 0.82, 0.6))
+	NodeUI.sub(self, "\"let's unpack that deck, bestie.\" cut one card from your deck for good.")
+	var h := NodeUI.hbox(self, 250)
+	h.add_child(NodeUI.choice("Do the work", "remove a card from your deck.", Color(0.5, 0.85, 0.6), _therapist_menu, GameState.deck.size() > 1, "🛋"))
+	h.add_child(NodeUI.choice("I'm fine actually", "skip it, pocket 20 gold (copay refund).", NodeUI.GOLD, _therapist_skip, true, "💸"))
+
+func _therapist_skip() -> void:
+	GameState.gold += 20
+	_outcome("You ghost the session and pocket 20 gold. growth!")
+
+func _therapist_menu() -> void:
+	for c in get_children():
+		if not (c is ColorRect or c is TextureRect):
+			c.queue_free()
+	NodeUI.title(self, "release which card?", Color(0.5, 0.85, 0.6))
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.position = Vector2(80, 160)
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	add_child(grid)
+	for id in GameState.deck:
+		var card := Database.get_card(id)
+		if card != null:
+			var b := NodeUI.small_button(card.title, _therapist_remove.bind(id))
+			b.custom_minimum_size = Vector2(150, 46)
+			grid.add_child(b)
+
+func _therapist_remove(id: StringName) -> void:
+	GameState.deck.erase(id)
+	_outcome("Released %s. you feel lighter ✨" % Database.get_card(id).title)
+
+func _bargain() -> void:
+	NodeUI.title(self, "❓  Cursed Bargain", Color(0.82, 0.4, 0.5))
+	NodeUI.sub(self, "a velvet box hums. \"trade a little vitality for a little power?\"")
+	var h := NodeUI.hbox(self, 250)
+	h.add_child(NodeUI.choice("Pay in vitality", "lose 6 MAX HP, gain an artefact.", Color(0.85, 0.4, 0.5), _bargain_take, GameState.player_max_hp > 24, "💀"))
+	h.add_child(NodeUI.choice("Not worth it", "keep your health, walk away.", Color(0.5, 0.6, 0.7), _leave, true, "🚪"))
+
+func _bargain_take() -> void:
+	var aid := _unowned()
+	if aid != &"":
+		GameState.player_max_hp -= 6
+		GameState.player_hp = min(GameState.player_hp, GameState.player_max_hp)
+		GameState.add_artifact(aid)
+		_outcome("You trade 6 MAX HP for %s. worth it?" % Database.get_artifact(aid).title)
+	else:
+		GameState.gold += 40
+		_outcome("Nothing answers the call — you find 40 gold instead.")
 
 func _fountain() -> void:
 	NodeUI.title(self, "❓  Wishing Fountain (real?)", Color(0.4, 0.8, 0.95))
@@ -107,7 +164,7 @@ func _unowned() -> StringName:
 	var all := Database.all_artifact_ids().duplicate()
 	all.shuffle()
 	for aid in all:
-		if not GameState.has_artifact(aid):
+		if not GameState.has_artifact(aid) and GameState.artifact_unlocked(aid):
 			return aid
 	return &""
 
