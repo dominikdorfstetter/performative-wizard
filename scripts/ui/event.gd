@@ -15,11 +15,11 @@ func _ready() -> void:
 # --- events --------------------------------------------------------------
 
 func _mannequin() -> void:
-	NodeUI.title(self, "❓  A Suspicious Mannequin", Color(0.4, 0.7, 0.9))
-	NodeUI.sub(self, "It wears a fabulous jacket and seems... aware of you.")
-	var h := NodeUI.hbox(self, 280)
-	h.add_child(NodeUI.choice("Try on the jacket", "50%: gain an artefact.\n50%: it bites you for 8.", Color(0.85, 0.4, 0.95), _mannequin_try))
-	h.add_child(NodeUI.choice("Leave it be", "Walk away. Some risks aren't worth it.", Color(0.5, 0.6, 0.7), _leave))
+	NodeUI.title(self, "❓  Sus Mannequin", Color(0.4, 0.7, 0.9))
+	NodeUI.sub(self, "it's serving a look and lowkey staring back. unsettling fr.")
+	var h := NodeUI.hbox(self, 250)
+	h.add_child(NodeUI.choice("Try the fit on", "50%: cop an artefact.\n50%: it bites you for 8.", Color(0.85, 0.4, 0.95), _mannequin_try, true, "🧥"))
+	h.add_child(NodeUI.choice("Nope, weird", "dip. some risks ain't it.", Color(0.5, 0.6, 0.7), _leave, true, "🚪"))
 
 func _mannequin_try() -> void:
 	if _rng.randf() < 0.5:
@@ -35,11 +35,11 @@ func _mannequin_try() -> void:
 		_outcome("The mannequin BIT you! Lost 8 HP.")
 
 func _merchant() -> void:
-	NodeUI.title(self, "❓  Travelling Merchant", Color(0.95, 0.8, 0.3))
-	NodeUI.sub(self, "A hooded figure spreads out an array of mystery cards.")
-	var h := NodeUI.hbox(self, 280)
-	h.add_child(NodeUI.choice("Buy mystery card", "Pay 20 gold for a random card.", NodeUI.GOLD, _merchant_buy, GameState.gold >= 20))
-	h.add_child(NodeUI.choice("Move along", "Keep your coin.", Color(0.5, 0.6, 0.7), _leave))
+	NodeUI.title(self, "❓  Sketchy Plug", Color(0.95, 0.8, 0.3))
+	NodeUI.sub(self, "a hooded figure's got mystery cards. trust the process?")
+	var h := NodeUI.hbox(self, 250)
+	h.add_child(NodeUI.choice("Cop one (20g)", "pay 20 gold for a random card.", NodeUI.GOLD, _merchant_buy, GameState.gold >= 20, "🃏"))
+	h.add_child(NodeUI.choice("Keep it pushing", "hold onto your coin.", Color(0.5, 0.6, 0.7), _leave, true, "🚶"))
 
 func _merchant_buy() -> void:
 	GameState.gold -= 20
@@ -50,11 +50,11 @@ func _merchant_buy() -> void:
 	_outcome("You bought a %s!" % Database.get_card(pool[0]).title)
 
 func _fountain() -> void:
-	NodeUI.title(self, "❓  A Wishing Fountain", Color(0.4, 0.8, 0.95))
-	NodeUI.sub(self, "Suspiciously clean water glints with old coins.")
-	var h := NodeUI.hbox(self, 280)
-	h.add_child(NodeUI.choice("Drink deeply", "Heal 16 HP.", Color(0.4, 0.85, 0.55), _fountain_drink))
-	h.add_child(NodeUI.choice("Toss 15 gold", "Make a wish: gain an artefact.", Color(0.85, 0.4, 0.95), _fountain_toss, GameState.gold >= 15))
+	NodeUI.title(self, "❓  Wishing Fountain (real?)", Color(0.4, 0.8, 0.95))
+	NodeUI.sub(self, "suspiciously clean water, absolutely loaded with old coins.")
+	var h := NodeUI.hbox(self, 250)
+	h.add_child(NodeUI.choice("Take a sip", "heal 16 HP. hydration check.", Color(0.4, 0.85, 0.55), _fountain_drink, true, "💧"))
+	h.add_child(NodeUI.choice("Toss 15g, make a wish", "manifest an artefact.", Color(0.85, 0.4, 0.95), _fountain_toss, GameState.gold >= 15, "🪙"))
 
 func _fountain_drink() -> void:
 	GameState.player_hp = min(GameState.player_max_hp, GameState.player_hp + 16)
@@ -71,11 +71,11 @@ func _fountain_toss() -> void:
 		_outcome("No artefacts left — the water heals you 10 instead.")
 
 func _wardrobe() -> void:
-	NodeUI.title(self, "❓  An Abandoned Wardrobe", Color(0.9, 0.7, 0.4))
-	NodeUI.sub(self, "Dusty, ornate, and faintly humming. Rummage inside?")
-	var h := NodeUI.hbox(self, 280)
-	h.add_child(NodeUI.choice("Rummage", "60%: find 30 gold.\n40%: a moth swarm bites you for 7.", Color(0.9, 0.7, 0.4), _wardrobe_rummage))
-	h.add_child(NodeUI.choice("Close the doors", "Best not to disturb it.", Color(0.5, 0.6, 0.7), _leave))
+	NodeUI.title(self, "❓  Abandoned Wardrobe", Color(0.9, 0.7, 0.4))
+	NodeUI.sub(self, "dusty, ornate, lowkey humming. rummage or nah?")
+	var h := NodeUI.hbox(self, 250)
+	h.add_child(NodeUI.choice("Dig through it", "60%: find 30 gold.\n40%: moths bite you for 7.", Color(0.9, 0.7, 0.4), _wardrobe_rummage, true, "🔦"))
+	h.add_child(NodeUI.choice("Hard pass", "best not to disturb it.", Color(0.5, 0.6, 0.7), _leave, true, "🚪"))
 
 func _wardrobe_rummage() -> void:
 	if _rng.randf() < 0.6:

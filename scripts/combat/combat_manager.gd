@@ -13,9 +13,9 @@ const HAND_SIZE := 5
 const MAX_ENERGY := 3
 const LOG_KEEP := 6
 
-const THRESHOLD_DAMAGE := 5
-const THRESHOLD_DRAW := 10
-const THRESHOLD_PIERCE := 15
+const THRESHOLD_DAMAGE := 6
+const THRESHOLD_DRAW := 12
+const THRESHOLD_PIERCE := 18
 const SWAG_DAMAGE_BONUS := 2
 
 # Gen-Z display names for the internal status keywords.
@@ -134,7 +134,7 @@ func _start_player_turn() -> void:
 	energy = max_energy
 	var before := swag
 	gain_swag(drip)
-	if has_passive(&"strength_at_10_swag") and swag >= 10:
+	if has_passive(&"strength_at_10_swag") and swag >= THRESHOLD_DRAW:
 		player.add_status(&"strength", 1)
 		_say("Catwalk Heels: +1 Rizz")
 	if has_passive(&"heal_3_per_turn") and turn > 1:

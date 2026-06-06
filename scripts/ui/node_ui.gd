@@ -52,7 +52,7 @@ static func sub(parent: Control, text: String, y: float = 108.0) -> Label:
 	return l
 
 ## A large choice card-button with a title and description.
-static func choice(text: String, desc: String, accent: Color, cb: Callable, enabled := true) -> Button:
+static func choice(text: String, desc: String, accent: Color, cb: Callable, enabled := true, icon := "") -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(300, 178)
 	b.disabled = not enabled
@@ -63,9 +63,32 @@ static func choice(text: String, desc: String, accent: Color, cb: Callable, enab
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	if enabled and cb.is_valid():
 		b.pressed.connect(cb)
-	_label(b, text, Vector2(14, 14), Vector2(272, 30), 22, accent.lightened(0.35))
-	_label(b, desc, Vector2(16, 52), Vector2(268, 116), 16, Color(0.82, 0.82, 0.88))
+	var vb := VBoxContainer.new()
+	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vb.offset_left = 16
+	vb.offset_right = -16
+	vb.offset_top = 10
+	vb.offset_bottom = -10
+	vb.alignment = BoxContainer.ALIGNMENT_CENTER
+	vb.add_theme_constant_override("separation", 10)
+	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(vb)
+	if icon != "":
+		vb.add_child(_vlabel(icon, 42, Color.WHITE))
+	vb.add_child(_vlabel(text, 22, accent.lightened(0.35)))
+	vb.add_child(_vlabel(desc, 16, Color(0.82, 0.82, 0.88)))
 	return b
+
+static func _vlabel(text: String, fs: int, color: Color) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD
+	l.add_theme_font_size_override("font_size", fs)
+	l.add_theme_color_override("font_color", color)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return l
 
 static func menu_button(text: String, cb: Callable, accent := Color(0.5, 0.55, 0.7), w := 340.0) -> Button:
 	var b := Button.new()

@@ -7,12 +7,12 @@ func _ready() -> void:
 
 func _menu() -> void:
 	_clear()
-	NodeUI.title(self, "🔥  Rest Site", Color(0.4, 0.85, 0.55))
-	NodeUI.sub(self, "HP %d/%d    ·    Deck %d cards" % [GameState.player_hp, GameState.player_max_hp, GameState.deck.size()])
+	NodeUI.title(self, "🛋  Touch Grass", Color(0.4, 0.85, 0.55))
+	NodeUI.sub(self, "HP %d/%d    ·    deck: %d cards" % [GameState.player_hp, GameState.player_max_hp, GameState.deck.size()])
 	var heal := int(ceil(GameState.player_max_hp * 0.3))
-	var h := NodeUI.hbox(self, 270)
-	h.add_child(NodeUI.choice("Rest", "Heal %d HP." % heal, Color(0.4, 0.85, 0.55), _heal.bind(heal)))
-	h.add_child(NodeUI.choice("Tailor", "Remove a card from your deck.", Color(0.4, 0.7, 0.9), _remove_menu, GameState.deck.size() > 1))
+	var h := NodeUI.hbox(self, 250)
+	h.add_child(NodeUI.choice("Log Off", "Heal %d HP. self-care era." % heal, Color(0.4, 0.85, 0.55), _heal.bind(heal), true, "💤"))
+	h.add_child(NodeUI.choice("Get Snatched", "Yeet a card from your deck.", Color(0.4, 0.7, 0.9), _remove_menu, GameState.deck.size() > 1, "✂"))
 
 func _heal(n: int) -> void:
 	GameState.player_hp = min(GameState.player_max_hp, GameState.player_hp + n)
@@ -20,7 +20,7 @@ func _heal(n: int) -> void:
 
 func _remove_menu() -> void:
 	_clear()
-	NodeUI.title(self, "Remove which card?", Color(0.4, 0.7, 0.9))
+	NodeUI.title(self, "yeet which card?", Color(0.4, 0.7, 0.9))
 	_deck_grid(_do_remove)
 	var back := NodeUI.small_button("Cancel", _menu)
 	back.position = Vector2(486, 604)

@@ -21,8 +21,8 @@ func _ready() -> void:
 
 func _build() -> void:
 	_clear()
-	NodeUI.title(self, "🛒  Boutique on the Road", NodeUI.GOLD)
-	NodeUI.sub(self, "💰 %d gold" % GameState.gold)
+	NodeUI.title(self, "🛒  The Plug", NodeUI.GOLD)
+	NodeUI.sub(self, "💰 %d gold  ·  treat yourself" % GameState.gold)
 
 	# cards for sale
 	var row := HBoxContainer.new()
@@ -37,19 +37,19 @@ func _build() -> void:
 	if not _art_stock.is_empty():
 		var a := Database.get_artifact(_art_stock.id)
 		var afford: bool = not _art_stock.sold and GameState.gold >= _art_stock.price
-		var label := "SOLD" if _art_stock.sold else "%s %s\n%s\n\n💰 %d" % [a.emoji, a.title, a.description, _art_stock.price]
-		var ab := NodeUI.choice("Artefact", label, Color(0.85, 0.4, 0.95), _buy_artifact, afford)
-		ab.position = Vector2(800, 160)
+		var label := "SOLD" if _art_stock.sold else "%s\n\n💰 %d" % [a.description, _art_stock.price]
+		var ab := NodeUI.choice(a.title, label, Color(0.85, 0.4, 0.95), _buy_artifact, afford, a.emoji)
+		ab.position = Vector2(800, 150)
 		add_child(ab)
 
 	# services
-	var remove := NodeUI.small_button("Remove a card (%d g)" % REMOVE_COST, _remove_menu, Color(0.4, 0.7, 0.9))
+	var remove := NodeUI.small_button("yeet a card (%dg)" % REMOVE_COST, _remove_menu, Color(0.4, 0.7, 0.9))
 	remove.custom_minimum_size = Vector2(240, 44)
-	remove.position = Vector2(800, 330)
+	remove.position = Vector2(830, 350)
 	remove.disabled = GameState.gold < REMOVE_COST or GameState.deck.size() <= 1
 	add_child(remove)
 
-	var leave := NodeUI.small_button("Leave →", _to_map, Color(0.4, 0.85, 0.55))
+	var leave := NodeUI.small_button("dip ✌", _to_map, Color(0.4, 0.85, 0.55))
 	leave.position = Vector2(486, 600)
 	add_child(leave)
 

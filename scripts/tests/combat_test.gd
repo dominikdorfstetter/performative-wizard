@@ -45,8 +45,9 @@ func _ready() -> void:
 	_check("enemy burn decayed", cm.enemies[0].status(&"burn"), 2)
 	_check("player hp after cat attack", cm.player.hp, 66)
 
-	_check("t2 swag (>=5 threshold)", cm.swag, 5)
-	_check("swag damage bonus active", cm.swag_damage_bonus(), 2)
+	_check("t2 swag", cm.swag, 5)
+	cm.swag = 6                                      # cross the (new) +2 threshold
+	_check("swag damage bonus active (>=6)", cm.swag_damage_bonus(), 2)
 
 	cm.hand = [Database.get_card(&"ember")]
 	cm.play_card(cm.hand[0])

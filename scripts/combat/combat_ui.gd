@@ -202,7 +202,7 @@ func _punch(node: Control) -> void:
 func _banter() -> void:
 	if _popups == null:
 		return
-	for thr in [10, 15]:
+	for thr in [12, 18]:
 		if _prev_swag < thr and cm.swag >= thr:
 			_say_bubble(Vector2(214, 240), PLAYER_LINES[randi() % PLAYER_LINES.size()], C_SWAG)
 			break
@@ -428,7 +428,7 @@ func _intent_text_for(e: Combatant) -> String:
 
 func _threshold_text() -> String:
 	var d := func(n): return "●" if cm.swag >= n else "○"
-	return "%s ≥5 +2dmg    %s ≥10 +draw    %s ≥15 pierce" % [d.call(5), d.call(10), d.call(15)]
+	return "%s ≥6 +2dmg    %s ≥12 +draw    %s ≥18 pierce" % [d.call(6), d.call(12), d.call(18)]
 
 func _artifact_text() -> String:
 	if GameState.run_artifacts.is_empty():

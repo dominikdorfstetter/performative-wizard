@@ -75,6 +75,13 @@ const ICON := {
 
 # Outfit item icons, one silhouette per slot, drawn in 3 shades of the element colour.
 const ELEM_BASE := {"Fire": "e07a2c", "Necro": "5fa84a", "Neutral": "8a90a6"}
+# Per-artefact tint for their charm icon.
+const ARTI := {
+	"glitter_brooch": "ff5ab0", "phoenix_feather": "f2792a", "ember_pin": "e0531f",
+	"bone_charm": "e8e8ee", "energy_ring": "ffd24a", "swag_engine": "9a90d8",
+	"iron_corset": "9aa0a8", "vigor_idol": "e07a4c", "vampire_fang": "c0405a",
+	"prophets_lens": "5fb0d8", "coin_purse": "ffcf4a",
+}
 const ITEM := {
 	"Hat": [
 		["d", [[8, 3, 13]]],
@@ -222,9 +229,20 @@ func item_texture(id: StringName) -> Texture2D:
 	return tex
 
 func item_image(slot: String, element: String) -> Image:
+	return _item(slot, Color(ELEM_BASE.get(element, "8a90a6")))
+
+func artifact_texture(id: StringName) -> Texture2D:
+	var key := "arti_" + String(id)
+	if _cache.has(key):
+		return _cache[key]
+	var col: String = ARTI.get(String(id), "b08ad8")
+	var tex := ImageTexture.create_from_image(_item("Trinket", Color(col)))
+	_cache[key] = tex
+	return tex
+
+func _item(slot: String, base: Color) -> Image:
 	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
-	var base := Color(ELEM_BASE.get(element, "8a90a6"))
 	var shades := {"b": base, "l": base.lightened(0.24), "d": base.darkened(0.3)}
 	for layer in ITEM.get(slot, []):
 		var c: Color = shades[layer[0]]
