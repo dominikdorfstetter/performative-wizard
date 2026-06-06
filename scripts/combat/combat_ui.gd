@@ -35,6 +35,7 @@ var _enemy_widgets: Array = []
 var _enemy_sprites: Array = []
 var _prev_enemy_hp: Array = []
 var _prev_player_hp := -1
+var _prev_player_str := 0
 var _prev_swag := 0
 var _prev_state := -1
 var _player_home := Vector2.ZERO
@@ -233,6 +234,7 @@ func _sync_goons() -> void:
 	if want > have:
 		for i in range(have, want):
 			_add_goon(i)
+		Audio.play("summon", -5.0)
 	elif want < have:
 		var doomed: Array = _goon_sprites.slice(want, have)
 		_goon_sprites = _goon_sprites.slice(0, want)
@@ -646,8 +648,15 @@ func _emit_popups() -> void:
 		_hurt_flash()
 		_punch(_player_sprite)
 		Audio.play("hurt")
+	elif _prev_player_hp >= 0 and cm.player.hp > _prev_player_hp:
+		_float_text(Vector2(150, 250), "+%d" % (cm.player.hp - _prev_player_hp), Color(0.5, 0.95, 0.6))
+		Audio.play("heal", -4.0)
 	if max_dmg >= 14:
 		_shake(7.0)
+	var str_now: int = cm.player.status(&"strength")
+	if str_now > _prev_player_str:
+		Audio.play("buff", -7.0)
+	_prev_player_str = str_now
 	_prev_enemy_hp = []
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)

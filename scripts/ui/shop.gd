@@ -75,6 +75,7 @@ func _buy_card(i: int) -> void:
 	GameState.gold -= item.price
 	GameState.deck.append(item.id)
 	item.sold = true
+	Audio.play("coin", -4.0)
 	_build()
 
 func _buy_artifact() -> void:
@@ -83,6 +84,7 @@ func _buy_artifact() -> void:
 	GameState.gold -= _art_stock.price
 	GameState.add_artifact(_art_stock.id)
 	_art_stock.sold = true
+	Audio.play("coin", -4.0)
 	_build()
 
 func _remove_menu() -> void:

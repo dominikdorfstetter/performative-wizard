@@ -154,6 +154,11 @@ func _build_sfx() -> void:
 	_sfx["aura"] = _wav(_tone(1280, 0.12, "sine", 0.32))
 	_sfx["win"] = _wav(_cat([_tone(523, 0.1, "square", 0.4), _tone(659, 0.1, "square", 0.4), _tone(784, 0.1, "square", 0.4), _tone(1047, 0.2, "square", 0.4)]))
 	_sfx["lose"] = _wav(_cat([_tone(392, 0.13, "saw", 0.4), _tone(311, 0.13, "saw", 0.4), _tone(196, 0.26, "saw", 0.4)]))
+	_sfx["heal"] = _wav(_cat([_tone(660, 0.08, "sine", 0.3), _tone(880, 0.11, "sine", 0.32)]))
+	_sfx["summon"] = _wav(_mix(_glide(170, 430, 0.22, "square", 0.3), _tone(0, 0.12, "noise", 0.12)))
+	_sfx["coin"] = _wav(_cat([_tone(1175, 0.045, "square", 0.32), _tone(1568, 0.08, "square", 0.32)]))
+	_sfx["buff"] = _wav(_cat([_tone(523, 0.06, "square", 0.3), _tone(784, 0.06, "square", 0.3), _tone(1047, 0.1, "square", 0.32)]))
+	_sfx["debuff"] = _wav(_glide(470, 150, 0.2, "saw", 0.3))
 
 # Each track: a 4-chord arpeggio loop with bass and (optional) drums. Distinct
 # progression / tempo / waveform / arp give every context its own mood.

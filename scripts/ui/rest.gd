@@ -16,6 +16,7 @@ func _menu() -> void:
 
 func _heal(n: int) -> void:
 	GameState.player_hp = min(GameState.player_max_hp, GameState.player_hp + n)
+	Audio.play("heal", -3.0)
 	_to_map()
 
 func _remove_menu() -> void:

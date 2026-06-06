@@ -12,6 +12,7 @@ func _ready() -> void:
 	var node := GameState.current_node()
 	var gain := GameState.combat_reward(node) + GameState.gold_income()
 	GameState.gold += gain
+	Audio.play("coin", -4.0)
 	(%Subtitle as Label).text = "+%d gold  (now %d)    ·    HP %d/%d    ·    Deck %d" % [
 		gain, GameState.gold, GameState.player_hp, GameState.player_max_hp, GameState.deck.size()]
 
