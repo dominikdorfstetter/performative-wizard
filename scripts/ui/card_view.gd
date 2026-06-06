@@ -7,6 +7,21 @@ const C_GOLD := Color(1.0, 0.82, 0.29)
 const C_SWAG := Color(1.0, 0.31, 0.70)
 const C_DIM := Color(0.62, 0.60, 0.68)
 
+# Hand-picked icon per card for flavour (falls back to effect-based rules below).
+const ICON_BY_ID := {
+	&"quick_read": "eye", &"second_wind": "bolt", &"lucky_strike": "dice",
+	&"finger_guns": "lips", &"wink": "lips", &"smooth_talk": "lips", &"pickup_line": "lips",
+	&"rizz_up": "rizz", &"flex": "fist", &"composure": "shield", &"delulu": "note",
+	&"grand_finale": "crown", &"flourish": "wing", &"vogue": "wing", &"strike_a_pose": "star",
+	&"macabre_bow": "arrow", &"touch_grass": "drop", &"shroud": "wing", &"hot_streak": "bolt",
+	&"soul_siphon": "heart", &"drain": "heart",
+}
+
+const RARITY_COLOR := {
+	"Common": Color(0.60, 0.60, 0.66), "Uncommon": Color(0.40, 0.80, 0.50),
+	"Rare": Color(1.0, 0.82, 0.29),
+}
+
 static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	var accent := type_color(card.type)
 	var rare := card.rarity == "Rare"
@@ -24,17 +39,32 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	b.mouse_entered.connect(_hover.bind(b, true))
 	b.mouse_exited.connect(_hover.bind(b, false))
 
-	# coloured header band with the card's icon
+	var rc := rarity_color(card.rarity)
+
+	# coloured header band with the card's icon on an inset "art" tile
 	var header := Panel.new()
 	header.position = Vector2(3, 3)
 	header.size = Vector2(144, 48)
 	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var hs := StyleBoxFlat.new()
-	hs.bg_color = accent.darkened(0.5)
+	hs.bg_color = accent.darkened(0.52)
 	hs.corner_radius_top_left = 9
 	hs.corner_radius_top_right = 9
 	header.add_theme_stylebox_override("panel", hs)
 	b.add_child(header)
+
+	# art tile makes the motif pop off the band
+	var tile := Panel.new()
+	tile.position = Vector2(50, 5)
+	tile.size = Vector2(50, 42)
+	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var ts := StyleBoxFlat.new()
+	ts.bg_color = accent.darkened(0.34)
+	ts.set_corner_radius_all(8)
+	ts.set_border_width_all(1)
+	ts.border_color = accent.lightened(0.1)
+	tile.add_theme_stylebox_override("panel", ts)
+	b.add_child(tile)
 
 	var ic := SpriteBank.icon_texture(icon_for(card))
 	if ic != null:
@@ -43,13 +73,21 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tr.position = Vector2(57, 7)
-		tr.size = Vector2(40, 40)
+		tr.position = Vector2(53, 6)
+		tr.size = Vector2(44, 40)
 		b.add_child(tr)
 
+	# accent rule along the header's bottom edge (rarity-coloured)
+	var rule := ColorRect.new()
+	rule.color = rc
+	rule.position = Vector2(6, 49)
+	rule.size = Vector2(138, 2)
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(rule)
+
 	_add_label(b, str(card.cost), Vector2(7, 7), Vector2(34, 34), 20, Color.BLACK, _circle(C_GOLD))
-	if rare:
-		_add_label(b, "◆", Vector2(119, 8), Vector2(24, 22), 14, C_GOLD)
+	# rarity gem (every card), brighter diamond for higher rarities
+	_add_label(b, "◆", Vector2(119, 8), Vector2(24, 22), 14, rc)
 
 	# type tag ABOVE the title so 2-line titles never collide with it
 	_add_label(b, card.type.to_upper(), Vector2(6, 52), Vector2(138, 14), 10, C_DIM)
@@ -84,6 +122,8 @@ static func _hover(b: Button, on: bool) -> void:
 	tw.tween_property(b, "scale", Vector2(1.08, 1.08) if on else Vector2.ONE, 0.1)
 
 static func icon_for(card: CardData) -> StringName:
+	if card.id in ICON_BY_ID:
+		return StringName(ICON_BY_ID[card.id])
 	for e in card.effects:
 		var op := String(e.get("op", ""))
 		if op == "damage_all":
@@ -92,12 +132,18 @@ static func icon_for(card: CardData) -> StringName:
 			return &"bones"
 		if op == "sacrifice_strike" or op.begins_with("finisher"):
 			return &"skull"
-		if op == "heal" or op == "cleanse":
+		if op == "heal":
+			return &"heart"
+		if op == "cleanse":
 			return &"drop"
+		if op == "draw":
+			return &"eye"
 		if op == "damage_x_burn":
 			return &"fire"
 		if op == "apply_status" and StringName(e.get("status", &"")) == &"burn":
 			return &"fire"
+		if op == "self_status" and StringName(e.get("status", &"")) == &"strength":
+			return &"rizz"
 	if card.type == "Attack":
 		return &"sword"
 	if card.swag_gain > 0:
@@ -105,6 +151,9 @@ static func icon_for(card: CardData) -> StringName:
 	if card.type == "Skill":
 		return &"shield"
 	return &"swirl"
+
+static func rarity_color(r: String) -> Color:
+	return RARITY_COLOR.get(r, Color(0.6, 0.6, 0.66))
 
 static func type_color(t: String) -> Color:
 	match t:
