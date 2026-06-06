@@ -13,6 +13,7 @@ const C_INTENT := Color(1.0, 0.62, 0.36)
 const C_TARGET := Color(1.0, 0.82, 0.29)
 
 const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons"}
+const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid"}
 const PLAYER_LINES := ["aura farming fr 🧿", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy ✨", "locked TF in", "we mogging rn 😤"]
 const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you? 💀", "stay mad bestie"]
 
@@ -21,7 +22,7 @@ var _popups: Control
 var _player_sprite: TextureRect
 var _player_hp_bar: ProgressBar
 var _player_hp_text: Label
-var _player_status: Label
+var _player_status_box: HBoxContainer
 var _enemy_widgets: Array = []
 var _enemy_sprites: Array = []
 var _prev_enemy_hp: Array = []
@@ -146,12 +147,13 @@ func _build_player_widget(w: WizardData) -> void:
 	_player_hp_bar.add_child(_player_hp_text)
 	add_child(_player_hp_bar)
 
-	_player_status = Label.new()
-	_player_status.position = Vector2(20, 362)
-	_player_status.size = Vector2(280, 22)
-	_player_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_player_status.add_theme_font_size_override("font_size", 16)
-	add_child(_player_status)
+	_player_status_box = HBoxContainer.new()
+	_player_status_box.position = Vector2(20, 360)
+	_player_status_box.custom_minimum_size = Vector2(280, 24)
+	_player_status_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	_player_status_box.add_theme_constant_override("separation", 8)
+	_player_status_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_player_status_box)
 
 func _build_fit_strip() -> void:
 	var x := 16.0
@@ -182,7 +184,7 @@ func _refresh() -> void:
 	if _player_hp_bar != null:
 		_player_hp_bar.value = cm.player.hp
 		_player_hp_text.text = "%d / %d" % [cm.player.hp, cm.player.max_hp]
-		_player_status.text = _status_text(cm.player)
+		_fill_status(_player_status_box, cm.player)
 
 	_energy.text = "⚡ Energy  %d / %d" % [cm.energy, cm.max_energy]
 	_swag_value.text = "✦ AURA  %d   (+%d/turn)" % [cm.swag, cm.drip]
@@ -255,14 +257,14 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 	bar.add_child(hptext)
 	w.add_child(bar)
 
-	var st := Label.new()
-	st.text = _status_text(e)
-	st.position = Vector2(0, 70)
-	st.size = Vector2(150, 22)
-	st.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	st.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	st.add_theme_font_size_override("font_size", 13)
-	w.add_child(st)
+	var stbox := HBoxContainer.new()
+	stbox.position = Vector2(0, 70)
+	stbox.custom_minimum_size = Vector2(150, 22)
+	stbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	stbox.add_theme_constant_override("separation", 6)
+	stbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	w.add_child(stbox)
+	_fill_status(stbox, e)
 
 	# ground shadow + monster sprite
 	var shadow := Panel.new()
@@ -616,6 +618,38 @@ func _say_bubble(pos: Vector2, text: String, accent: Color) -> void:
 	tw.tween_callback(c.queue_free)
 
 # --- text helpers --------------------------------------------------------
+
+func _fill_status(box: HBoxContainer, c: Combatant) -> void:
+	if box == null:
+		return
+	for ch in box.get_children():
+		ch.queue_free()
+	if c.block > 0:
+		box.add_child(_status_chip(&"block", c.block))
+	for k in c.statuses:
+		if c.statuses[k] > 0:
+			box.add_child(_status_chip(k, c.statuses[k]))
+
+func _status_chip(id: StringName, value: int) -> Control:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 1)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var icon_name: String = STATUS_ICON.get(id, "")
+	if icon_name != "":
+		var tr := TextureRect.new()
+		tr.texture = SpriteBank.icon_texture(icon_name)
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.custom_minimum_size = Vector2(18, 18)
+		h.add_child(tr)
+	var lbl := Label.new()
+	lbl.text = str(value)
+	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_child(lbl)
+	return h
 
 func _status_text(c: Combatant) -> String:
 	var parts: Array[String] = []
