@@ -28,6 +28,7 @@ const DEF := {
 const WIZ := {
 	&"fire": {"hat": "b5302b", "robe": "e0883c", "skin": "eec8a4", "trim": "ffd24a"},
 	&"necro": {"hat": "2e2440", "robe": "57804a", "skin": "cdd2dd", "trim": "8fd96b"},
+	&"rizz": {"hat": "c23b8a", "robe": "e0a93c", "skin": "eec8a4", "trim": "ff8fd0", "shades": true},
 }
 
 # Small 16x16 motif icons for cards/keywords. Each is layers of horizontal spans
@@ -80,7 +81,7 @@ const ARTI := {
 	"glitter_brooch": "ff5ab0", "phoenix_feather": "f2792a", "ember_pin": "e0531f",
 	"bone_charm": "e8e8ee", "energy_ring": "ffd24a", "swag_engine": "9a90d8",
 	"iron_corset": "9aa0a8", "vigor_idol": "e07a4c", "vampire_fang": "c0405a",
-	"prophets_lens": "5fb0d8", "coin_purse": "ffcf4a",
+	"prophets_lens": "5fb0d8", "coin_purse": "ffcf4a", "loaded_dice": "ffd24a",
 }
 const ITEM := {
 	"Hat": [
@@ -343,8 +344,15 @@ func wizard_image(id: StringName, look := 0) -> Image:
 	for y in range(7, 10):
 		for x in range(5, 11):
 			img.set_pixel(x, y, skin)
-	img.set_pixel(6 + look, 8, Color("241a2e"))
-	img.set_pixel(9 + look, 8, Color("241a2e"))
+	if d.get("shades", false):
+		for x in range(5, 11):
+			img.set_pixel(x, 8, Color("181222"))
+		img.set_pixel(5, 7, Color("181222"))
+		img.set_pixel(10, 7, Color("181222"))
+		img.set_pixel(6, 8, Color("6a6a90"))
+	else:
+		img.set_pixel(6 + look, 8, Color("241a2e"))
+		img.set_pixel(9 + look, 8, Color("241a2e"))
 
 	# robe
 	for y in range(10, 16):

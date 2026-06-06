@@ -1,0 +1,12 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"loaded_dice"
+title = "Loaded Dice"
+emoji = "🎲"
+description = "Your attacks crit 15% of the time (x2 damage)."
+passive_id = &"crit_15"
+gold_per_combat = 0

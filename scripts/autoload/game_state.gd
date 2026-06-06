@@ -24,6 +24,7 @@ const BOUTIQUE: Array[Dictionary] = [
 	{"id": &"robe_of_excess", "cost": 70},
 	{"id": &"crowd_pleaser", "cost": 70},
 	{"id": &"influencer_ring", "cost": 90},
+	{"id": &"lucky_cap", "cost": 95},
 	{"id": &"catwalk_heels", "cost": 100},
 	{"id": &"showstopper_hat", "cost": 110},
 	{"id": &"phoenix_gown", "cost": 130},
@@ -156,6 +157,11 @@ func active_passives() -> Array[StringName]:
 		var a := Database.get_artifact(aid)
 		if a != null and a.passive_id != &"" and a.passive_id not in out:
 			out.append(a.passive_id)
+	var w := Database.get_wizard(wizard_id)
+	if w != null:
+		for ip in w.innate_passives:
+			if ip not in out:
+				out.append(ip)
 	return out
 
 func gold_income() -> int:

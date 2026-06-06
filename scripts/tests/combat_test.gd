@@ -145,5 +145,49 @@ func _ready() -> void:
 	cm6.start_combat(p6, [Database.get_enemy(&"alley_cat")], deck6, 0, true, [], 1.5, 2.0)
 	_check("hp scaled 1.5x", cm6.enemies[0].max_hp, 42)
 
+	# --- crit / Rizz / aura-drain / draw ------------------------------------
+	print("--- crit / rizz / drain / draw ---")
+	var cmc := CombatManager.new()
+	var pc := Combatant.new()
+	pc.max_hp = 72
+	pc.hp = 72
+	cmc.start_combat(pc, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true, [&"crit_100"])
+	_check("crit chance from passive", cmc.crit_chance, 1.0)
+	cmc.hand = [Database.get_card(&"ember")]
+	cmc.play_card(cmc.hand[0])
+	_check("ember crit deals double", cmc.enemies[0].hp, 16)
+	_check("last_crit flag set", cmc.last_crit, true)
+
+	var cmr := CombatManager.new()
+	var pr := Combatant.new()
+	pr.max_hp = 72
+	pr.hp = 72
+	cmr.start_combat(pr, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"finger_guns")], 0, true, [&"rizz_crit"])
+	cmr.player.add_status(&"strength", 20)
+	cmr.hand = [Database.get_card(&"finger_guns")]
+	cmr.play_card(cmr.hand[0])
+	_check("rizz crit (5+20)x2 kills cat", cmr.enemies[0].is_dead(), true)
+
+	var cmd2 := CombatManager.new()
+	var pd := Combatant.new()
+	pd.max_hp = 72
+	pd.hp = 72
+	cmd2.start_combat(pd, [Database.get_enemy(&"cursed_mirror")], [Database.get_card(&"ember")], 0, true)
+	cmd2.swag = 10
+	cmd2.end_turn()
+	_check("enemy drained 4 aura", cmd2.swag, 6)
+
+	var cmw := CombatManager.new()
+	var pw := Combatant.new()
+	pw.max_hp = 72
+	pw.hp = 72
+	var deckw: Array[CardData] = []
+	for n in 8:
+		deckw.append(Database.get_card(&"ember"))
+	cmw.start_combat(pw, [Database.get_enemy(&"alley_cat")], deckw, 0, true)
+	cmw.hand = [Database.get_card(&"quick_read")]
+	cmw.play_card(cmw.hand[0])
+	_check("quick read drew 2", cmw.hand.size(), 2)
+
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

@@ -341,6 +341,9 @@ func _play_card(card: CardData, btn: Button) -> void:
 	if is_attack:
 		_lunge(_player_sprite)
 		_shoot_projectile(Vector2(210, 248), _enemy_center(ti), SpriteBank.icon_texture(CardView.icon_for(card)))
+	if cm.last_crit:
+		_crit_popup(_enemy_center(ti))
+		_shake(10.0)
 	if cm.player.block > blk0:
 		_block_flash()
 
@@ -406,6 +409,21 @@ func _shoot_projectile(from: Vector2, to: Vector2, tex: Texture2D) -> void:
 	tw.tween_property(p, "position", to - Vector2(15, 15), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_property(p, "rotation", deg_to_rad(420), 0.16)
 	tw.chain().tween_callback(p.queue_free)
+
+func _crit_popup(pos: Vector2) -> void:
+	var l := Label.new()
+	l.text = "CRIT!"
+	l.add_theme_font_size_override("font_size", 44)
+	l.add_theme_color_override("font_color", C_GOLD)
+	l.position = pos - Vector2(70, 70)
+	l.pivot_offset = Vector2(70, 30)
+	l.scale = Vector2(0.4, 0.4)
+	_popups.add_child(l)
+	var tw := create_tween()
+	tw.tween_property(l, "scale", Vector2(1.25, 1.25), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(0.35)
+	tw.tween_property(l, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(l.queue_free)
 
 func _hit_spark(pos: Vector2) -> void:
 	var tr := TextureRect.new()
@@ -623,6 +641,8 @@ func _intent_text_for(e: Combatant) -> String:
 			return "%s %d" % [STATUS_NAME.get(sid, String(sid).capitalize()), int(it.get("amount", 0))]
 		"buff":
 			return "Rizz +%d" % int(it.get("amount", 0))
+		"drain_swag":
+			return "✦ −%d" % int(it.get("amount", 0))
 	return "?"
 
 func _threshold_text() -> String:

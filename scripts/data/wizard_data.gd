@@ -15,3 +15,4 @@ extends Resource
 @export var accent: Color = Color(1, 1, 1)
 @export var starter_deck: Array[StringName] = []
 @export var reward_pool: Array[StringName] = []
+@export var innate_passives: Array[StringName] = []   # always-on class passives (e.g. Rizz crit)

@@ -39,6 +39,8 @@ var discard_pile: Array[CardData] = []
 
 var passives: Array[StringName] = []
 var enemy_dmg_scale := 1.0
+var crit_chance := 0.0
+var last_crit := false
 var log_lines: Array[String] = []
 
 # --- setup ---------------------------------------------------------------
@@ -57,6 +59,7 @@ func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_va
 	enemy_dmg_scale = dmg_scale
 	drip = drip_value
 	passives = outfit_passives
+	_compute_crit()
 	draw_pile = deck.duplicate()
 	if not deterministic:
 		randomize()
@@ -75,6 +78,21 @@ func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_va
 
 func has_passive(id: StringName) -> bool:
 	return id in passives
+
+# Crit chance from passives named "crit_<percent>" (e.g. crit_15 = +15%).
+func _compute_crit() -> void:
+	crit_chance = 0.0
+	for p in passives:
+		var s := String(p)
+		if s.begins_with("crit_"):
+			crit_chance += float(s.substr(5)) / 100.0
+
+# Current crit chance including The Rizzard's dynamic Rizz scaling.
+func live_crit_chance() -> float:
+	var cc := crit_chance
+	if has_passive(&"rizz_crit"):
+		cc += player.status(&"strength") * 0.06
+	return cc
 
 func _apply_combat_start_passives() -> void:
 	if has_passive(&"energy_plus_1"):
@@ -172,6 +190,7 @@ func play_card(card: CardData) -> bool:
 	var atk_bonus := swag_damage_bonus() if is_attack else 0
 	if is_attack and first_spell and has_passive(&"first_spell_plus_3"):
 		atk_bonus += 3
+	last_crit = is_attack and randf() < live_crit_chance()
 	var ctx := {
 		"source": player,
 		"target": tgt,
@@ -180,6 +199,7 @@ func play_card(card: CardData) -> bool:
 		"passives": passives,
 		"bonus_damage": atk_bonus,
 		"pierce": pierced,
+		"crit": last_crit,
 	}
 
 	var hp0 := _total_enemy_hp()
@@ -198,6 +218,8 @@ func play_card(card: CardData) -> bool:
 		spells_this_turn += 1
 
 	var tburn1 := tgt.status(&"burn") if tgt != null else 0
+	if last_crit:
+		_say("✦ CRIT! that's lethal rizz ✦")
 	_log_card(card, hp0 - _total_enemy_hp(), player.block - pblk0, tburn1 - tburn0, swag - swag0, pierced)
 	if all_dead():
 		_finish(true)
@@ -211,7 +233,10 @@ func _resolve_finisher(e: Dictionary, ctx: Dictionary) -> void:
 	match String(e.get("op", "")):
 		"finisher_swag_x3":
 			var raw := swag * 3 + int(ctx.get("bonus_damage", 0))
-			tgt.take_damage(EffectResolver.compute_damage(raw, player, tgt), ctx.get("pierce", false))
+			var dmg := EffectResolver.compute_damage(raw, player, tgt)
+			if ctx.get("crit", false):
+				dmg *= 2
+			tgt.take_damage(dmg, ctx.get("pierce", false))
 			swag = 0
 		_:
 			push_warning("[CombatManager] unknown finisher: " + String(e.get("op", "")))
@@ -283,6 +308,10 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 			var s2 := StringName(intent.get("status", &""))
 			src.add_status(s2, amount)
 			_say("%s locked in: %s +%d" % [name, _disp(s2), amount])
+		"drain_swag":
+			var before := swag
+			swag = max(0, swag - amount)
+			_say("%s drained %d of your Aura 😤" % [name, before - swag])
 		_:
 			push_warning("[CombatManager] unknown intent: " + String(intent.get("op", "")))
 
@@ -318,6 +347,9 @@ func _decay(c: Combatant) -> void:
 				c.statuses.erase(s)
 			else:
 				c.statuses[s] = v - 1
+
+func draw_cards(n: int) -> void:
+	_draw(n)
 
 func _draw(n: int) -> void:
 	for i in n:

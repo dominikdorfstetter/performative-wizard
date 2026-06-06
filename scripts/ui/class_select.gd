@@ -13,7 +13,7 @@ func _ready() -> void:
 		_message.text = GameState.message
 		_message.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
 		GameState.message = ""
-	for id in [&"fire", &"necro"]:
+	for id in [&"fire", &"necro", &"rizz"]:
 		var w := Database.get_wizard(id)
 		if w != null:
 			_choices.add_child(_make_wizard_button(w))
@@ -28,7 +28,7 @@ func _ready() -> void:
 
 func _make_wizard_button(w: WizardData) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(330, 320)
+	b.custom_minimum_size = Vector2(300, 320)
 	b.add_theme_stylebox_override("normal", _box(Color(0.14, 0.12, 0.18), w.accent))
 	b.add_theme_stylebox_override("hover", _box(Color(0.20, 0.17, 0.26), w.accent.lightened(0.25)))
 	b.add_theme_stylebox_override("pressed", _box(Color(0.22, 0.19, 0.28), w.accent))
@@ -42,13 +42,13 @@ func _make_wizard_button(w: WizardData) -> Button:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tr.position = Vector2(115, 10)
+		tr.position = Vector2(100, 10)
 		tr.size = Vector2(100, 100)
 		b.add_child(tr)
-	_label(b, w.pname, Vector2(15, 114), Vector2(300, 32), 25, w.accent.lightened(0.35))
-	_label(b, "the " + w.title, Vector2(15, 148), Vector2(300, 24), 17, Color(0.7, 0.7, 0.78))
-	_label(b, "❤ %d HP" % w.max_hp, Vector2(15, 176), Vector2(300, 24), 16, Color(0.8, 0.8, 0.85))
-	_label(b, w.blurb, Vector2(24, 204), Vector2(282, 104), 16, Color(0.78, 0.78, 0.82))
+	_label(b, w.pname, Vector2(12, 114), Vector2(276, 32), 24, w.accent.lightened(0.35))
+	_label(b, "the " + w.title, Vector2(12, 148), Vector2(276, 24), 17, Color(0.7, 0.7, 0.78))
+	_label(b, "❤ %d HP" % w.max_hp, Vector2(12, 176), Vector2(276, 24), 16, Color(0.8, 0.8, 0.85))
+	_label(b, w.blurb, Vector2(18, 204), Vector2(264, 104), 16, Color(0.78, 0.78, 0.82))
 	return b
 
 func _choose(id: StringName) -> void:

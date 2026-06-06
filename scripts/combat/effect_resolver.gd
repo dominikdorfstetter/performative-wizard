@@ -24,24 +24,25 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 	var target: Combatant = ctx.get("target")
 	var bonus: int = int(ctx.get("bonus_damage", 0))
 	var pierce: bool = bool(ctx.get("pierce", false))
+	var crit: int = 2 if bool(ctx.get("crit", false)) else 1
 	match op:
 		"damage":
 			if target != null:
-				target.take_damage(compute_damage(amount + bonus, source, target), pierce)
+				target.take_damage(compute_damage(amount + bonus, source, target) * crit, pierce)
 		"damage_all":
 			for en in ctx.get("enemies", []):
 				if not en.is_dead():
-					en.take_damage(compute_damage(amount + bonus, source, en), pierce)
+					en.take_damage(compute_damage(amount + bonus, source, en) * crit, pierce)
 		"damage_x_burn":
 			if target != null:
 				var dmg := target.status(&"burn") * int(e.get("mult", 2))
-				target.take_damage(compute_damage(dmg + bonus, source, target), pierce)
+				target.take_damage(compute_damage(dmg + bonus, source, target) * crit, pierce)
 		"damage_if_status":
 			if target != null:
 				var dmg := amount
 				if target.status(StringName(e.get("status", &""))) > 0:
 					dmg += int(e.get("bonus", 0))
-				target.take_damage(compute_damage(dmg + bonus, source, target), pierce)
+				target.take_damage(compute_damage(dmg + bonus, source, target) * crit, pierce)
 		"block":
 			if source != null:
 				source.block += amount
@@ -68,6 +69,10 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 			var cm = ctx.get("combat")
 			if cm != null:
 				cm.gain_swag(amount)
+		"draw":
+			var cmd = ctx.get("combat")
+			if cmd != null:
+				cmd.draw_cards(amount)
 		"sacrifice_strike":
 			_sacrifice_strike(e, ctx, source, target, bonus, pierce)
 		_:
