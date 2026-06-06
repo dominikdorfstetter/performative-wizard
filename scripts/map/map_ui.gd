@@ -6,6 +6,10 @@ const TYPE_ICON := {
 	"Combat": "👊", "Elite": "💀", "Event": "❓", "Shop": "🛒",
 	"Rest": "🛋", "Chest": "📦", "Boss": "👑",
 }
+const TYPE_PIX := {
+	"Combat": "fist", "Elite": "skull", "Event": "swirl", "Shop": "coin",
+	"Rest": "zzz", "Chest": "chest", "Boss": "crown",
+}
 const TYPE_COLOR := {
 	"Combat": Color(0.86, 0.30, 0.27), "Elite": Color(0.85, 0.4, 0.95),
 	"Event": Color(0.4, 0.7, 0.9), "Shop": Color(0.95, 0.8, 0.3),
@@ -89,15 +93,27 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 	if avail:
 		b.pressed.connect(_enter.bind(r, c, type))
 
-	var icon := Label.new()
-	icon.text = TYPE_ICON.get(type, "?")
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-	icon.add_theme_font_size_override("font_size", 24)
-	icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.45)
-	b.add_child(icon)
+	var pix := SpriteBank.icon_texture(StringName(TYPE_PIX.get(type, "swirl")))
+	if pix != null:
+		var icon := TextureRect.new()
+		icon.texture = pix
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.position = Vector2(11, 10)
+		icon.size = Vector2(28, 28)
+		icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.4)
+		b.add_child(icon)
+	else:
+		var icon := Label.new()
+		icon.text = TYPE_ICON.get(type, "?")
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		icon.add_theme_font_size_override("font_size", 24)
+		icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.45)
+		b.add_child(icon)
 	# enemy-count badge so you can read the encounter before entering
 	if type == "Combat" or type == "Elite":
 		var cnt: int = node.get("enemies", []).size()
