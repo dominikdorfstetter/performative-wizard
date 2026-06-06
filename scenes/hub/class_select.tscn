@@ -9,53 +9,64 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_cs")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.08, 0.06, 0.11, 1)
+theme_override_constants/margin_left = 60
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 60
+theme_override_constants/margin_bottom = 60
 
-[node name="Title" type="Label" parent="."]
-layout_mode = 0
-offset_top = 56.0
-offset_right = 1152.0
-offset_bottom = 110.0
+[node name="Col" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="Margin/Col"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_font_sizes/font_size = 42
 text = "PERFORMATIVE WIZARD"
 horizontal_alignment = 1
 
-[node name="Subtitle" type="Label" parent="."]
-layout_mode = 0
-offset_top = 116.0
-offset_right = 1152.0
-offset_bottom = 146.0
-theme_override_font_sizes/font_size = 20
-text = "Choose your base robe set — all your power comes from the clothes."
-horizontal_alignment = 1
-
-[node name="Message" type="Label" parent="."]
-layout_mode = 0
-offset_top = 156.0
-offset_right = 1152.0
-offset_bottom = 186.0
+[node name="Subtitle" type="Label" parent="Margin/Col"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 
-[node name="Choices" type="HBoxContainer" parent="."]
-layout_mode = 0
-offset_left = 226.0
-offset_top = 214.0
-offset_right = 926.0
-offset_bottom = 560.0
-theme_override_constants/separation = 40
+[node name="Message" type="Label" parent="Margin/Col"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Margin/Col"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 10)
+
+[node name="Choices" type="HBoxContainer" parent="Margin/Col"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 44
 alignment = 1
 
+[node name="Boutique" type="Button" parent="Margin/Col"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 18
+text = "✦ Boutique  (spend Clout)"
+
 [node name="Hint" type="Label" parent="."]
-layout_mode = 0
-offset_top = 584.0
-offset_right = 1152.0
-offset_bottom = 610.0
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -30.0
 theme_override_font_sizes/font_size = 14
 text = "F11 toggles fullscreen"
 horizontal_alignment = 1

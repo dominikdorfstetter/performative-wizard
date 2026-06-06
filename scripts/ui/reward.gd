@@ -2,18 +2,17 @@ extends Control
 ## Post-victory reward. Awards gold (scaled by encounter difficulty), grants an artefact
 ## on Elite kills, and offers a card to add. Returns to the map.
 
-@onready var _options: HBoxContainer = $Options
+@onready var _options: HBoxContainer = %Options
 
 func _ready() -> void:
-	$Background.visible = false
 	NodeUI.gradient_bg(self)
-	$Title.add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
-	$Banner.text = ""
+	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
+	(%Banner as Label).text = ""
 
 	var node := GameState.current_node()
 	var gain := GameState.combat_reward(node) + GameState.gold_income()
 	GameState.gold += gain
-	$Subtitle.text = "+%d gold  (now %d)    ·    HP %d/%d    ·    Deck %d" % [
+	(%Subtitle as Label).text = "+%d gold  (now %d)    ·    HP %d/%d    ·    Deck %d" % [
 		gain, GameState.gold, GameState.player_hp, GameState.player_max_hp, GameState.deck.size()]
 
 	if node.get("type") == "Elite":
@@ -21,8 +20,8 @@ func _ready() -> void:
 		if aid != &"":
 			GameState.add_artifact(aid)
 			var a := Database.get_artifact(aid)
-			$Banner.text = "🎒  you looted:  %s %s — %s" % [a.emoji, a.title, a.description]
-			$Banner.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
+			(%Banner as Label).text = "🎒  you looted:  %s %s — %s" % [a.emoji, a.title, a.description]
+			(%Banner as Label).add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
 
 	var w := Database.get_wizard(GameState.wizard_id)
 	var pool := w.reward_pool.duplicate()
@@ -32,7 +31,7 @@ func _ready() -> void:
 		if card != null:
 			_options.add_child(_big_card(card, id))
 
-	$Skip.pressed.connect(_to_map)
+	(%Skip as Button).pressed.connect(_to_map)
 
 # scale cards up and box them so they spread across the screen instead of clustering
 func _big_card(card: CardData, id: StringName) -> Control:

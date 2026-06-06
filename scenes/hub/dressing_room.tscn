@@ -9,47 +9,57 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_dr")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.08, 0.06, 0.11, 1)
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 56
 
-[node name="Title" type="Label" parent="."]
-layout_mode = 0
-offset_top = 26.0
-offset_right = 1152.0
-offset_bottom = 72.0
+[node name="Page" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Margin/Page"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_font_sizes/font_size = 34
 text = "THE DRESSING ROOM"
 horizontal_alignment = 1
 
-[node name="WizardLabel" type="Label" parent="."]
-layout_mode = 0
-offset_top = 78.0
-offset_right = 1152.0
-offset_bottom = 106.0
+[node name="WizardLabel" type="Label" parent="Margin/Page"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Wizard"
 horizontal_alignment = 1
 
-[node name="Slots" type="VBoxContainer" parent="."]
-layout_mode = 0
-offset_left = 40.0
-offset_top = 120.0
-offset_right = 766.0
-offset_bottom = 558.0
-theme_override_constants/separation = 2
+[node name="Body" type="HBoxContainer" parent="Margin/Page"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
 
-[node name="SummaryPanel" type="Panel" parent="."]
-layout_mode = 0
-offset_left = 786.0
-offset_top = 124.0
-offset_right = 1112.0
-offset_bottom = 500.0
+[node name="Slots" type="VBoxContainer" parent="Margin/Page/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
 
-[node name="SummaryText" type="Label" parent="SummaryPanel"]
+[node name="RightCol" type="VBoxContainer" parent="Margin/Page/Body"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SummaryPanel" type="Panel" parent="Margin/Page/Body/RightCol"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SummaryText" type="Label" parent="Margin/Page/Body/RightCol/SummaryPanel"]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -60,23 +70,24 @@ offset_right = -16.0
 offset_bottom = -14.0
 theme_override_font_sizes/font_size = 16
 text = "Loadout"
-vertical_alignment = 0
 autowrap_mode = 2
 
-[node name="EnterButton" type="Button" parent="."]
-layout_mode = 0
-offset_left = 786.0
-offset_top = 512.0
-offset_right = 1112.0
-offset_bottom = 562.0
+[node name="EnterButton" type="Button" parent="Margin/Page/Body/RightCol"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "let's get it →"
 
 [node name="BackButton" type="Button" parent="."]
-layout_mode = 0
-offset_left = 40.0
-offset_top = 572.0
-offset_right = 200.0
-offset_bottom = 608.0
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = -44.0
+offset_right = 196.0
+offset_bottom = -8.0
 theme_override_font_sizes/font_size = 16
 text = "← Back"

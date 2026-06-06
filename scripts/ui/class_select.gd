@@ -2,14 +2,13 @@ extends Control
 ## Hub stand-in: pick your wizard (base robe set) to begin a run. M3 grows this into
 ## the dressing room with the full wardrobe.
 
-@onready var _message: Label = $Message
-@onready var _choices: HBoxContainer = $Choices
+@onready var _message: Label = %Message
+@onready var _choices: HBoxContainer = %Choices
 
 func _ready() -> void:
-	$Background.visible = false
 	NodeUI.gradient_bg(self)
-	$Title.add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
-	$Subtitle.text = "pick your fighter — all your power is in the fit.    ✦ Clout: %d" % GameState.clout
+	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
+	(%Subtitle as Label).text = "pick your fighter — all your power is in the fit.    ✦ Clout: %d" % GameState.clout
 	if GameState.message != "":
 		_message.text = GameState.message
 		_message.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
@@ -18,13 +17,7 @@ func _ready() -> void:
 		var w := Database.get_wizard(id)
 		if w != null:
 			_choices.add_child(_make_wizard_button(w))
-	var boutique := Button.new()
-	boutique.text = "✦ Boutique  (spend Clout)"
-	boutique.add_theme_font_size_override("font_size", 18)
-	boutique.position = Vector2(456, 548)
-	boutique.size = Vector2(240, 42)
-	boutique.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/boutique.tscn"))
-	add_child(boutique)
+	(%Boutique as Button).pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/boutique.tscn"))
 	var menu := Button.new()
 	menu.text = "← Menu"
 	menu.add_theme_font_size_override("font_size", 16)

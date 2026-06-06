@@ -9,19 +9,18 @@ const ELEM_COLOR := {
 	"Neutral": Color(0.6, 0.6, 0.66),
 }
 
-@onready var _slots: VBoxContainer = $Slots
-@onready var _summary: Label = $SummaryPanel/SummaryText
+@onready var _slots: VBoxContainer = %Slots
+@onready var _summary: Label = %SummaryText
 
 var _wizard: WizardData
 
 func _ready() -> void:
-	$Background.visible = false
 	NodeUI.gradient_bg(self)
-	$Title.add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
-	$SummaryPanel.add_theme_stylebox_override("panel", _panel(Color(0.13, 0.11, 0.17), Color(0.28, 0.24, 0.36)))
+	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
+	(%SummaryPanel as Panel).add_theme_stylebox_override("panel", _panel(Color(0.13, 0.11, 0.17), Color(0.28, 0.24, 0.36)))
 	_wizard = Database.get_wizard(GameState.wizard_id)
-	$WizardLabel.text = "%s, the %s    —    pick your drip" % [_wizard.pname, _wizard.title]
-	$WizardLabel.add_theme_color_override("font_color", _wizard.accent.lightened(0.3))
+	(%WizardLabel as Label).text = "%s, the %s    —    pick your drip" % [_wizard.pname, _wizard.title]
+	(%WizardLabel as Label).add_theme_color_override("font_color", _wizard.accent.lightened(0.3))
 	var tex := SpriteBank.wizard_texture(_wizard.id)
 	if tex != null:
 		var tr := TextureRect.new()
@@ -32,10 +31,11 @@ func _ready() -> void:
 		tr.position = Vector2(28, 14)
 		tr.size = Vector2(54, 54)
 		add_child(tr)
-	$EnterButton.pressed.connect(_enter)
-	$BackButton.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
-	$EnterButton.add_theme_stylebox_override("normal", _panel(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
-	$EnterButton.add_theme_stylebox_override("hover", _panel(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
+	var enter := %EnterButton as Button
+	enter.pressed.connect(_enter)
+	enter.add_theme_stylebox_override("normal", _panel(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
+	enter.add_theme_stylebox_override("hover", _panel(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
+	(%BackButton as Button).pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
 	_rebuild()
 
 func _rebuild() -> void:
