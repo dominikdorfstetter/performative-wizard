@@ -16,6 +16,16 @@ func _ready() -> void:
 	(%Subtitle as Label).text = "+%d gold  (now %d)    ·    HP %d/%d    ·    Deck %d" % [
 		gain, GameState.gold, GameState.player_hp, GameState.player_max_hp, GameState.deck.size()]
 
+	# The Critic's review of the fight you just had — and a heads-up on what her
+	# verdict did to the road ahead.
+	if GameState.critic_last_rating != "":
+		var quip := GameState.critic_quip(GameState.critic_last_rating)
+		if GameState.pending_critic == "S":
+			quip += "   " + Loc.t("→ a VIP room opens ahead. 👑")
+		elif GameState.pending_critic == "C":
+			quip += "   " + Loc.t("→ a heckler's waiting in your next fight. 🗣")
+		(%Subtitle as Label).text += "\n" + Loc.t("👀 THE CRITIC:  ") + quip
+
 	if node.get("type") == "Elite":
 		var aid := _random_unowned_artifact()
 		if aid != &"":

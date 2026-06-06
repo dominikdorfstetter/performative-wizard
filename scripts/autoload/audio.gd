@@ -159,6 +159,10 @@ func _build_sfx() -> void:
 	_sfx["coin"] = _wav(_cat([_tone(1175, 0.045, "square", 0.32), _tone(1568, 0.08, "square", 0.32)]))
 	_sfx["buff"] = _wav(_cat([_tone(523, 0.06, "square", 0.3), _tone(784, 0.06, "square", 0.3), _tone(1047, 0.1, "square", 0.32)]))
 	_sfx["debuff"] = _wav(_glide(470, 150, 0.2, "saw", 0.3))
+	# crowd pop for the finisher cash-out: a rising fanfare over a cheer/noise wash
+	_sfx["crowd"] = _wav(_mix(
+		_cat([_tone(523, 0.09, "square", 0.34), _tone(784, 0.09, "square", 0.36), _tone(1047, 0.18, "square", 0.4)]),
+		_glide(300, 900, 0.36, "noise", 0.22)))
 
 # Each track: a 4-chord arpeggio loop with bass and (optional) drums. Distinct
 # progression / tempo / waveform / arp give every context its own mood.
