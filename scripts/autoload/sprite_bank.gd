@@ -9,23 +9,23 @@ const OUTLINE := Color("14111c")
 const DEF := {
 	&"alley_cat": {"c": "e0883c", "shape": "round", "feat": "ears", "eye": "8fd96b", "angry": false},
 	&"disgruntled_pigeon": {"c": "8a93a6", "shape": "round", "feat": "beak", "eye": "ffffff", "angry": true},
-	&"garden_gnome": {"c": "d8b088", "shape": "round", "feat": "hat", "eye": "ffffff", "angry": false},
+	&"garden_gnome": {"c": "d8b088", "shape": "tall", "feat": "hat", "eye": "ffffff", "angry": false},
 	&"angry_toaster": {"c": "b9c0c9", "shape": "square", "feat": "slots", "eye": "ffffff", "angry": true},
-	&"haunted_umbrella": {"c": "8a5bd0", "shape": "round", "feat": "none", "eye": "d6ff66", "angry": true},
-	&"sock_puppet": {"c": "e6e6ee", "shape": "round", "feat": "mouth", "eye": "ffffff", "angry": false},
+	&"haunted_umbrella": {"c": "8a5bd0", "shape": "tall", "feat": "wings", "eye": "d6ff66", "angry": true},
+	&"sock_puppet": {"c": "e6e6ee", "shape": "tall", "feat": "mouth", "eye": "ffffff", "angry": false},
 	&"possessed_wardrobe": {"c": "8a5a3a", "shape": "square", "feat": "doors", "eye": "ff6b6b", "angry": true},
 	&"taxidermy_owl": {"c": "9a6b3f", "shape": "round", "feat": "tufts", "eye": "ffd24a", "angry": false},
 	&"the_critic": {"c": "b23b3b", "shape": "round", "feat": "horns", "eye": "ffd24a", "angry": true},
-	&"feral_houseplant": {"c": "4e9a48", "shape": "round", "feat": "tufts", "eye": "ffffff", "angry": true},
+	&"feral_houseplant": {"c": "4e9a48", "shape": "blob", "feat": "spikes", "eye": "ffffff", "angry": true},
 	&"cursed_mirror": {"c": "acc4d4", "shape": "square", "feat": "none", "eye": "c08ce0", "angry": false},
-	&"possessed_mannequin": {"c": "d8c2a2", "shape": "round", "feat": "none", "eye": "241a30", "angry": true},
-	&"rabid_roomba": {"c": "4a4f57", "shape": "round", "feat": "antenna", "eye": "ff5a5a", "angry": true},
-	&"goblin_gremlin": {"c": "6f9a3a", "shape": "round", "feat": "ears", "eye": "ffd24a", "angry": true},
-	&"gargoyle_cherub": {"c": "9aa0a8", "shape": "round", "feat": "horns", "eye": "ffffff", "angry": true},
+	&"possessed_mannequin": {"c": "d8c2a2", "shape": "tall", "feat": "none", "eye": "241a30", "angry": true, "cyclops": true},
+	&"rabid_roomba": {"c": "4a4f57", "shape": "blob", "feat": "antenna", "eye": "ff5a5a", "angry": true},
+	&"goblin_gremlin": {"c": "6f9a3a", "shape": "round", "feat": "fangs", "eye": "ffd24a", "angry": true},
+	&"gargoyle_cherub": {"c": "9aa0a8", "shape": "round", "feat": "wings", "eye": "ffffff", "angry": true},
 	&"black_cat": {"c": "2c2735", "shape": "round", "feat": "ears", "eye": "ffd24a", "angry": true},
-	&"shade_thrower": {"c": "5b4a78", "shape": "round", "feat": "none", "eye": "ff6b8f", "angry": true},
-	&"clout_goblin": {"c": "7aa83a", "shape": "round", "feat": "ears", "eye": "ffd24a", "angry": true},
-	&"ringlight_wraith": {"c": "d8d2e8", "shape": "round", "feat": "antenna", "eye": "ff5ab0", "angry": true},
+	&"shade_thrower": {"c": "5b4a78", "shape": "diamond", "feat": "crest", "eye": "ff6b8f", "angry": true},
+	&"clout_goblin": {"c": "7aa83a", "shape": "round", "feat": "fangs", "eye": "ffd24a", "angry": true},
+	&"ringlight_wraith": {"c": "d8d2e8", "shape": "diamond", "feat": "halo", "eye": "ff5ab0", "angry": true},
 	# Summoned minion ("goon") for the necromancer's Undead stacks.
 	&"goon": {"c": "7fa86a", "shape": "round", "feat": "tufts", "eye": "ff4d4d", "angry": true},
 }
@@ -207,14 +207,40 @@ func _render(d: Dictionary) -> Image:
 	return img
 
 func _inside(shape: String, x: int, y: int) -> bool:
-	if shape == "square":
-		return x >= 3 and x <= 12 and y >= 4 and y <= 14
+	match shape:
+		"square":
+			return x >= 3 and x <= 12 and y >= 4 and y <= 14
+		"tall":
+			return x >= 5 and x <= 10 and y >= 2 and y <= 14
+		"blob":
+			# squat, wide ellipse sitting low
+			var bx := (x - 7.5) / 6.4
+			var by := (y - 10.0) / 4.6
+			return bx * bx + by * by <= 1.0
+		"diamond":
+			return absi(x - 7) + absi(y - 9) <= 6
+		"drip":
+			# round head with a pointed drop bottom
+			if y <= 10:
+				var rx := (x - 7.5) / 5.4
+				var ry := (y - 8.0) / 4.6
+				return rx * rx + ry * ry <= 1.0
+			var halfw: int = max(0, 5 - (y - 10))
+			return x >= 7 - halfw and x <= 8 + halfw
 	var dx := (x - 7.5) / 5.6
 	var dy := (y - 9.0) / 5.6
 	return dx * dx + dy * dy <= 1.0
 
 func _eyes(img: Image, d: Dictionary) -> void:
 	var iris := Color(d.eye)
+	if d.get("cyclops", false):
+		_blot(img, 6, 7, 4, 3, Color("f4f4fa"))
+		_blot(img, 7, 8, 2, 1, iris)
+		img.set_pixel(7, 8, Color("1a1420"))
+		if d.angry:
+			img.set_pixel(6, 6, OUTLINE)
+			img.set_pixel(9, 6, OUTLINE)
+		return
 	for ex in [5, 9]:
 		# white-ish socket
 		_blot(img, ex, 7, 2, 2, Color("f4f4fa"))
@@ -270,6 +296,32 @@ func _feature(img: Image, d: Dictionary, body: Color) -> void:
 		"mouth":
 			for mx in range(5, 11):
 				img.set_pixel(mx, 12, Color("c2342f"))
+		"spikes":
+			for sx in [4, 6, 8, 10, 12]:
+				img.set_pixel(sx, 3, body.lightened(0.2))
+				img.set_pixel(sx, 2, body.darkened(0.1))
+		"crest":
+			for cy in range(0, 4):
+				img.set_pixel(8, cy, Color("ff5ab0"))
+				img.set_pixel(7, cy + 1, Color("ff8fd0"))
+		"fangs":
+			img.set_pixel(6, 11, Color("f4f4fa"))
+			img.set_pixel(6, 12, Color("f4f4fa"))
+			img.set_pixel(10, 11, Color("f4f4fa"))
+			img.set_pixel(10, 12, Color("f4f4fa"))
+		"wings":
+			for wy in range(7, 12):
+				img.set_pixel(2, wy, body.darkened(0.1))
+				img.set_pixel(13, wy, body.darkened(0.1))
+			img.set_pixel(1, 8, body.darkened(0.2))
+			img.set_pixel(14, 8, body.darkened(0.2))
+			img.set_pixel(1, 10, body.darkened(0.2))
+			img.set_pixel(14, 10, body.darkened(0.2))
+		"halo":
+			for hx in range(5, 11):
+				img.set_pixel(hx, 0, Color("ffe89a"))
+			img.set_pixel(4, 1, Color("ffe89a"))
+			img.set_pixel(11, 1, Color("ffe89a"))
 		_:
 			pass
 
