@@ -52,20 +52,23 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 		_add_label(b, "◆", Vector2(119, 8), Vector2(24, 22), 14, C_GOLD)
 
 	# type tag ABOVE the title so 2-line titles never collide with it
-	_add_label(b, card.type.to_upper(), Vector2(6, 54), Vector2(138, 14), 10, C_DIM)
-	_add_label(b, card.title, Vector2(5, 67), Vector2(140, 44), 15, accent.lightened(0.45))
+	_add_label(b, card.type.to_upper(), Vector2(6, 52), Vector2(138, 14), 10, C_DIM)
+	# shrink the title font for longer names so 2-line titles aren't cramped
+	var tlen := card.title.length()
+	var tsize := 16 if tlen <= 11 else (14 if tlen <= 17 else 12)
+	_add_label(b, card.title, Vector2(5, 66), Vector2(140, 48), tsize, accent.lightened(0.45))
 	var body := Panel.new()
-	body.position = Vector2(8, 113)
-	body.size = Vector2(134, 83)
+	body.position = Vector2(8, 116)
+	body.size = Vector2(134, 80)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var bs := StyleBoxFlat.new()
 	bs.bg_color = Color(0, 0, 0, 0.16)
 	bs.set_corner_radius_all(7)
 	body.add_theme_stylebox_override("panel", bs)
 	b.add_child(body)
-	_add_label(b, card.description, Vector2(9, 119), Vector2(132, 54), 13, Color(0.87, 0.87, 0.92))
+	_add_label(b, card.description, Vector2(9, 122), Vector2(132, 52), 13, Color(0.87, 0.87, 0.92))
 	if card.swag_gain > 0:
-		_add_label(b, "✦ Aura +%d" % card.swag_gain, Vector2(6, 178), Vector2(138, 18), 13, C_SWAG)
+		_add_label(b, "✦ Aura +%d" % card.swag_gain, Vector2(6, 178), Vector2(138, 16), 13, C_SWAG)
 	return b
 
 static func _hover(b: Button, on: bool) -> void:
