@@ -26,6 +26,10 @@ const DEF := {
 	&"shade_thrower": {"c": "5b4a78", "shape": "diamond", "feat": "crest", "eye": "ff6b8f", "angry": true},
 	&"clout_goblin": {"c": "7aa83a", "shape": "round", "feat": "fangs", "eye": "ffd24a", "angry": true},
 	&"ringlight_wraith": {"c": "d8d2e8", "shape": "diamond", "feat": "halo", "eye": "ff5ab0", "angry": true},
+	&"wifi_router": {"c": "2c3a4a", "shape": "square", "feat": "antenna", "eye": "5fd0e0", "angry": true},
+	&"vending_machine": {"c": "c0423c", "shape": "tall", "feat": "slots", "eye": "ffd24a", "angry": true},
+	&"gym_rat": {"c": "9a8a78", "shape": "round", "feat": "ears", "eye": "ff5a5a", "angry": true},
+	&"the_algorithm": {"c": "26243a", "shape": "square", "feat": "antenna", "eye": "ff5ab0", "angry": true},
 	# Summoned minion ("goon") for the necromancer's Undead stacks.
 	&"goon": {"c": "7fa86a", "shape": "round", "feat": "tufts", "eye": "ff4d4d", "angry": true},
 }
@@ -142,6 +146,10 @@ const ICON := {
 	],
 	"zzz": [
 		{"c": "8fe0b0", "s": [[4, 4, 7], [5, 6, 6], [6, 5, 5], [7, 4, 7], [8, 9, 12], [9, 11, 11], [10, 10, 10], [11, 9, 12]]},
+	],
+	"crack": [
+		{"c": "8fa0c0", "s": [[3, 7, 8], [4, 6, 11], [5, 5, 11], [6, 5, 10], [7, 4, 10], [8, 5, 10], [9, 5, 10], [10, 6, 9], [11, 7, 8]]},
+		{"c": "1a1420", "s": [[3, 8, 8], [4, 7, 8], [5, 8, 9], [6, 7, 7], [7, 8, 8], [8, 6, 7], [9, 8, 8], [10, 7, 7]]},
 	],
 }
 

@@ -45,7 +45,10 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 				target.take_damage(compute_damage(dmg + bonus, source, target) * crit, pierce)
 		"block":
 			if source != null:
-				source.block += amount
+				var blk := amount
+				if source.status(&"frail") > 0:   # exposed fit → softer guard
+					blk = int(blk * 0.75)
+				source.block += blk
 		"heal":
 			if source != null:
 				source.heal(amount)

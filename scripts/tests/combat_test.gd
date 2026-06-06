@@ -216,5 +216,38 @@ func _ready() -> void:
 	_check("cleanse cleared jinx", cmt.player.status(&"jinx"), 0)
 	_check("touch grass gave block", cmt.player.block, 5)
 
+	# --- new enemy verbs: multi-hit, heal, frail -----------------------------
+	print("--- enemy verbs ---")
+	# rabid_roomba opens with attack 4 x3 = 12
+	var cmm := CombatManager.new()
+	var pm := Combatant.new()
+	pm.max_hp = 72
+	pm.hp = 72
+	cmm.start_combat(pm, [Database.get_enemy(&"rabid_roomba")], [Database.get_card(&"ember")], 0, true)
+	cmm.end_turn()
+	_check("roomba flurry hit for 12", 72 - cmm.player.hp, 12)
+
+	# vending machine heal intent restores its own HP
+	var cmv := CombatManager.new()
+	var pv := Combatant.new()
+	pv.max_hp = 72
+	pv.hp = 72
+	cmv.start_combat(pv, [Database.get_enemy(&"vending_machine")], [Database.get_card(&"ember")], 0, true)
+	cmv.enemies[0].hp = 20
+	cmv.enemies[0].intent_index = 2   # heal 10
+	cmv.end_turn()
+	_check("vending machine healed", cmv.enemies[0].hp, 30)
+
+	# frail makes the player gain 25% less Block
+	var cmf := CombatManager.new()
+	var pf := Combatant.new()
+	pf.max_hp = 72
+	pf.hp = 72
+	cmf.start_combat(pf, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"bone_wall")], 0, true)
+	cmf.player.add_status(&"frail", 2)
+	cmf.hand = [Database.get_card(&"bone_wall")]   # Block 9
+	cmf.play_card(cmf.hand[0])
+	_check("frail softens block (9->6)", cmf.player.block, 6)
+
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

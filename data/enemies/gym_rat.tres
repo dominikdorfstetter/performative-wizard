@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"gym_rat"
+title = "Gym Rat"
+emoji = "🏋️"
+max_hp = 72
+intents = [{ "op": "buff", "status": "strength", "amount": 3 }, { "op": "attack", "amount": 5, "hits": 3 }, { "op": "attack", "amount": 14 }, { "op": "block", "amount": 8 }]

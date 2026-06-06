@@ -19,7 +19,7 @@ const THRESHOLD_PIERCE := 18
 const SWAG_DAMAGE_BONUS := 2
 
 # Gen-Z display names for the internal status keywords.
-const _DISP := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed"}
+const _DISP := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed"}
 
 var state: State = State.PLAYER_TURN
 var player: Combatant
@@ -291,13 +291,22 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 	var name := src.display_name
 	match String(intent.get("op", "")):
 		"attack":
+			var hits: int = max(1, int(intent.get("hits", 1)))
 			var dmg := int(round(amount * enemy_dmg_scale))
 			var hp0 := player.hp
-			player.take_damage(EffectResolver.compute_damage(dmg, src, player))
-			_say("%s threw hands for %d" % [name, hp0 - player.hp])
+			for _h in hits:
+				player.take_damage(EffectResolver.compute_damage(dmg, src, player))
+			if hits > 1:
+				_say("%s went off — %d×%d (%d)" % [name, dmg, hits, hp0 - player.hp])
+			else:
+				_say("%s threw hands for %d" % [name, hp0 - player.hp])
 			if not src.is_dead() and has_passive(&"thorns_3"):
 				src.take_damage(3)
 				_say("thorns! %s caught a fade for 3" % name)
+		"heal":
+			var before := src.hp
+			src.heal(amount)
+			_say("%s restocked %d HP" % [name, src.hp - before])
 		"block":
 			src.block += amount
 			_say("%s is being unbothered (Block %d)" % [name, amount])
@@ -341,7 +350,7 @@ func _tick_burn(c: Combatant) -> int:
 	return b
 
 func _decay(c: Combatant) -> void:
-	for s in [&"weak", &"vulnerable", &"jinx"]:
+	for s in [&"weak", &"vulnerable", &"jinx", &"frail"]:
 		var v := c.status(s)
 		if v > 0:
 			if v - 1 <= 0:

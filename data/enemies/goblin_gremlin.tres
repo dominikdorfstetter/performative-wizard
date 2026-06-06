@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"goblin_gremlin"
-title = "Goblin Gremlin"
-emoji = "👺"
+title = "Wi-Fi Gremlin"
+emoji = "📶"
 max_hp = 22
-intents = [{ "op": "attack", "amount": 6 }, { "op": "apply_status", "status": "weak", "amount": 1, "target": "player" }, { "op": "attack", "amount": 6 }]
+intents = [{ "op": "attack", "amount": 6 }, { "op": "apply_status", "status": "frail", "amount": 1, "target": "player" }, { "op": "attack", "amount": 4, "hits": 2 }]

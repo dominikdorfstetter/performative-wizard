@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"clout_goblin"
-title = "Clout Goblin"
-emoji = "👺"
+title = "Clout Chaser"
+emoji = "🤳"
 max_hp = 30
 intents = [{ "op": "drain_swag", "amount": 3 }, { "op": "buff", "status": "strength", "amount": 2 }, { "op": "attack", "amount": 9 }]

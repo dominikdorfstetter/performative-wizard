@@ -37,7 +37,7 @@ static func _make_node(r: int, c: int, rng: RandomNumberGenerator) -> Dictionary
 		"Elite":
 			node.enemies = Encounters.elite(rng)
 		"Boss":
-			node.enemies = Encounters.boss()
+			node.enemies = Encounters.boss(rng)
 	return node
 
 static func _pick_type(r: int, rng: RandomNumberGenerator) -> String:

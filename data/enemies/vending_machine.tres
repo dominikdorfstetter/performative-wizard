@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"vending_machine"
+title = "Vengeful Vending Machine"
+emoji = "🥤"
+max_hp = 52
+intents = [{ "op": "block", "amount": 8 }, { "op": "attack", "amount": 9 }, { "op": "heal", "amount": 10 }, { "op": "attack", "amount": 12 }]

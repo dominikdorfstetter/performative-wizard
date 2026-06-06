@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"gargoyle_cherub"
-title = "Gargoyle Cherub"
-emoji = "🗿"
+title = "Garden Gargoyle"
+emoji = "🏛️"
 max_hp = 78
-intents = [{ "op": "block", "amount": 10 }, { "op": "attack", "amount": 12 }, { "op": "buff", "status": "strength", "amount": 2 }, { "op": "attack", "amount": 12 }]
+intents = [{ "op": "block", "amount": 12 }, { "op": "attack", "amount": 12 }, { "op": "heal", "amount": 14 }, { "op": "attack", "amount": 12 }]

@@ -18,8 +18,8 @@ const GOON_X0 := 252.0
 const GOON_STEP := 40.0
 const GOON_SIZE := 50.0
 
-const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed"}
-const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl"}
+const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed"}
+const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl", &"frail": "crack"}
 const PLAYER_LINES := ["aura farming fr 🧿", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy ✨", "locked TF in", "we mogging rn 😤"]
 const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you? 💀", "stay mad bestie"]
 
@@ -804,9 +804,14 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 	match String(it.get("op", "")):
 		"attack":
 			var amount := int(round(int(it.get("amount", 0)) * cm.enemy_dmg_scale))
+			var hits: int = max(1, int(it.get("hits", 1)))
 			icon = "sword"
-			text = str(amount)
+			text = str(amount) if hits == 1 else "%d×%d" % [amount, hits]
 			col = Color(0.95, 0.5, 0.45)
+		"heal":
+			icon = "heart"
+			text = "+%d" % int(it.get("amount", 0))
+			col = Color(0.5, 0.95, 0.6)
 		"block":
 			icon = "shield"
 			text = str(int(it.get("amount", 0)))

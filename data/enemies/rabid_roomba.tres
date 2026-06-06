@@ -8,4 +8,4 @@ id = &"rabid_roomba"
 title = "Rabid Roomba"
 emoji = "🤖"
 max_hp = 26
-intents = [{ "op": "attack", "amount": 5 }, { "op": "attack", "amount": 5 }, { "op": "attack", "amount": 5 }]
+intents = [{ "op": "attack", "amount": 4, "hits": 3 }, { "op": "block", "amount": 6 }, { "op": "attack", "amount": 7 }]
