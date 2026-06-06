@@ -170,6 +170,7 @@ const ARTI := {
 	"bone_charm": "e8e8ee", "energy_ring": "ffd24a", "swag_engine": "9a90d8",
 	"iron_corset": "9aa0a8", "vigor_idol": "e07a4c", "vampire_fang": "c0405a",
 	"prophets_lens": "5fb0d8", "coin_purse": "ffcf4a", "loaded_dice": "ffd24a",
+	"venom_vial": "6ad06a", "spotlight": "ffe089",
 }
 const ITEM := {
 	"Hat": [

@@ -107,6 +107,9 @@ func _apply_combat_start_passives() -> void:
 		drip += 2
 	if has_passive(&"strength_start_2"):
 		player.add_status(&"strength", 2)
+	if has_passive(&"enemies_start_vulnerable"):
+		for e in enemies:
+			e.add_status(&"vulnerable", 1)
 
 # --- targeting -----------------------------------------------------------
 

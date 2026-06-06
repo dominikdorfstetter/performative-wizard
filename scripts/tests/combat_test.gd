@@ -275,6 +275,17 @@ func _ready() -> void:
 	cme.play_card(cme.hand[0])                 # deal 6 -> enrage +2
 	_check("gym rat enraged +2", cme.enemies[0].status(&"strength"), 2)
 
+	# artifact passives: poison_plus_1 + enemies_start_vulnerable
+	var cmap := CombatManager.new()
+	var pap := Combatant.new()
+	pap.max_hp = 72
+	pap.hp = 72
+	cmap.start_combat(pap, [Database.get_enemy(&"garden_gnome")], [Database.get_card(&"spread_rumors")], 0, true, [&"poison_plus_1", &"enemies_start_vulnerable"])
+	_check("Spotlight: enemy starts Cooked", cmap.enemies[0].status(&"vulnerable"), 1)
+	cmap.hand = [Database.get_card(&"spread_rumors")]
+	cmap.play_card(cmap.hand[0])
+	_check("Venom Vial: poison 4->5", cmap.enemies[0].status(&"poison"), 5)
+
 	# --- Power cards: persistent start-of-turn effects -----------------------
 	print("--- powers ---")
 	var cm_pow := CombatManager.new()

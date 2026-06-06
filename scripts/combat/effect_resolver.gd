@@ -58,6 +58,8 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 				var stacks := amount
 				if sid == &"burn" and _has(ctx, &"burn_plus_1"):
 					stacks += 1
+				if sid == &"poison" and _has(ctx, &"poison_plus_1"):
+					stacks += 1
 				target.add_status(sid, stacks)
 		"self_status":
 			if source != null:
