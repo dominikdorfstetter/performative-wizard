@@ -13,6 +13,8 @@ func _ready() -> void:
 		_message.text = GameState.message
 		_message.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
 		GameState.message = ""
+	if GameState.ascension > 0:
+		_build_ascension_picker()
 	for id in [&"fire", &"necro", &"rizz"]:
 		var w := Database.get_wizard(id)
 		if w != null:
@@ -60,6 +62,47 @@ func _make_wizard_button(w: WizardData) -> Button:
 		_label(b, "❤ %d HP" % w.max_hp, Vector2(12, 176), Vector2(276, 24), 16, Color(0.8, 0.8, 0.85))
 		_label(b, w.blurb, Vector2(18, 204), Vector2(264, 104), 16, Color(0.78, 0.78, 0.82))
 	return b
+
+var _asc_label: Label
+
+func _build_ascension_picker() -> void:
+	GameState.asc_level = clampi(GameState.asc_level, 0, GameState.ascension)
+	var col := %Subtitle.get_parent()
+	var box := HBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 12)
+	var dec := Button.new()
+	dec.text = "◀"
+	dec.add_theme_font_size_override("font_size", 20)
+	dec.pressed.connect(_asc_change.bind(-1))
+	box.add_child(dec)
+	_asc_label = Label.new()
+	_asc_label.add_theme_font_size_override("font_size", 18)
+	_asc_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.35))
+	_asc_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_asc_label.custom_minimum_size = Vector2(420, 0)
+	_asc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(_asc_label)
+	var inc := Button.new()
+	inc.text = "▶"
+	inc.add_theme_font_size_override("font_size", 20)
+	inc.pressed.connect(_asc_change.bind(1))
+	box.add_child(inc)
+	col.add_child(box)
+	col.move_child(box, 3)   # after Title/Subtitle/Message
+	_update_asc_label()
+
+func _asc_change(delta: int) -> void:
+	GameState.asc_level = clampi(GameState.asc_level + delta, 0, GameState.ascension)
+	_update_asc_label()
+
+func _update_asc_label() -> void:
+	var n := GameState.asc_level
+	if n == 0:
+		_asc_label.text = "🔥 Ascension 0 / %d  —  base difficulty" % GameState.ascension
+	else:
+		_asc_label.text = "🔥 Ascension %d / %d  —  +%d%% enemy HP, +%d%% dmg, +%d Clout" % [
+			n, GameState.ascension, n * 8, n * 6, n * 10]
 
 func _choose(id: StringName) -> void:
 	GameState.start_run(id)
