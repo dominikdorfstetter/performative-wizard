@@ -12,6 +12,12 @@ const C_GOLD := Color(1.0, 0.82, 0.29)
 const C_INTENT := Color(1.0, 0.62, 0.36)
 const C_TARGET := Color(1.0, 0.82, 0.29)
 
+# Summoned-goon row, between the wizard and the enemies, standing on the floor.
+const GOON_Y := 250.0
+const GOON_X0 := 252.0
+const GOON_STEP := 40.0
+const GOON_SIZE := 50.0
+
 const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed"}
 const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl"}
 const PLAYER_LINES := ["aura farming fr 🧿", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy ✨", "locked TF in", "we mogging rn 😤"]
@@ -23,6 +29,8 @@ var _player_sprite: TextureRect
 var _player_hp_bar: ProgressBar
 var _player_hp_text: Label
 var _player_status_box: HBoxContainer
+var _goons_box: Control
+var _goon_sprites: Array = []
 var _enemy_widgets: Array = []
 var _enemy_sprites: Array = []
 var _prev_enemy_hp: Array = []
@@ -133,6 +141,10 @@ func _build_player_widget(w: WizardData) -> void:
 	add_child(_player_sprite)
 	_idle_bob(_player_sprite, 0.0, 7.0)
 
+	_goons_box = Control.new()
+	_goons_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_goons_box)
+
 	_player_hp_bar = ProgressBar.new()
 	_player_hp_bar.show_percentage = false
 	_player_hp_bar.max_value = cm.player.max_hp
@@ -172,6 +184,63 @@ func _build_fit_strip() -> void:
 		add_child(tr)
 		x += 27
 
+# --- summoned goons ------------------------------------------------------
+
+func _goon_pos(i: int) -> Vector2:
+	return Vector2(GOON_X0 + i * GOON_STEP, GOON_Y)
+
+## Keep the visible goon row in sync with the player's Undead stacks: spawn new
+## ones with a pop, and send consumed ones (e.g. Sacrifice Strike) lunging at the
+## enemies before they poof — so a summon reads as bodies on the field.
+func _sync_goons() -> void:
+	if _goons_box == null:
+		return
+	var want: int = cm.player.status(&"undead")
+	var have: int = _goon_sprites.size()
+	if want > have:
+		for i in range(have, want):
+			_add_goon(i)
+	elif want < have:
+		var doomed: Array = _goon_sprites.slice(want, have)
+		_goon_sprites = _goon_sprites.slice(0, want)
+		for g in doomed:
+			_consume_goon(g)
+
+func _add_goon(i: int) -> void:
+	var g := TextureRect.new()
+	g.texture = SpriteBank.texture(&"goon")
+	g.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	g.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	g.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	g.size = Vector2(GOON_SIZE, GOON_SIZE)
+	g.position = _goon_pos(i)
+	g.pivot_offset = Vector2(GOON_SIZE * 0.5, GOON_SIZE * 0.5)
+	g.scale = Vector2(0.1, 0.1)
+	_goons_box.add_child(g)
+	_goon_sprites.append(g)
+	# stagger each goon's idle bob so a freshly-raised squad isn't in lockstep
+	var delay := (i % 3) * 0.3
+	var tw := create_tween()
+	tw.tween_property(g, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func():
+		if is_instance_valid(g):
+			_idle_bob(g, delay, 4.0))
+
+func _consume_goon(g) -> void:
+	if not is_instance_valid(g):
+		return
+	var home_x: float = g.position.x
+	var tw := create_tween()
+	tw.tween_property(g, "position:x", home_x + 72, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(g, "modulate", Color(1.9, 1.9, 1.9), 0.14)
+	tw.tween_callback(func():
+		if not is_instance_valid(g):
+			return
+		var c: Vector2 = g.position + Vector2(GOON_SIZE * 0.5, GOON_SIZE * 0.5)
+		_death_poof(c)
+		_hit_spark(c)
+		g.queue_free())
+
 # --- rendering -----------------------------------------------------------
 
 func _refresh() -> void:
@@ -199,6 +268,7 @@ func _refresh() -> void:
 
 	_rebuild_enemies(over)
 	_rebuild_hand(over)
+	_sync_goons()
 	_emit_popups()
 	_banter()
 
@@ -454,6 +524,8 @@ func _hit_spark(pos: Vector2) -> void:
 	tw.chain().tween_callback(tr.queue_free)
 
 func _death_poof(pos: Vector2) -> void:
+	if not is_inside_tree():
+		return
 	var p := CPUParticles2D.new()
 	p.position = pos
 	p.one_shot = true

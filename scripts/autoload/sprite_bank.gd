@@ -26,6 +26,8 @@ const DEF := {
 	&"shade_thrower": {"c": "5b4a78", "shape": "round", "feat": "none", "eye": "ff6b8f", "angry": true},
 	&"clout_goblin": {"c": "7aa83a", "shape": "round", "feat": "ears", "eye": "ffd24a", "angry": true},
 	&"ringlight_wraith": {"c": "d8d2e8", "shape": "round", "feat": "antenna", "eye": "ff5ab0", "angry": true},
+	# Summoned minion ("goon") for the necromancer's Undead stacks.
+	&"goon": {"c": "7fa86a", "shape": "round", "feat": "tufts", "eye": "ff4d4d", "angry": true},
 }
 
 # wizards: humanoid sprites (pointy hat, face, robe)
