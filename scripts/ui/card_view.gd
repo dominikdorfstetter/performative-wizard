@@ -86,9 +86,13 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(rule)
 
-	_add_label(b, str(card.cost), Vector2(7, 7), Vector2(34, 34), 20, Color.BLACK, _circle(C_GOLD))
+	var upgraded := GameState.is_upgraded(card.id)
+	var eff_cost := GameState.card_cost(card)
+	_add_label(b, str(eff_cost), Vector2(7, 7), Vector2(34, 34), 20, Color.BLACK, _circle(C_SWAG if upgraded else C_GOLD))
 	# rarity gem (every card), brighter diamond for higher rarities
 	_add_label(b, "◆", Vector2(119, 8), Vector2(24, 22), 14, rc)
+	if upgraded:
+		_add_label(b, "✦+", Vector2(96, 6), Vector2(22, 18), 13, C_SWAG)
 
 	# type tag ABOVE the title so 2-line titles never collide with it
 	_add_label(b, card.type.to_upper(), Vector2(6, 52), Vector2(138, 14), 10, C_DIM)

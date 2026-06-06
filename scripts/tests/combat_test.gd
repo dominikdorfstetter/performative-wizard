@@ -338,6 +338,12 @@ func _ready() -> void:
 	_check("combust still locked (90>50)", GameState.card_unlocked(&"combust"), false)
 	var fpool: Array = GameState.unlocked_cards([&"ember", &"inferno", &"combust"])
 	_check("pool filters to unlocked", fpool.size(), 2)
+	# card upgrade: Glow Up makes a card cost 1 less
+	var infc := Database.get_card(&"inferno")
+	_check("base cost 2", GameState.card_cost(infc), 2)
+	GameState.upgrade_card(&"inferno")
+	_check("glow'd up cost 1", GameState.card_cost(infc), 1)
+	GameState.card_upgrades = {}
 	GameState.act = 1
 	_check("boss 1 -> act 2", GameState.advance_act(), true)
 	_check("act is 2", GameState.act, 2)

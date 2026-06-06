@@ -53,6 +53,7 @@ var gold := 0
 var act := 1                                 # 1..MAX_ACTS
 var asc_level := 0                           # ascension modifiers active this run
 var run_artifacts: Array[StringName] = []    # artefact ids held this run
+var card_upgrades: Dictionary = {}           # card_id -> true (Glow'd Up: costs 1 less)
 var map: Array = []
 var pos_row := -1                            # -1 = haven't entered row 0 yet
 var pos_col := -1
@@ -142,6 +143,7 @@ func start_run(wid: StringName) -> void:
 	gold = 30
 	act = 1
 	run_artifacts = []
+	card_upgrades = {}
 	_validate_equip_for(w.element)
 	map = MapGenerator.generate(randi())
 	pos_row = -1
@@ -158,6 +160,18 @@ func locked_wizard_hint(id: StringName) -> String:
 	if w == null or wizard_unlocked(id):
 		return ""
 	return "🔒  Unlock at ✦ %d  (you have ✦ %d earned)" % [w.unlock_clout, clout_earned]
+
+func is_upgraded(id: StringName) -> bool:
+	return card_upgrades.get(id, false)
+
+func upgrade_card(id: StringName) -> void:
+	card_upgrades[id] = true
+
+## Effective energy cost after Glow-Up (costs 1 less, min 0).
+func card_cost(card: CardData) -> int:
+	if card == null:
+		return 0
+	return max(0, card.cost - (1 if is_upgraded(card.id) else 0))
 
 func card_unlocked(id: StringName) -> bool:
 	var c := Database.get_card(id)

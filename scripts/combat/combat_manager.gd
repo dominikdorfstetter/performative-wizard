@@ -193,12 +193,12 @@ func _tick_powers() -> void:
 		player.block += barrier
 
 func can_play(card: CardData) -> bool:
-	return state == State.PLAYER_TURN and energy >= card.cost
+	return state == State.PLAYER_TURN and energy >= GameState.card_cost(card)
 
 func play_card(card: CardData) -> bool:
 	if not can_play(card) or card not in hand:
 		return false
-	energy -= card.cost
+	energy -= GameState.card_cost(card)
 	hand.erase(card)
 	discard_pile.append(card)
 
