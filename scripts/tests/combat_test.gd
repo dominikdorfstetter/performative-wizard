@@ -358,9 +358,11 @@ func _ready() -> void:
 	_check("de translates card text", Loc.t("Deal 5."), "5 Schaden.")
 	_check("de keeps slang status", Loc.t("Cooked"), "Cooked")
 	_check("de passthrough untranslated", Loc.t("xyz not real"), "xyz not real")
+	_check("de translates log line", Loc.t("%s threw hands for %d"), "%s hat zugeschlagen für %d")
 	Loc.set_locale("es")
 	_check("es translates card text", Loc.t("Deal 5."), "Inflige 5.")
 	_check("es translates enemy", Loc.t("Angry Toaster"), "Tostadora Furiosa")
+	_check("es translates banter", Loc.t("you fell off"), "te caíste")
 	Loc.set_locale("en")
 	_check("en is passthrough", Loc.t("Deal 5."), "Deal 5.")
 

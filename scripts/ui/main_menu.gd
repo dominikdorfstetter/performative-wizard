@@ -178,7 +178,7 @@ func _setup_talk() -> void:
 
 func _next_talk() -> void:
 	var fire_turn := _talk_i % 2 == 0
-	var line: String = BANTER[_talk_i % BANTER.size()]
+	var line: String = Loc.t(BANTER[_talk_i % BANTER.size()])
 	_talk_i += 1
 	if fire_turn:
 		_hide_bubble(_necro_bubble)

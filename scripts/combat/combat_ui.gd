@@ -529,7 +529,7 @@ func _shoot_projectile(from: Vector2, to: Vector2, tex: Texture2D) -> void:
 
 func _crit_popup(pos: Vector2) -> void:
 	var l := Label.new()
-	l.text = "CRIT!"
+	l.text = Loc.t("CRIT!")
 	l.add_theme_font_size_override("font_size", 44)
 	l.add_theme_color_override("font_color", C_GOLD)
 	l.position = pos - Vector2(70, 70)
@@ -676,7 +676,7 @@ func _banter() -> void:
 		return
 	for thr in [12, 18]:
 		if _prev_swag < thr and cm.swag >= thr:
-			_say_bubble(Vector2(150, 130), PLAYER_LINES[randi() % PLAYER_LINES.size()], C_SWAG)
+			_say_bubble(Vector2(150, 130), Loc.t(PLAYER_LINES[randi() % PLAYER_LINES.size()]), C_SWAG)
 			Audio.play("aura", -5.0)
 			break
 	_prev_swag = cm.swag
@@ -684,7 +684,7 @@ func _banter() -> void:
 		var alive := cm.living_enemies()
 		if not alive.is_empty():
 			var idx: int = cm.enemies.find(alive[randi() % alive.size()])
-			_say_bubble(_enemy_center(idx) + Vector2(0, -120), ENEMY_TAUNTS[randi() % ENEMY_TAUNTS.size()], C_INTENT)
+			_say_bubble(_enemy_center(idx) + Vector2(0, -120), Loc.t(ENEMY_TAUNTS[randi() % ENEMY_TAUNTS.size()]), C_INTENT)
 	_prev_state = cm.state
 
 func _hurt_flash() -> void:

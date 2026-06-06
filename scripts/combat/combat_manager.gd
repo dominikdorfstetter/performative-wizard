@@ -71,8 +71,8 @@ func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_va
 	_apply_combat_start_passives()
 	var names := []
 	for e in enemies:
-		names.append(e.display_name)
-	_say("the opps pulled up: %s" % ", ".join(names))
+		names.append(Loc.t(e.display_name))
+	_say(Loc.t("the opps pulled up: %s") % ", ".join(names))
 	_start_player_turn()
 
 func has_passive(id: StringName) -> bool:
@@ -154,7 +154,7 @@ func _start_player_turn() -> void:
 	turn += 1
 	var pois := _tick_poison(player)
 	if pois > 0:
-		_say("you're Toxic'd for %d" % pois)
+		_say(Loc.t("you're Toxic'd for %d") % pois)
 		if player.is_dead():
 			_finish(false)
 			return
@@ -172,9 +172,9 @@ func _start_player_turn() -> void:
 		draw_n += 1
 	_draw(draw_n)
 	if drip > 0:
-		_say("— Your turn %d  (+%d aura → %d) —" % [turn, swag - before, swag])
+		_say(Loc.t("— Your turn %d  (+%d aura → %d) —") % [turn, swag - before, swag])
 	else:
-		_say("— Your turn %d —" % turn)
+		_say(Loc.t("— Your turn %d —") % turn)
 	_emit()
 
 ## Persistent Power-card effects, applied at the start of each player turn.
@@ -189,7 +189,7 @@ func _tick_powers() -> void:
 	var hive := player.status(&"hive_mind")          # raise goons each turn
 	if hive > 0:
 		player.add_status(&"undead", hive)
-		_say("the squad multiplies: +%d Goon" % hive)
+		_say(Loc.t("the squad multiplies: +%d Goon") % hive)
 	var barrier := player.status(&"barrier")         # standing Block each turn
 	if barrier > 0:
 		player.block += barrier
@@ -253,14 +253,14 @@ func play_card(card: CardData) -> bool:
 		var en := enemies[i]
 		if not en.is_dead() and en.data != null and en.data.enrage > 0 and en.hp < int(enemy_hp_before[i]):
 			en.add_status(&"strength", en.data.enrage)
-			_say("%s is ENRAGED → +%d Rizz" % [en.display_name, en.data.enrage])
+			_say(Loc.t("%s is ENRAGED → +%d Rizz") % [Loc.t(en.display_name), en.data.enrage])
 
 	if is_attack:
 		spells_this_turn += 1
 
 	var tburn1 := tgt.status(&"burn") if tgt != null else 0
 	if last_crit:
-		_say("✦ CRIT! that's lethal rizz ✦")
+		_say(Loc.t("✦ CRIT! that's lethal rizz ✦"))
 	_log_card(card, hp0 - _total_enemy_hp(), player.block - pblk0, tburn1 - tburn0, swag - swag0, pierced)
 	if all_dead():
 		_finish(true)
@@ -292,7 +292,7 @@ func end_turn() -> void:
 		var tgt := target()
 		if tgt != null:
 			tgt.take_damage(undead * 2)
-			_say("your %d Goons threw hands for %d" % [undead, undead * 2])
+			_say(Loc.t("your %d Goons threw hands for %d") % [undead, undead * 2])
 			if all_dead():
 				_finish(true)
 				return
@@ -309,10 +309,10 @@ func _enemy_turn() -> void:
 			continue
 		var burned := _tick_burn(e)
 		if burned > 0:
-			_say("%s got Roasted for %d" % [e.display_name, burned])
+			_say(Loc.t("%s got Roasted for %d") % [Loc.t(e.display_name), burned])
 		var poisoned := _tick_poison(e)
 		if poisoned > 0:
-			_say("%s is Toxic'd for %d" % [e.display_name, poisoned])
+			_say(Loc.t("%s is Toxic'd for %d") % [Loc.t(e.display_name), poisoned])
 		if e.is_dead():
 			continue
 		if e.data == null or e.data.intents.is_empty():
@@ -340,7 +340,7 @@ func _make_enemy(edata: EnemyData) -> Combatant:
 
 func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 	var amount := int(intent.get("amount", 0))
-	var name := src.display_name
+	var name := Loc.t(src.display_name)
 	match String(intent.get("op", "")):
 		"attack":
 			var hits: int = max(1, int(intent.get("hits", 1)))
@@ -349,37 +349,37 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 			for _h in hits:
 				player.take_damage(EffectResolver.compute_damage(dmg, src, player))
 			if hits > 1:
-				_say("%s went off — %d×%d (%d)" % [name, dmg, hits, hp0 - player.hp])
+				_say(Loc.t("%s went off — %d×%d (%d)") % [name, dmg, hits, hp0 - player.hp])
 			else:
-				_say("%s threw hands for %d" % [name, hp0 - player.hp])
+				_say(Loc.t("%s threw hands for %d") % [name, hp0 - player.hp])
 			if not src.is_dead() and has_passive(&"thorns_3"):
 				src.take_damage(3)
-				_say("thorns! %s caught a fade for 3" % name)
+				_say(Loc.t("thorns! %s caught a fade for 3") % name)
 		"heal":
 			var before := src.hp
 			src.heal(amount)
-			_say("%s restocked %d HP" % [name, src.hp - before])
+			_say(Loc.t("%s restocked %d HP") % [name, src.hp - before])
 		"block":
 			src.block += amount
-			_say("%s is being unbothered (Block %d)" % [name, amount])
+			_say(Loc.t("%s is being unbothered (Block %d)") % [name, amount])
 		"apply_status":
 			var s := StringName(intent.get("status", &""))
 			player.add_status(s, amount)
-			_say("%s hit you with %s %d" % [name, _disp(s), amount])
+			_say(Loc.t("%s hit you with %s %d") % [name, _disp(s), amount])
 		"buff":
 			var s2 := StringName(intent.get("status", &""))
 			src.add_status(s2, amount)
-			_say("%s locked in: %s +%d" % [name, _disp(s2), amount])
+			_say(Loc.t("%s locked in: %s +%d") % [name, _disp(s2), amount])
 		"drain_swag":
 			var before := swag
 			swag = max(0, swag - amount)
-			_say("%s drained %d of your Aura 😤" % [name, before - swag])
+			_say(Loc.t("%s drained %d of your Aura 😤") % [name, before - swag])
 		"summon_ally":
 			var sid := StringName(intent.get("enemy", &""))
 			var ed := Database.get_enemy(sid)
 			if ed != null and living_enemies().size() < 4:
 				enemies.append(_make_enemy(ed))
-				_say("%s called backup: %s pulled up!" % [name, ed.title])
+				_say(Loc.t("%s called backup: %s pulled up!") % [name, Loc.t(ed.title)])
 		_:
 			push_warning("[CombatManager] unknown intent: " + String(intent.get("op", "")))
 
@@ -444,25 +444,25 @@ func _draw(n: int) -> void:
 func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: int, pierced: bool) -> void:
 	var parts: Array[String] = []
 	if dmg > 0:
-		parts.append("%d dmg" % dmg)
+		parts.append(Loc.t("%d dmg") % dmg)
 	if blk > 0:
-		parts.append("%d block" % blk)
+		parts.append(Loc.t("%d block") % blk)
 	if burn_added > 0:
-		parts.append("%d burn" % burn_added)
+		parts.append(Loc.t("%d burn") % burn_added)
 	if swag_delta > 0:
 		parts.append("+%d aura" % swag_delta)
 	elif swag_delta < 0:
-		parts.append("spent %d aura" % -swag_delta)
+		parts.append(Loc.t("spent %d aura") % -swag_delta)
 	if pierced and dmg > 0:
-		parts.append("pierced!")
-	var msg := "You play %s" % card.title
+		parts.append(Loc.t("pierced!"))
+	var msg := Loc.t("You play %s") % Loc.t(card.title)
 	if not parts.is_empty():
 		msg += "  →  " + ", ".join(parts)
 	_say(msg)
 
 func _finish(victory: bool) -> void:
 	state = State.WIN if victory else State.LOSE
-	_say("✦ BIG W ✦" if victory else "you took an L 💀")
+	_say(Loc.t("✦ BIG W ✦") if victory else Loc.t("you took an L 💀"))
 	# Emit the final UI update first (death poofs/popups run while the combat scene
 	# is still in the tree), THEN signal the end — which may change scene and detach us.
 	_emit()
