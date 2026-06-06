@@ -2,8 +2,8 @@
 .godot/
 /android/
 /builds/
-export_presets.cfg
 *.translation
+# export_presets.cfg is tracked (no signing secrets in it)
 
 # macOS
 .DS_Store
