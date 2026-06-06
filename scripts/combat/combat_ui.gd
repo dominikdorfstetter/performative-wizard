@@ -67,6 +67,7 @@ func _ready() -> void:
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_popups)
 	_add_sparkles()
+	_add_twinkles()
 	if GameState.map.is_empty():
 		GameState.start_run(&"fire")
 		GameState.finalize_loadout()
@@ -335,9 +336,11 @@ func _play_card(card: CardData, btn: Button) -> void:
 
 	var is_attack := card.type == "Attack"
 	var blk0 := cm.player.block
+	var ti := cm.target_index
 	cm.play_card(card)
 	if is_attack:
 		_lunge(_player_sprite)
+		_shoot_projectile(Vector2(210, 248), _enemy_center(ti), SpriteBank.icon_texture(CardView.icon_for(card)))
 	if cm.player.block > blk0:
 		_block_flash()
 
@@ -369,6 +372,83 @@ func _add_sparkles() -> void:
 	p.color = Color(1.0, 0.6, 0.88, 0.55)
 	add_child(p)
 	move_child(p, 1)
+
+func _add_twinkles() -> void:
+	var i := 0
+	for pos in [[118, 70], [300, 52], [520, 58], [700, 46], [822, 86], [200, 104], [640, 96], [410, 80]]:
+		var c := ColorRect.new()
+		c.color = Color(1, 1, 1)
+		c.size = Vector2(3, 3)
+		c.position = Vector2(pos[0], pos[1])
+		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(c)
+		move_child(c, 2)
+		var tw := c.create_tween().set_loops()
+		tw.tween_interval(0.3 * i)
+		tw.tween_property(c, "modulate:a", 0.15, 0.9).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(c, "modulate:a", 1.0, 0.9).set_trans(Tween.TRANS_SINE)
+		i += 1
+
+func _shoot_projectile(from: Vector2, to: Vector2, tex: Texture2D) -> void:
+	if tex == null:
+		return
+	var p := TextureRect.new()
+	p.texture = tex
+	p.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	p.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.size = Vector2(30, 30)
+	p.pivot_offset = Vector2(15, 15)
+	p.position = from - Vector2(15, 15)
+	_popups.add_child(p)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(p, "position", to - Vector2(15, 15), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(p, "rotation", deg_to_rad(420), 0.16)
+	tw.chain().tween_callback(p.queue_free)
+
+func _hit_spark(pos: Vector2) -> void:
+	var tr := TextureRect.new()
+	tr.texture = SpriteBank.icon_texture(&"burst")
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tr.size = Vector2(52, 52)
+	tr.pivot_offset = Vector2(26, 26)
+	tr.position = pos - Vector2(26, 26)
+	tr.modulate = Color(2.2, 2.2, 2.2, 1.0)
+	tr.scale = Vector2(0.5, 0.5)
+	_popups.add_child(tr)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(tr, "scale", Vector2(1.5, 1.5), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(tr, "modulate:a", 0.0, 0.25)
+	tw.chain().tween_callback(tr.queue_free)
+
+func _death_poof(pos: Vector2) -> void:
+	var p := CPUParticles2D.new()
+	p.position = pos
+	p.one_shot = true
+	p.emitting = true
+	p.amount = 18
+	p.lifetime = 0.6
+	p.explosiveness = 0.92
+	p.direction = Vector2(0, -1)
+	p.spread = 180.0
+	p.gravity = Vector2(0, 60)
+	p.initial_velocity_min = 40.0
+	p.initial_velocity_max = 95.0
+	p.scale_amount_min = 2.0
+	p.scale_amount_max = 4.5
+	p.color = Color(0.82, 0.80, 0.86, 0.85)
+	_popups.add_child(p)
+	get_tree().create_timer(1.2).timeout.connect(p.queue_free)
+
+func _shake(amount: float) -> void:
+	var tw := create_tween()
+	for i in 5:
+		tw.tween_property(self, "position", Vector2(randf_range(-amount, amount), randf_range(-amount, amount)), 0.04)
+	tw.tween_property(self, "position", Vector2.ZERO, 0.05)
 
 func _lunge(node: Control) -> void:
 	if node == null:
@@ -405,17 +485,25 @@ func _block_flash() -> void:
 func _emit_popups() -> void:
 	if _popups == null:
 		return
+	var max_dmg := 0
 	for i in cm.enemies.size():
 		if i < _prev_enemy_hp.size():
 			var d: int = int(_prev_enemy_hp[i]) - cm.enemies[i].hp
 			if d > 0:
+				max_dmg = max(max_dmg, d)
 				_float_text(_enemy_center(i), "-%d" % d, C_HP.lightened(0.25))
+				_hit_spark(_enemy_center(i))
 				if i < _enemy_sprites.size() and is_instance_valid(_enemy_sprites[i]):
 					_punch(_enemy_sprites[i])
+				if int(_prev_enemy_hp[i]) > 0 and cm.enemies[i].hp <= 0:
+					_death_poof(_enemy_center(i))
 	if _prev_player_hp >= 0 and cm.player.hp < _prev_player_hp:
+		max_dmg = max(max_dmg, _prev_player_hp - cm.player.hp)
 		_float_text(Vector2(150, 250), "-%d" % (_prev_player_hp - cm.player.hp), Color(1, 0.5, 0.4))
 		_hurt_flash()
 		_punch(_player_sprite)
+	if max_dmg >= 14:
+		_shake(7.0)
 	_prev_enemy_hp = []
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
