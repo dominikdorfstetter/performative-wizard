@@ -8,6 +8,7 @@ const C_HP := Color(0.85, 0.27, 0.24)
 const C_HP_TRACK := Color(0.22, 0.12, 0.13)
 const C_SWAG := Color(1.0, 0.31, 0.70)
 const C_SWAG_TRACK := Color(0.26, 0.10, 0.20)
+const C_SWAG_DIM := Color(0.52, 0.42, 0.52)
 const C_GOLD := Color(1.0, 0.82, 0.29)
 const C_INTENT := Color(1.0, 0.62, 0.36)
 const C_TARGET := Color(1.0, 0.82, 0.29)
@@ -39,6 +40,8 @@ var _prev_player_str := 0
 var _prev_pstatus: Dictionary = {}
 var _prev_swag := 0
 var _prev_state := -1
+var _prev_lit := 0           # how many Aura tiers were lit last refresh (for the pulse)
+var _prev_rating := ""       # The Critic's last shown verdict (for the tick-up pulse)
 var _player_home := Vector2.ZERO
 
 @onready var _bg: TextureRect = $Background
@@ -51,6 +54,7 @@ var _player_home := Vector2.ZERO
 @onready var _swag_value: Label = $SwagValue
 @onready var _swag_bar: ProgressBar = $SwagBar
 @onready var _thresholds: Label = $SwagThresholds
+@onready var _critic: Label = $CriticRating
 @onready var _end_turn: Button = $EndTurn
 @onready var _hand: HBoxContainer = $Hand
 @onready var _result_panel: Panel = $ResultPanel
@@ -64,6 +68,8 @@ func _ready() -> void:
 	_hudbg.add_theme_stylebox_override("panel", _panel_box(Color(0.08, 0.06, 0.11, 0.92), Color(0.2, 0.17, 0.26)))
 	_style_bar(_swag_bar, C_SWAG, C_SWAG_TRACK)
 	_swag_value.add_theme_color_override("font_color", C_SWAG)
+	_thresholds.add_theme_font_size_override("font_size", 14)
+	_critic.add_theme_font_size_override("font_size", 18)
 	_energy.add_theme_color_override("font_color", C_GOLD)
 	_gold.add_theme_color_override("font_color", C_GOLD)
 	_end_turn.pressed.connect(_on_end_turn)
@@ -152,6 +158,8 @@ func _start_fight() -> void:
 	_prev_player_hp = cm.player.hp
 	_prev_swag = cm.swag
 	_prev_state = cm.state
+	_prev_lit = 0
+	_prev_rating = ""
 	_refresh()
 
 # --- player widget (left, persistent) ------------------------------------
@@ -299,8 +307,8 @@ func _refresh() -> void:
 
 	_energy.text = Loc.t("⚡ Energy  %d / %d") % [cm.energy, cm.max_energy]
 	_swag_value.text = Loc.t("✦ AURA  %d   (+%d/turn)") % [cm.swag, cm.drip]
-	_swag_bar.value = min(cm.swag, _swag_bar.max_value)
-	_thresholds.text = _threshold_text()
+	_update_swag_meter()
+	_update_critic_rating()
 	_end_turn.disabled = over or cm.state != CombatManager.State.PLAYER_TURN
 
 	_rebuild_enemies(over)
@@ -449,6 +457,8 @@ func _play_card(card: CardData, btn: Button) -> void:
 	tw.chain().tween_callback(btn.queue_free)
 
 	var is_attack := card.type == "Attack"
+	var is_finisher := _is_finisher(card)
+	var swag_before := cm.swag
 	var blk0 := cm.player.block
 	var ti := cm.target_index
 	Audio.play("card")
@@ -463,6 +473,10 @@ func _play_card(card: CardData, btn: Button) -> void:
 	if cm.player.block > blk0:
 		_block_flash()
 		Audio.play("block")
+	# A finisher that doesn't end the fight still gets its cash-out moment here;
+	# a finisher that wins is handled in _on_combat_ended (it delays the scene swap).
+	if is_finisher and cm.state == CombatManager.State.PLAYER_TURN:
+		_finisher_cashout(swag_before)
 
 # --- animations ----------------------------------------------------------
 
@@ -586,6 +600,43 @@ func _shake(amount: float) -> void:
 	for i in 5:
 		tw.tween_property(self, "position", Vector2(randf_range(-amount, amount), randf_range(-amount, amount)), 0.04)
 	tw.tween_property(self, "position", Vector2.ZERO, 0.05)
+
+func _is_finisher(card: CardData) -> bool:
+	for e in card.effects:
+		if String(e.get("op", "")).begins_with("finisher"):
+			return true
+	return false
+
+# The trailer shot: the Aura meter craters full→empty in one beat, the screen
+# shakes, a FINALE banner detonates, and the crowd pops.
+func _finisher_cashout(swag_before: int) -> void:
+	Audio.play("crowd", -2.0)
+	_shake(16.0)
+	_finale_banner()
+	_swag_bar.value = min(swag_before, _swag_bar.max_value)
+	_style_bar(_swag_bar, C_GOLD, C_SWAG_TRACK)
+	var tw := create_tween()
+	tw.tween_property(_swag_bar, "value", 0.0, 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+
+func _finale_banner() -> void:
+	if _popups == null:
+		return
+	var l := Label.new()
+	l.text = Loc.t("✦ FINALE ✦")
+	l.add_theme_font_size_override("font_size", 60)
+	l.add_theme_color_override("font_color", C_GOLD)
+	l.size = Vector2(440, 90)
+	l.position = Vector2(size.x * 0.5 - 220, 150)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.pivot_offset = Vector2(220, 45)
+	l.scale = Vector2(0.3, 0.3)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_popups.add_child(l)
+	var tw := create_tween()
+	tw.tween_property(l, "scale", Vector2(1.2, 1.2), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(0.55)
+	tw.tween_property(l, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(l.queue_free)
 
 func _lunge(node: Control) -> void:
 	if node == null:
@@ -860,9 +911,62 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 	lbl.add_theme_color_override("font_color", col)
 	box.add_child(lbl)
 
-func _threshold_text() -> String:
-	var d := func(n): return "●" if cm.swag >= n else "○"
-	return Loc.t("%s ≥6 +2dmg    %s ≥12 +draw    %s ≥18 pierce") % [d.call(6), d.call(12), d.call(18)]
+# The Aura meter: three tiers that light/unlight live so a glance reads which
+# passive buffs are on right now. Fill goes gold when all three are lit.
+func _update_swag_meter() -> void:
+	var tiers := [
+		[CombatManager.THRESHOLD_DAMAGE, Loc.t("+2DMG")],
+		[CombatManager.THRESHOLD_DRAW, Loc.t("DRAW")],
+		[CombatManager.THRESHOLD_PIERCE, Loc.t("PIERCE")],
+	]
+	var parts: Array[String] = []
+	var lit := 0
+	for t in tiers:
+		if cm.swag >= int(t[0]):
+			parts.append("●" + String(t[1]))
+			lit += 1
+		else:
+			parts.append("○" + String(t[1]))
+	_thresholds.text = "  ".join(parts)
+	var col := C_SWAG_DIM
+	if lit >= 3:
+		col = C_GOLD
+	elif lit > 0:
+		col = C_SWAG.lightened(0.12 * lit)
+	_thresholds.add_theme_color_override("font_color", col)
+	_swag_bar.value = min(cm.swag, _swag_bar.max_value)
+	_style_bar(_swag_bar, C_GOLD if lit >= 3 else C_SWAG, C_SWAG_TRACK)
+	if lit > _prev_lit:
+		_pulse(_thresholds)
+		Audio.play("aura", -6.0)
+	_prev_lit = lit
+
+# The Critic's live verdict, ticking up as the show builds (P1b). She reads the
+# CURRENT peak, so the grade rises the moment you light a higher tier.
+func _update_critic_rating() -> void:
+	if _critic == null:
+		return
+	var letter := cm.live_rating()
+	_critic.text = Loc.t("👀 THE CRITIC:  %s") % letter
+	_critic.add_theme_color_override("font_color", _rating_color(letter))
+	if _prev_rating != "" and letter != _prev_rating:
+		_pulse(_critic)
+	_prev_rating = letter
+
+func _rating_color(letter: String) -> Color:
+	match letter:
+		"S": return C_GOLD
+		"A": return Color(0.6, 0.95, 0.7)
+		"B": return Color(0.85, 0.85, 0.95)
+		_: return Color(0.92, 0.46, 0.5)
+
+func _pulse(node: Control) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	node.pivot_offset = node.size * 0.5
+	node.scale = Vector2(1.22, 1.22)
+	var tw := node.create_tween()
+	tw.tween_property(node, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 # --- styles --------------------------------------------------------------
 
@@ -901,9 +1005,18 @@ func _on_end_turn() -> void:
 	cm.end_turn()
 
 func _on_combat_ended(victory: bool) -> void:
+	# A finisher that lands the killing blow gets its trailer shot before we leave.
+	if victory and cm.finisher_clean:
+		Audio.play("crowd", -2.0)
+		_shake(16.0)
+		_finale_banner()
+		await get_tree().create_timer(0.9).timeout
+		if not is_inside_tree():
+			return
 	Audio.play("win" if victory else "lose", -2.0)
 	if victory:
 		GameState.player_hp = cm.player.hp
+		GameState.record_show_rating(cm.compute_show_rating())   # The Critic reviews the fight
 		var node := GameState.current_node()
 		if node.get("type") == "Boss":
 			if GameState.advance_act():

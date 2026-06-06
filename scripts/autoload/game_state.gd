@@ -37,6 +37,7 @@ var equipped: Dictionary = {}
 var clout := 0                               # meta currency, spent in the Boutique
 var clout_earned := 0                        # lifetime Clout (never spent down) — gates unlocks
 var ascension := 0                           # highest cleared difficulty tier
+var critic_score := 0                        # lifetime style score from The Critic's reviews
 var sfx_on := true
 var music_on := true
 var locale := "en"
@@ -58,6 +59,11 @@ var card_upgrades: Dictionary = {}           # card_id -> true (Glow'd Up: costs
 var map: Array = []
 var pos_row := -1                            # -1 = haven't entered row 0 yet
 var pos_col := -1
+
+# The Critic (run-scoped): her verdict on the LAST fight, and the verdict still
+# waiting to reshape the NEXT room the player enters.
+var critic_last_rating := ""
+var pending_critic := ""
 
 var message := ""
 
@@ -98,6 +104,7 @@ func new_game() -> void:
 	clout = 0
 	clout_earned = 0
 	ascension = 0
+	critic_score = 0
 	run_artifacts = []
 	map = []
 	save_meta()
@@ -285,6 +292,7 @@ func enter(row: int, col: int) -> Dictionary:
 	pos_col = col
 	var n := current_node()
 	n["visited"] = true
+	apply_critic_mutation(n)
 	return n
 
 func node_scales(node: Dictionary) -> Array:
@@ -301,7 +309,53 @@ func combat_reward(node: Dictionary) -> int:
 	if node.get("type") == "Elite":
 		base += 25
 	base += (node.get("enemies", []).size() - 1) * 6
+	base += int(node.get("critic_bonus_gold", 0))   # The Critic's VIP ovation
 	return base
+
+# --- The Critic: review the run ------------------------------------------
+
+# Two voice lines per grade so back-to-back fights don't repeat verbatim.
+const CRITIC_LINES := {
+	"S": ["S — serve. obsessed. devastating. 💅", "S — the giiirls are SERVING. iconic."],
+	"A": ["A — ate. left a crumb on the plate.", "A — a real look. almost made me clap."],
+	"B": ["B — mid showing, bestie. do better.", "B — it was giving... fine. i guess."],
+	"C": ["C — flop era. who told you that was giving?", "C — boo. i've seen NPCs with more drip."],
+}
+
+## Bank The Critic's verdict on the fight that just ended: remember it for the
+## reward screen and queue it to reshape the NEXT room the player enters.
+func record_show_rating(r: Dictionary) -> void:
+	var rating := String(r.get("rating", "B"))
+	critic_last_rating = rating
+	pending_critic = rating
+	critic_score += {"S": 3, "A": 2, "B": 1, "C": 0}.get(rating, 0)
+	save_meta()
+
+## Her review rewrites the room ahead. S-rank opens a VIP room (richer reward);
+## C-rank sends a heckler into the fight. Penalties touch ROOMS ONLY — never the
+## starting-combat math (no starting-Aura debuff, no death spiral). Non-fight
+## rooms (Rest/Shop/Event/Boss) are left alone.
+func apply_critic_mutation(n: Dictionary) -> void:
+	if pending_critic == "":
+		return
+	var rating := pending_critic
+	pending_critic = ""
+	var t := String(n.get("type", ""))
+	if t != "Combat" and t != "Elite":
+		return
+	if rating == "S":
+		n["critic_bonus_gold"] = int(n.get("critic_bonus_gold", 0)) + 20
+		n["critic_note"] = "vip"
+	elif rating == "C":
+		var ens: Array = n.get("enemies", []).duplicate()
+		ens.append(&"heckler")
+		n["enemies"] = ens
+		n["critic_note"] = "heckler"
+
+## The Critic's spoken verdict for a grade (localized; varies by run progress).
+func critic_quip(rating: String) -> String:
+	var arr: Array = CRITIC_LINES.get(rating, CRITIC_LINES["C"])
+	return Loc.t(arr[critic_score % arr.size()])
 
 func finish_run(victory: bool) -> void:
 	var earned := 20 + int(gold / 3)
@@ -374,6 +428,7 @@ func load_meta() -> void:
 	# legacy saves: treat current Clout as already-earned so nothing re-locks
 	clout_earned = int(data.get("clout_earned", clout))
 	ascension = int(data.get("ascension", 0))
+	critic_score = int(data.get("critic_score", 0))
 	sfx_on = bool(data.get("sfx_on", true))
 	music_on = bool(data.get("music_on", true))
 	locale = String(data.get("locale", "en"))
@@ -389,4 +444,4 @@ func save_meta() -> void:
 	if f == null:
 		push_warning("[GameState] could not open save file for writing")
 		return
-	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "sfx_on": sfx_on, "music_on": music_on, "locale": locale}, "\t"))
+	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale}, "\t"))

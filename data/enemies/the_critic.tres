@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"the_critic"
-title = "The Hater"
+title = "The Critic"
 emoji = "👹"
 max_hp = 160
 intents = [{ "op": "attack", "amount": 12 }, { "op": "drain_swag", "amount": 6 }, { "op": "attack", "amount": 20 }, { "op": "apply_status", "status": "vulnerable", "amount": 2, "target": "player" }, { "op": "block", "amount": 18 }, { "op": "buff", "status": "strength", "amount": 3 }]

@@ -33,6 +33,10 @@ var swag := 0
 var drip := 0
 var spells_this_turn := 0
 
+# --- The Critic: style scoring inputs (see compute_show_rating) -----------
+var peak_swag := 0          # high-water mark of Aura reached this fight
+var finisher_clean := false # a finisher (Aura cash-out) landed the killing blow
+
 var draw_pile: Array[CardData] = []
 var hand: Array[CardData] = []
 var discard_pile: Array[CardData] = []
@@ -67,8 +71,11 @@ func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_va
 	discard_pile.clear()
 	turn = 0
 	log_lines.clear()
+	peak_swag = 0
+	finisher_clean = false
 	state = State.PLAYER_TURN
 	_apply_combat_start_passives()
+	peak_swag = swag                 # seed the high-water mark after outfit seeding
 	var names := []
 	for e in enemies:
 		names.append(Loc.t(e.display_name))
@@ -136,6 +143,7 @@ func all_dead() -> bool:
 
 func gain_swag(amount: int) -> void:
 	swag = max(0, swag + amount)
+	peak_swag = max(peak_swag, swag)
 
 func swag_damage_bonus() -> int:
 	return SWAG_DAMAGE_BONUS if swag >= THRESHOLD_DAMAGE else 0
@@ -279,8 +287,47 @@ func _resolve_finisher(e: Dictionary, ctx: Dictionary) -> void:
 				dmg *= 2
 			tgt.take_damage(dmg, ctx.get("pierce", false))
 			swag = 0
+			if all_dead():
+				finisher_clean = true   # the Aura cash-out was the killing blow
 		_:
 			push_warning("[CombatManager] unknown finisher: " + String(e.get("op", "")))
+
+# --- The Critic: show rating ---------------------------------------------
+
+## How many Aura thresholds (6/12/18) the player's peak this fight lit up.
+func thresholds_lit() -> int:
+	var lit := 0
+	for t in [THRESHOLD_DAMAGE, THRESHOLD_DRAW, THRESHOLD_PIERCE]:
+		if peak_swag >= t:
+			lit += 1
+	return lit
+
+## The Critic's verdict, graded PRIMARILY on how boldly the Aura economy was played:
+## peak reached, which thresholds were lit, and whether the kill was a clean cash-out.
+## S = lit all three AND finished on a cash-out; A = lit all three, or two + a clean
+## finisher; B = lit at least one; C = never crossed a threshold. Works mid-fight too
+## (reads the current peak), so the rating can tick up live as the show builds.
+func compute_show_rating() -> Dictionary:
+	var lit := thresholds_lit()
+	var rating := "C"
+	if lit >= 3 and finisher_clean:
+		rating = "S"
+	elif lit >= 3 or (lit >= 2 and finisher_clean):
+		rating = "A"
+	elif lit >= 1:
+		rating = "B"
+	return {
+		"rating": rating,
+		"peak_swag": peak_swag,
+		"thresholds_lit": lit,
+		"finisher_clean": finisher_clean,
+		"turns": turn,
+		"hp_lost": (player.max_hp - player.hp) if player != null else 0,
+	}
+
+## Just the letter — for the live in-combat readout.
+func live_rating() -> String:
+	return String(compute_show_rating()["rating"])
 
 func end_turn() -> void:
 	if state != State.PLAYER_TURN:

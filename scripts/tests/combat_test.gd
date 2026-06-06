@@ -352,6 +352,90 @@ func _ready() -> void:
 	GameState.clout_earned = saved_ce
 	GameState.act = saved_act
 
+	# --- The Critic: show rating (P1a) ---------------------------------------
+	print("--- critic: show rating ---")
+	# S: hoard past the pierce threshold, then close on a clean Aura cash-out.
+	var cmcr := CombatManager.new()
+	var pcr := Combatant.new()
+	pcr.max_hp = 72
+	pcr.hp = 72
+	cmcr.start_combat(pcr, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"grand_finale")], 0, true)
+	cmcr.gain_swag(18)
+	_check("peak tracks gains", cmcr.peak_swag, 18)
+	cmcr.energy = 9
+	cmcr.hand = [Database.get_card(&"grand_finale")]
+	cmcr.play_card(cmcr.hand[0])
+	_check("finisher cleaned the fight", cmcr.finisher_clean, true)
+	_check("peak survives the cash-out drain", cmcr.peak_swag, 18)
+	_check("S rank: bold + clean finisher", cmcr.compute_show_rating()["rating"], "S")
+	_check("S rank thresholds lit", cmcr.compute_show_rating()["thresholds_lit"], 3)
+
+	# C: win scrappy, never crossing a threshold, no finisher.
+	var cmc2 := CombatManager.new()
+	var pc2 := Combatant.new()
+	pc2.max_hp = 72
+	pc2.hp = 72
+	cmc2.start_combat(pc2, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
+	cmc2.enemies[0].hp = 5
+	cmc2.energy = 3
+	cmc2.hand = [Database.get_card(&"ember")]
+	cmc2.play_card(cmc2.hand[0])
+	_check("scrappy win state", cmc2.state, CombatManager.State.WIN)
+	_check("C rank: low aura", cmc2.compute_show_rating()["rating"], "C")
+	_check("C rank no thresholds", cmc2.compute_show_rating()["thresholds_lit"], 0)
+	_check("C rank finisher not clean", cmc2.finisher_clean, false)
+
+	# A: parked high (lit all three) but the kill was NOT a finisher.
+	var cma := CombatManager.new()
+	var pa := Combatant.new()
+	pa.max_hp = 72
+	pa.hp = 72
+	cma.start_combat(pa, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
+	cma.gain_swag(18)
+	cma.enemies[0].hp = 5
+	cma.energy = 3
+	cma.hand = [Database.get_card(&"ember")]
+	cma.play_card(cma.hand[0])
+	_check("A rank: parked high, no clean finisher", cma.compute_show_rating()["rating"], "A")
+
+	# --- The Critic: score + map mutation + persistence (P1c) ----------------
+	print("--- critic: score + map mutation ---")
+	var saved_cs: int = GameState.critic_score
+	var saved_pending: String = GameState.pending_critic
+	GameState.critic_score = 0
+	GameState.pending_critic = ""
+	GameState.record_show_rating({"rating": "S", "peak_swag": 18, "thresholds_lit": 3, "finisher_clean": true, "turns": 3, "hp_lost": 0})
+	_check("S adds 3 to critic_score", GameState.critic_score, 3)
+	_check("last rating recorded", GameState.critic_last_rating, "S")
+	var snode := {"row": 1, "col": 0, "type": "Combat", "enemies": [&"alley_cat"], "links": [], "visited": false}
+	GameState.apply_critic_mutation(snode)
+	_check("S enriches next room gold", int(snode.get("critic_bonus_gold", 0)), 20)
+	_check("reward includes critic bonus", GameState.combat_reward(snode) >= 20, true)
+	_check("pending cleared after apply", GameState.pending_critic, "")
+	# C injects a heckler into the next fight room (room-only, not starting-combat math)
+	GameState.pending_critic = "C"
+	var cnode := {"row": 2, "col": 0, "type": "Combat", "enemies": [&"alley_cat"], "links": [], "visited": false}
+	var scales_before: Array = GameState.node_scales(cnode)
+	GameState.apply_critic_mutation(cnode)
+	_check("C injects a heckler", cnode["enemies"].size(), 2)
+	_check("heckler is the add", cnode["enemies"][1], &"heckler")
+	_check("heckler enemy exists in db", Database.get_enemy(&"heckler") != null, true)
+	_check("penalty leaves scaling untouched", GameState.node_scales(cnode), scales_before)
+	# non-combat rooms are never mutated
+	GameState.pending_critic = "C"
+	var rnode := {"row": 3, "col": 0, "type": "Rest", "enemies": [], "links": [], "visited": false}
+	GameState.apply_critic_mutation(rnode)
+	_check("rest room untouched", rnode.get("enemies", []).size(), 0)
+	# critic_score round-trips through the save file
+	GameState.critic_score = 7
+	GameState.save_meta()
+	GameState.critic_score = 999
+	GameState.load_meta()
+	_check("critic_score persists via save", GameState.critic_score, 7)
+	GameState.critic_score = saved_cs
+	GameState.pending_critic = saved_pending
+	GameState.save_meta()
+
 	# --- localization --------------------------------------------------------
 	print("--- localization ---")
 	Loc.set_locale("de")
@@ -363,8 +447,15 @@ func _ready() -> void:
 	_check("es translates card text", Loc.t("Deal 5."), "Inflige 5.")
 	_check("es translates enemy", Loc.t("Angry Toaster"), "Tostadora Furiosa")
 	_check("es translates banter", Loc.t("you fell off"), "te caíste")
+	_check("es translates critic name", Loc.t("The Critic"), "La Crítica")
+	_check("es translates critic verdict", Loc.t("👀 THE CRITIC:  %s"), "👀 LA CRÍTICA:  %s")
+	Loc.set_locale("de")
+	_check("de translates meter tier", Loc.t("PIERCE"), "DURCHBRUCH")
+	_check("de translates critic quip", Loc.t("S — serve. obsessed. devastating. 💅"), "S — serve. besessen. vernichtend. 💅")
+	_check("de translates heckler", Loc.t("Heckler"), "Zwischenrufer")
 	Loc.set_locale("en")
 	_check("en is passthrough", Loc.t("Deal 5."), "Deal 5.")
+	_check("en critic passthrough", Loc.t("The Critic"), "The Critic")
 
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

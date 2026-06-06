@@ -30,6 +30,8 @@ const DEF := {
 	&"vending_machine": {"c": "c0423c", "shape": "tall", "feat": "slots", "eye": "ffd24a", "angry": true},
 	&"gym_rat": {"c": "9a8a78", "shape": "round", "feat": "ears", "eye": "ff5a5a", "angry": true},
 	&"the_algorithm": {"c": "26243a", "shape": "square", "feat": "antenna", "eye": "ff5ab0", "angry": true},
+	# Critic's heckler — a loudmouth she drops into a flop room.
+	&"heckler": {"c": "9a5fbf", "shape": "round", "feat": "mouth", "eye": "ffd24a", "angry": true},
 	# Summoned minion ("goon") for the necromancer's Undead stacks.
 	&"goon": {"c": "7fa86a", "shape": "round", "feat": "tufts", "eye": "ff4d4d", "angry": true},
 }
