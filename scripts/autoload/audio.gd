@@ -8,6 +8,8 @@ var _players: Array[AudioStreamPlayer] = []
 var _next := 0
 var _music: AudioStreamPlayer
 var _sfx := {}
+var _tracks := {}
+var _current_track := "menu"
 var sfx_muted := false
 var music_muted := false
 
@@ -20,7 +22,7 @@ func _ready() -> void:
 	_music.volume_db = -17.0
 	add_child(_music)
 	_build_sfx()
-	_build_music()
+	_build_tracks()
 
 func play(name: String, vol_db := -7.0) -> void:
 	if sfx_muted:
@@ -34,9 +36,22 @@ func play(name: String, vol_db := -7.0) -> void:
 	p.volume_db = vol_db
 	p.play()
 
-func play_music() -> void:
-	if not music_muted and _music.stream != null and not _music.playing:
-		_music.play()
+## Switch to a named track (menu/combat/combat2/elite/boss). Re-calling with the
+## track that's already playing is a no-op, so scenes can call it freely.
+func play_music(track := "") -> void:
+	if track == "":
+		track = _current_track
+	if music_muted:
+		_current_track = track   # remember it for unmute
+		return
+	var s = _tracks.get(track)
+	if s == null:
+		return
+	if _current_track == track and _music.playing:
+		return
+	_current_track = track
+	_music.stream = s
+	_music.play()
 
 func stop_music() -> void:
 	_music.stop()
@@ -84,6 +99,8 @@ func _tone(freq: float, dur: float, wave: String, vol: float, decay := true) -> 
 				s = 1.0 if ph < 0.5 else -1.0
 			"saw":
 				s = ph * 2.0 - 1.0
+			"triangle":
+				s = 2.0 * absf(2.0 * ph - 1.0) - 1.0
 			"noise":
 				s = randf() * 2.0 - 1.0
 		var env := 1.0
@@ -138,15 +155,52 @@ func _build_sfx() -> void:
 	_sfx["win"] = _wav(_cat([_tone(523, 0.1, "square", 0.4), _tone(659, 0.1, "square", 0.4), _tone(784, 0.1, "square", 0.4), _tone(1047, 0.2, "square", 0.4)]))
 	_sfx["lose"] = _wav(_cat([_tone(392, 0.13, "saw", 0.4), _tone(311, 0.13, "saw", 0.4), _tone(196, 0.26, "saw", 0.4)]))
 
-func _build_music() -> void:
-	var beat := 60.0 / 112.0
-	var eighth := beat / 2.0
-	var prog := [261.63, 220.0, 174.61, 196.0]   # C  Am  F  G
+# Each track: a 4-chord arpeggio loop with bass and (optional) drums. Distinct
+# progression / tempo / waveform / arp give every context its own mood.
+const TRACK_DEFS := {
+	"menu":    {"prog": [261.63, 220.0, 174.61, 196.0], "bpm": 96.0,  "lead": "sine",     "lvol": 0.13, "bass": "triangle", "bmult": 0.5, "drum": 0.0, "arp": [1.0, 1.5, 2.0, 1.5, 1.25, 1.5, 2.0, 3.0]},
+	"combat":  {"prog": [261.63, 220.0, 174.61, 196.0], "bpm": 112.0, "lead": "square",   "lvol": 0.15, "bass": "saw",      "bmult": 0.5, "drum": 0.5, "arp": [1.0, 1.25, 1.5, 2.0, 1.5, 1.25, 1.5, 2.0]},
+	"combat2": {"prog": [220.0, 174.61, 196.0, 261.63], "bpm": 120.0, "lead": "triangle", "lvol": 0.16, "bass": "saw",      "bmult": 0.5, "drum": 0.5, "arp": [2.0, 1.5, 1.25, 1.5, 2.0, 1.25, 1.0, 1.5]},
+	"elite":   {"prog": [246.94, 196.0, 164.81, 220.0], "bpm": 128.0, "lead": "square",   "lvol": 0.15, "bass": "saw",      "bmult": 0.5, "drum": 0.62, "arp": [1.0, 1.5, 1.25, 2.0, 1.5, 2.0, 1.25, 1.5]},
+	"boss":    {"prog": [164.81, 130.81, 196.0, 146.83], "bpm": 132.0, "lead": "square",  "lvol": 0.17, "bass": "saw",      "bmult": 1.0, "drum": 0.72, "arp": [1.0, 2.0, 1.5, 2.0, 3.0, 2.0, 1.5, 2.0]},
+}
+
+func _build_tracks() -> void:
+	for name in TRACK_DEFS:
+		_tracks[name] = _build_track(TRACK_DEFS[name])
+
+func _build_track(d: Dictionary) -> AudioStreamWAV:
+	var eighth: float = (60.0 / float(d.bpm)) / 2.0
+	var arp: Array = d.arp
 	var samples := PackedFloat32Array()
-	for root in prog:
-		var notes := [root, root * 1.25, root * 1.5, root * 2.0, root * 1.5, root * 1.25, root * 1.5, root * 2.0]
-		for nf in notes:
-			var lead := _tone(nf, eighth, "square", 0.16, true)
-			var bass := _tone(root * 0.5, eighth, "saw", 0.1, false)
-			samples.append_array(_mix(lead, bass))
-	_music.stream = _wav(samples, true)
+	for root in d.prog:
+		var bar := PackedFloat32Array()
+		for k in arp:
+			var lead := _tone(float(root) * float(k), eighth, d.lead, d.lvol, true)
+			var bass := _tone(float(root) * float(d.bmult), eighth, d.bass, 0.1, false)
+			bar.append_array(_mix(lead, bass))
+		if float(d.drum) > 0.0:
+			bar = _mix(bar, _drum_bar(eighth, float(d.drum)))
+		samples.append_array(bar)
+	return _wav(samples, true)
+
+# One bar of drums: kick on beats 1 & 3, snare on 2 & 4, closed hat on offbeats.
+func _drum_bar(eighth: float, vol: float) -> PackedFloat32Array:
+	var step_n := int(eighth * RATE)
+	var bar := PackedFloat32Array()
+	bar.resize(step_n * 8)
+	var kick := _glide(150.0, 48.0, min(0.16, eighth * 1.6), "sine", 0.95)
+	var snare := _mix(_tone(0.0, 0.13, "noise", 0.5), _tone(190.0, 0.13, "triangle", 0.3))
+	var hat := _tone(0.0, 0.035, "noise", 0.28)
+	_overlay(bar, kick, [0, 4], step_n, vol)
+	_overlay(bar, snare, [2, 6], step_n, vol)
+	_overlay(bar, hat, [1, 3, 5, 7], step_n, vol * 0.6)
+	return bar
+
+func _overlay(into: PackedFloat32Array, hit: PackedFloat32Array, steps: Array, step_n: int, vol: float) -> void:
+	for s in steps:
+		var off: int = s * step_n
+		for i in hit.size():
+			var idx: int = off + i
+			if idx < into.size():
+				into[idx] = clampf(into[idx] + hit[i] * vol, -1.0, 1.0)

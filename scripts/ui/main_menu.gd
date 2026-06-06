@@ -30,7 +30,7 @@ var _talk_i := 0
 func _ready() -> void:
 	NodeUI.gradient_bg(self)
 	set_process_unhandled_input(true)
-	Audio.play_music()
+	Audio.play_music("menu")
 	_build()
 
 func _build() -> void:

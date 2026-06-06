@@ -286,32 +286,90 @@ func icon_image(name: StringName) -> Image:
 					img.set_pixel(x, s[0], c)
 	return img
 
-## A simple pixelated night-stage backdrop for combat (sky gradient, moon, stars, floor).
-func battle_bg() -> Texture2D:
-	if _cache.has("battlebg"):
-		return _cache["battlebg"]
+# Combat backdrops: a palette + a celestial orb + a floor style per biome, so
+# different stretches of the run look distinct. Picked by depth in combat_ui.
+const BG_THEMES := {
+	"night":   {"sky": ["1a0f26", "47213f"], "ground": ["2c1930", "12090f"], "line": "5c3659", "floor": "pillars", "floorc": "1a121f", "orb": [28, 9, 5, "ede8d4"], "glow": "3a2b4a", "star": "eaeaff", "stars": 11},
+	"dusk":    {"sky": ["3a1c30", "b5562e"], "ground": ["3a2320", "160d0c"], "line": "7a4030", "floor": "pillars", "floorc": "241512", "orb": [70, 13, 7, "ffd06a"], "glow": "8a3f2a", "star": "ffe2b0", "stars": 6},
+	"void":    {"sky": ["0a0a1f", "241a48"], "ground": ["16122e", "070611"], "line": "3b3470", "floor": "none",    "floorc": "1a1540", "orb": [24, 11, 8, "6a5ad8"], "glow": "2a2060", "star": "cfd4ff", "stars": 22},
+	"dungeon": {"sky": ["15110f", "2a221c"], "ground": ["241d18", "0e0b09"], "line": "4a3c2e", "floor": "bricks",  "floorc": "18120d", "orb": [80, 10, 4, "ff8a3c"], "glow": "5a2e16", "star": "6a5c4a", "stars": 4},
+	"neon":    {"sky": ["0c1424", "13324a"], "ground": ["0e1c2c", "060b12"], "line": "27d0e0", "floor": "grid",    "floorc": "123a44", "orb": [72, 12, 6, "ff4fd0", ], "glow": "1a4a6a", "star": "8ff0ff", "stars": 14},
+}
+
+# 24 deterministic star slots; themes slice the first N for denser/sparser skies.
+const _STAR_SLOTS := [[10, 16], [44, 6], [56, 4], [63, 15], [72, 9], [85, 8], [89, 20], [6, 22],
+	[50, 18], [78, 22], [18, 7], [33, 12], [40, 21], [60, 23], [4, 11], [92, 14],
+	[26, 19], [68, 5], [80, 17], [14, 13], [48, 9], [88, 4], [36, 5], [54, 12]]
+
+func battle_bg(theme := "night") -> Texture2D:
+	var key := "bg_" + theme
+	if _cache.has(key):
+		return _cache[key]
+	var d = BG_THEMES.get(theme, BG_THEMES["night"])
 	var w := 96
 	var h := 54
 	var floor_y := 27
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var sky_top := Color(d.sky[0])
+	var sky_bot := Color(d.sky[1])
+	var gnd_top := Color(d.ground[0])
+	var gnd_bot := Color(d.ground[1])
 	for y in h:
 		for x in w:
 			var col: Color
 			if y < floor_y:
-				col = Color(0.10, 0.06, 0.15).lerp(Color(0.28, 0.13, 0.26), y / float(floor_y))
+				col = sky_top.lerp(sky_bot, y / float(floor_y))
 			else:
-				col = Color(0.17, 0.10, 0.19).lerp(Color(0.07, 0.05, 0.10), (y - floor_y) / float(h - floor_y))
+				col = gnd_top.lerp(gnd_bot, (y - floor_y) / float(h - floor_y))
 			img.set_pixel(x, y, col)
+	# celestial orb (soft glow halo behind it)
+	var orb = d.orb
+	if orb != null:
+		_disc(img, orb[0], orb[1], orb[2] + 3, Color(d.glow).lerp(sky_top, 0.45))
+		_disc(img, orb[0], orb[1], orb[2], Color(orb[3]))
+	# stars
+	var sc := Color(d.star)
+	var n: int = min(int(d.stars), _STAR_SLOTS.size())
+	for i in n:
+		var s = _STAR_SLOTS[i]
+		if s[1] < floor_y - 1:
+			img.set_pixel(s[0], s[1], sc)
+	# horizon line
 	for x in w:
-		img.set_pixel(x, floor_y, Color(0.36, 0.21, 0.36))
-	for x in range(0, w, 8):
-		for y in range(floor_y + 1, h):
-			img.set_pixel(x, y, Color(0.10, 0.07, 0.12))
-	_disc(img, 28, 9, 5, Color(0.93, 0.91, 0.83))
-	for s in [[10, 16], [44, 6], [56, 4], [63, 15], [72, 9], [85, 8], [89, 20], [6, 22], [50, 18], [78, 22]]:
-		img.set_pixel(s[0], s[1], Color(0.92, 0.92, 1.0))
-	_cache["battlebg"] = ImageTexture.create_from_image(img)
-	return _cache["battlebg"]
+		img.set_pixel(x, floor_y, Color(d.line))
+	_bg_floor(img, w, h, floor_y, String(d.floor), Color(d.floorc), Color(d.line))
+	_cache[key] = ImageTexture.create_from_image(img)
+	return _cache[key]
+
+func _bg_floor(img: Image, w: int, h: int, floor_y: int, style: String, fc: Color, line: Color) -> void:
+	match style:
+		"pillars":
+			for x in range(0, w, 8):
+				for y in range(floor_y + 1, h):
+					img.set_pixel(x, y, fc)
+		"grid":
+			for x in range(0, w, 8):
+				for y in range(floor_y + 1, h):
+					img.set_pixel(x, y, fc)
+			for y in range(floor_y + 4, h, 5):
+				for x in w:
+					img.set_pixel(x, y, line.darkened(0.25))
+		"bricks":
+			for y in range(floor_y + 1, h, 4):
+				for x in w:
+					img.set_pixel(x, y, fc)
+			var row := 0
+			for y in range(floor_y + 1, h):
+				if (y - floor_y) % 4 == 2:
+					var offs := 0 if row % 2 == 0 else 6
+					for x in range(offs, w, 12):
+						img.set_pixel(x, y, fc)
+					row += 1
+		"none":
+			# faint receding glow streaks instead of solid pillars
+			for x in range(4, w, 16):
+				for y in range(floor_y + 2, h, 2):
+					img.set_pixel(x, y, fc)
 
 func _disc(img: Image, cx: int, cy: int, r: int, c: Color) -> void:
 	for y in range(cy - r, cy + r + 1):

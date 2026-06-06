@@ -55,7 +55,7 @@ var _player_home := Vector2.ZERO
 @onready var _result_label: Label = $ResultPanel/ResultLabel
 
 func _ready() -> void:
-	_bg.texture = SpriteBank.battle_bg()
+	_bg.texture = SpriteBank.battle_bg("night")  # replaced below once the run is known
 	_bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_bg.stretch_mode = TextureRect.STRETCH_SCALE
@@ -77,12 +77,45 @@ func _ready() -> void:
 	add_child(_popups)
 	_add_sparkles()
 	_add_twinkles()
-	Audio.play_music()
 	if GameState.map.is_empty():
 		GameState.start_run(&"fire")
 		GameState.finalize_loadout()
 		GameState.enter(0, 0)
+	_bg.texture = SpriteBank.battle_bg(_bg_theme())
+	Audio.play_music(_combat_track())
 	_start_fight()
+
+# Pick a music track so different encounters sound different: bosses and elites
+# get their own themes, and normal fights alternate between two combat tracks.
+func _combat_track() -> String:
+	var node := GameState.current_node()
+	match String(node.get("type", "Combat")):
+		"Boss":
+			return "boss"
+		"Elite":
+			return "elite"
+		_:
+			var v: int = int(node.get("row", 0)) + node.get("enemies", []).size()
+			return "combat2" if v % 2 == 1 else "combat"
+
+# Backdrop biome by depth, with bosses/elites getting dramatic skies.
+func _bg_theme() -> String:
+	var node := GameState.current_node()
+	var t := String(node.get("type", "Combat"))
+	if t == "Boss":
+		return "void"
+	if t == "Elite":
+		return "neon"
+	var row := int(node.get("row", 0))
+	var total: int = max(1, GameState.map.size())
+	var depth := row / float(total)
+	if depth < 0.25:
+		return "night"
+	elif depth < 0.5:
+		return "dusk"
+	elif depth < 0.75:
+		return "dungeon"
+	return "void"
 
 func _start_fight() -> void:
 	var node := GameState.current_node()
