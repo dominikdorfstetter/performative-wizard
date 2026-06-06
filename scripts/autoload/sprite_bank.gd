@@ -32,9 +32,9 @@ const DEF := {
 
 # wizards: humanoid sprites (pointy hat, face, robe)
 const WIZ := {
-	&"fire": {"hat": "b5302b", "robe": "e0883c", "skin": "eec8a4", "trim": "ffd24a"},
-	&"necro": {"hat": "2e2440", "robe": "57804a", "skin": "cdd2dd", "trim": "8fd96b"},
-	&"rizz": {"hat": "c23b8a", "robe": "e0a93c", "skin": "eec8a4", "trim": "ff8fd0", "shades": true},
+	&"fire": {"hat": "b5302b", "robe": "e0883c", "skin": "eec8a4", "trim": "ffd24a", "motif": "flame"},
+	&"necro": {"hat": "2e2440", "robe": "57804a", "skin": "cdd2dd", "trim": "8fd96b", "motif": "skull"},
+	&"rizz": {"hat": "c23b8a", "robe": "e0a93c", "skin": "eec8a4", "trim": "ff8fd0", "shades": true, "motif": "chain"},
 }
 
 # Small 16x16 motif icons for cards/keywords. Each is layers of horizontal spans
@@ -542,7 +542,29 @@ func wizard_image(id: StringName, look := 0) -> Image:
 		for x in range(8 - half, 9 + half):
 			if x >= 0 and x < SIZE:
 				img.set_pixel(x, y, shade)
-	img.set_pixel(8, 12, trim)           # robe gem
+	# per-class emblem on the chest so the three wizards read differently
+	match d.get("motif", ""):
+		"flame":
+			img.set_pixel(8, 13, Color("ffd24a"))
+			img.set_pixel(8, 12, Color("ff7a2a"))
+			img.set_pixel(7, 13, Color("e0531f"))
+			img.set_pixel(9, 13, Color("e0531f"))
+			img.set_pixel(8, 0, Color("ff7a2a"))   # ember atop the hat
+			img.set_pixel(8, 1, Color("ffd24a"))
+		"skull":
+			img.set_pixel(8, 12, Color("e8e8ee"))
+			img.set_pixel(7, 12, Color("e8e8ee"))
+			img.set_pixel(9, 12, Color("e8e8ee"))
+			img.set_pixel(7, 13, Color("2a2238"))
+			img.set_pixel(9, 13, Color("2a2238"))
+		"chain":
+			for cx in [6, 8, 10]:
+				img.set_pixel(cx, 11, trim)
+			img.set_pixel(7, 12, trim)
+			img.set_pixel(9, 12, trim)
+			img.set_pixel(8, 13, Color("ffd24a"))   # pendant
+		_:
+			img.set_pixel(8, 12, trim)
 	_outline(img)
 	return img
 
