@@ -9,187 +9,121 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_ui")
 
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="HudBg" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -266.0
+
 [node name="TurnBanner" type="Label" parent="."]
 layout_mode = 0
 offset_left = 16.0
-offset_top = 10.0
-offset_right = 500.0
-offset_bottom = 36.0
+offset_top = 8.0
+offset_right = 420.0
+offset_bottom = 34.0
 theme_override_font_sizes/font_size = 18
 text = "Turn"
 
 [node name="GoldLabel" type="Label" parent="."]
-layout_mode = 0
-offset_left = 760.0
-offset_top = 10.0
-offset_right = 1136.0
-offset_bottom = 36.0
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
+offset_top = 8.0
+offset_right = -16.0
+offset_bottom = 34.0
 theme_override_font_sizes/font_size = 18
 text = "Gold"
 horizontal_alignment = 2
 
-[node name="ArtifactsLabel" type="Label" parent="."]
-layout_mode = 0
-offset_left = 16.0
-offset_top = 38.0
-offset_right = 1136.0
-offset_bottom = 62.0
-theme_override_font_sizes/font_size = 18
-text = ""
+[node name="LogLine" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -420.0
+offset_top = 36.0
+offset_right = 420.0
+offset_bottom = 58.0
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 
 [node name="Enemies" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 300.0
-offset_top = 72.0
-offset_right = 1112.0
-offset_bottom = 268.0
-theme_override_constants/separation = 22
+offset_left = 432.0
+offset_top = 132.0
+offset_right = 1132.0
+offset_bottom = 372.0
+theme_override_constants/separation = 18
 alignment = 1
 
-[node name="PlayerPanel" type="Panel" parent="."]
+[node name="EnergyLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 24.0
-offset_top = 286.0
-offset_right = 360.0
-offset_bottom = 416.0
-
-[node name="PlayerName" type="Label" parent="PlayerPanel"]
-layout_mode = 0
-offset_left = 16.0
-offset_top = 10.0
-offset_right = 320.0
-offset_bottom = 40.0
+offset_top = 392.0
+offset_right = 280.0
+offset_bottom = 422.0
 theme_override_font_sizes/font_size = 22
-text = "Pyromancer"
-
-[node name="PlayerHPBar" type="ProgressBar" parent="PlayerPanel"]
-layout_mode = 0
-offset_left = 16.0
-offset_top = 48.0
-offset_right = 320.0
-offset_bottom = 76.0
-show_percentage = false
-
-[node name="PlayerHPText" type="Label" parent="PlayerPanel/PlayerHPBar"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 16
-text = "HP"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="PlayerStatus" type="Label" parent="PlayerPanel"]
-layout_mode = 0
-offset_left = 16.0
-offset_top = 84.0
-offset_right = 320.0
-offset_bottom = 116.0
-theme_override_font_sizes/font_size = 17
-
-[node name="ResourcePanel" type="Panel" parent="."]
-layout_mode = 0
-offset_left = 380.0
-offset_top = 286.0
-offset_right = 800.0
-offset_bottom = 416.0
-
-[node name="EnergyBadge" type="Label" parent="ResourcePanel"]
-layout_mode = 0
-offset_left = 16.0
-offset_top = 10.0
-offset_right = 404.0
-offset_bottom = 42.0
-theme_override_font_sizes/font_size = 24
 text = "Energy"
 
-[node name="SwagValue" type="Label" parent="ResourcePanel"]
+[node name="SwagValue" type="Label" parent="."]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 48.0
-offset_right = 404.0
-offset_bottom = 80.0
-theme_override_font_sizes/font_size = 24
-text = "SWAG"
+offset_left = 300.0
+offset_top = 388.0
+offset_right = 700.0
+offset_bottom = 416.0
+theme_override_font_sizes/font_size = 22
+text = "AURA"
 
-[node name="SwagBar" type="ProgressBar" parent="ResourcePanel"]
+[node name="SwagBar" type="ProgressBar" parent="."]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 84.0
-offset_right = 404.0
-offset_bottom = 100.0
-max_value = 20.0
+offset_left = 300.0
+offset_top = 418.0
+offset_right = 700.0
+offset_bottom = 434.0
+max_value = 24.0
 show_percentage = false
 
-[node name="SwagThresholds" type="Label" parent="ResourcePanel"]
+[node name="SwagThresholds" type="Label" parent="."]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 104.0
-offset_right = 404.0
-offset_bottom = 126.0
+offset_left = 712.0
+offset_top = 400.0
+offset_right = 1000.0
+offset_bottom = 424.0
 theme_override_font_sizes/font_size = 13
 text = "thresholds"
 
-[node name="LogPanel" type="Panel" parent="."]
-layout_mode = 0
-offset_left = 820.0
-offset_top = 286.0
-offset_right = 1128.0
-offset_bottom = 416.0
-
-[node name="LogText" type="Label" parent="LogPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = 8.0
-offset_right = -12.0
-offset_bottom = -8.0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 14
-text = "log"
-vertical_alignment = 2
-autowrap_mode = 2
-
 [node name="EndTurn" type="Button" parent="."]
 layout_mode = 0
-offset_left = 1000.0
-offset_top = 232.0
-offset_right = 1128.0
-offset_bottom = 278.0
+offset_left = 1004.0
+offset_top = 390.0
+offset_right = 1132.0
+offset_bottom = 434.0
 theme_override_font_sizes/font_size = 20
 text = "Bye ✌"
 
-[node name="Piles" type="Label" parent="."]
-layout_mode = 0
-offset_left = 24.0
-offset_top = 420.0
-offset_right = 360.0
-offset_bottom = 440.0
-theme_override_font_sizes/font_size = 14
-text = "Draw  Discard"
-
 [node name="HandLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 500.0
-offset_top = 420.0
-offset_right = 1128.0
-offset_bottom = 440.0
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.6, 0.6, 0.68, 1)
-text = "tap an opp to throw hands at"
-horizontal_alignment = 2
+offset_left = 24.0
+offset_top = 392.0
+offset_right = 24.0
+offset_bottom = 414.0
 
 [node name="Hand" type="HBoxContainer" parent="."]
 layout_mode = 0
 offset_left = 110.0
-offset_top = 444.0
+offset_top = 446.0
 offset_right = 1040.0
-offset_bottom = 644.0
+offset_bottom = 646.0
 theme_override_constants/separation = 12
 alignment = 1
 

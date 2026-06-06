@@ -276,6 +276,39 @@ func icon_image(name: StringName) -> Image:
 					img.set_pixel(x, s[0], c)
 	return img
 
+## A simple pixelated night-stage backdrop for combat (sky gradient, moon, stars, floor).
+func battle_bg() -> Texture2D:
+	if _cache.has("battlebg"):
+		return _cache["battlebg"]
+	var w := 96
+	var h := 54
+	var floor_y := 27
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	for y in h:
+		for x in w:
+			var col: Color
+			if y < floor_y:
+				col = Color(0.10, 0.06, 0.15).lerp(Color(0.28, 0.13, 0.26), y / float(floor_y))
+			else:
+				col = Color(0.17, 0.10, 0.19).lerp(Color(0.07, 0.05, 0.10), (y - floor_y) / float(h - floor_y))
+			img.set_pixel(x, y, col)
+	for x in w:
+		img.set_pixel(x, floor_y, Color(0.36, 0.21, 0.36))
+	for x in range(0, w, 8):
+		for y in range(floor_y + 1, h):
+			img.set_pixel(x, y, Color(0.10, 0.07, 0.12))
+	_disc(img, 28, 9, 5, Color(0.93, 0.91, 0.83))
+	for s in [[10, 16], [44, 6], [56, 4], [63, 15], [72, 9], [85, 8], [89, 20], [6, 22], [50, 18], [78, 22]]:
+		img.set_pixel(s[0], s[1], Color(0.92, 0.92, 1.0))
+	_cache["battlebg"] = ImageTexture.create_from_image(img)
+	return _cache["battlebg"]
+
+func _disc(img: Image, cx: int, cy: int, r: int, c: Color) -> void:
+	for y in range(cy - r, cy + r + 1):
+		for x in range(cx - r, cx + r + 1):
+			if x >= 0 and x < img.get_width() and y >= 0 and y < img.get_height() and (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r:
+				img.set_pixel(x, y, c)
+
 func wizard_texture(id: StringName, look := 0) -> Texture2D:
 	var key := "wiz_%s_%d" % [String(id), look]
 	if _cache.has(key):

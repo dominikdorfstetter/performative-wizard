@@ -1,9 +1,8 @@
 extends Control
-## Interactive combat. Reads the encounter from the current map node, renders the fight
-## (multiple enemies, click to target), and on victory awards gold + routes to the reward
-## screen — or, for the boss, ends the run.
+## Battle-scene combat: the wizard stands on the left, monsters on the right over a
+## pixel backdrop. Attacks lunge, blocks flash, hits recoil. Reads the encounter from
+## the current map node; on victory awards gold and routes to the reward screen.
 
-const C_BG_PANEL := Color(0.13, 0.11, 0.17)
 const C_PANEL_BORDER := Color(0.28, 0.24, 0.36)
 const C_HP := Color(0.85, 0.27, 0.24)
 const C_HP_TRACK := Color(0.22, 0.12, 0.13)
@@ -19,35 +18,47 @@ const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't
 
 var cm: CombatManager
 var _popups: Control
-var _enemy_panels: Array = []
+var _player_sprite: TextureRect
+var _player_hp_bar: ProgressBar
+var _player_hp_text: Label
+var _player_status: Label
+var _enemy_widgets: Array = []
+var _enemy_sprites: Array = []
 var _prev_enemy_hp: Array = []
 var _prev_player_hp := -1
 var _prev_swag := 0
 var _prev_state := -1
+var _player_home := Vector2.ZERO
 
+@onready var _bg: TextureRect = $Background
+@onready var _hudbg: Panel = $HudBg
 @onready var _turn_banner: Label = $TurnBanner
 @onready var _gold: Label = $GoldLabel
-@onready var _artifacts: Label = $ArtifactsLabel
+@onready var _log_line: Label = $LogLine
 @onready var _enemies_box: HBoxContainer = $Enemies
-@onready var _player_name: Label = $PlayerPanel/PlayerName
-@onready var _player_hp_bar: ProgressBar = $PlayerPanel/PlayerHPBar
-@onready var _player_hp_text: Label = $PlayerPanel/PlayerHPBar/PlayerHPText
-@onready var _player_status: Label = $PlayerPanel/PlayerStatus
-@onready var _energy: Label = $ResourcePanel/EnergyBadge
-@onready var _swag_value: Label = $ResourcePanel/SwagValue
-@onready var _swag_bar: ProgressBar = $ResourcePanel/SwagBar
-@onready var _thresholds: Label = $ResourcePanel/SwagThresholds
-@onready var _log: Label = $LogPanel/LogText
-@onready var _piles: Label = $Piles
-@onready var _hand: HBoxContainer = $Hand
+@onready var _energy: Label = $EnergyLabel
+@onready var _swag_value: Label = $SwagValue
+@onready var _swag_bar: ProgressBar = $SwagBar
+@onready var _thresholds: Label = $SwagThresholds
 @onready var _end_turn: Button = $EndTurn
+@onready var _hand: HBoxContainer = $Hand
 @onready var _result_panel: Panel = $ResultPanel
 @onready var _result_label: Label = $ResultPanel/ResultLabel
 
 func _ready() -> void:
-	NodeUI.gradient_bg(self)
-	_style_chrome()
+	_bg.texture = SpriteBank.battle_bg()
+	_bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_bg.stretch_mode = TextureRect.STRETCH_SCALE
+	_hudbg.add_theme_stylebox_override("panel", _panel_box(Color(0.08, 0.06, 0.11, 0.92), Color(0.2, 0.17, 0.26)))
+	_style_bar(_swag_bar, C_SWAG, C_SWAG_TRACK)
+	_swag_value.add_theme_color_override("font_color", C_SWAG)
+	_energy.add_theme_color_override("font_color", C_GOLD)
+	_gold.add_theme_color_override("font_color", C_GOLD)
 	_end_turn.pressed.connect(_on_end_turn)
+	_end_turn.add_theme_stylebox_override("normal", _panel_box(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
+	_end_turn.add_theme_stylebox_override("hover", _panel_box(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
+	_result_panel.add_theme_stylebox_override("panel", _panel_box(Color(0.13, 0.11, 0.17), C_PANEL_BORDER))
 	$ResultPanel/RestartButton.pressed.connect(_to_menu)
 	_result_panel.visible = false
 	set_process_unhandled_input(true)
@@ -55,52 +66,25 @@ func _ready() -> void:
 	_popups.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_popups)
-	# Standalone fallback (headless / direct scene run).
 	if GameState.map.is_empty():
 		GameState.start_run(&"fire")
 		GameState.finalize_loadout()
 		GameState.enter(0, 0)
 	_start_fight()
 
-func _style_chrome() -> void:
-	for p in [$PlayerPanel, $ResourcePanel, $LogPanel, _result_panel]:
-		p.add_theme_stylebox_override("panel", _panel_box(C_BG_PANEL, C_PANEL_BORDER))
-	_style_bar(_player_hp_bar, C_HP, C_HP_TRACK)
-	_style_bar(_swag_bar, C_SWAG, C_SWAG_TRACK)
-	_swag_value.add_theme_color_override("font_color", C_SWAG)
-	_energy.add_theme_color_override("font_color", C_GOLD)
-	_gold.add_theme_color_override("font_color", C_GOLD)
-	_end_turn.add_theme_stylebox_override("normal", _panel_box(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
-	_end_turn.add_theme_stylebox_override("hover", _panel_box(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
-	_end_turn.add_theme_stylebox_override("pressed", _panel_box(Color(0.14, 0.30, 0.19), Color(0.36, 0.70, 0.45)))
-
 func _start_fight() -> void:
 	var node := GameState.current_node()
 	var w := Database.get_wizard(GameState.wizard_id)
 	var player := Combatant.new()
-	player.display_name = w.title
+	player.display_name = w.pname
 	player.max_hp = GameState.player_max_hp
 	player.hp = GameState.player_hp
-	_player_name.text = w.pname
-	_player_name.add_theme_color_override("font_color", w.accent.lightened(0.3))
-	_player_hp_bar.max_value = player.max_hp
-	var wtex := SpriteBank.wizard_texture(GameState.wizard_id)
-	if wtex != null:
-		var ptr := TextureRect.new()
-		ptr.texture = wtex
-		ptr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		ptr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		ptr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ptr.position = Vector2(288, 6)
-		ptr.size = Vector2(42, 42)
-		$PlayerPanel.add_child(ptr)
 
 	var deck: Array[CardData] = []
 	for id in GameState.deck:
 		var c := Database.get_card(id)
 		if c != null:
 			deck.append(c)
-
 	var encounter: Array = []
 	for eid in node.get("enemies", [&"alley_cat"]):
 		var ed := Database.get_enemy(eid)
@@ -112,25 +96,62 @@ func _start_fight() -> void:
 	cm.changed.connect(_refresh)
 	cm.combat_ended.connect(_on_combat_ended)
 	cm.start_combat(player, encounter, deck, GameState.drip, false, GameState.active_passives(), scales[0], scales[1])
+	_build_player_widget(w)
+	_build_fit_strip()
 	_prev_enemy_hp = []
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
 	_prev_player_hp = cm.player.hp
 	_prev_swag = cm.swag
 	_prev_state = cm.state
-	print("[Combat] node %s row %d: %d enemies, scale %.2f/%.2f"
-		% [node.get("type"), node.get("row"), encounter.size(), scales[0], scales[1]])
-	_build_fit_strip()
 	_refresh()
 
+# --- player widget (left, persistent) ------------------------------------
+
+func _build_player_widget(w: WizardData) -> void:
+	var nm := Label.new()
+	nm.text = w.pname
+	nm.position = Vector2(20, 150)
+	nm.size = Vector2(280, 26)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.add_theme_font_size_override("font_size", 20)
+	nm.add_theme_color_override("font_color", w.accent.lightened(0.32))
+	add_child(nm)
+
+	_player_sprite = TextureRect.new()
+	_player_sprite.texture = SpriteBank.wizard_texture(w.id, 1)
+	_player_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_player_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_player_sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_player_sprite.position = Vector2(90, 180)
+	_player_sprite.size = Vector2(150, 150)
+	_player_home = _player_sprite.position
+	add_child(_player_sprite)
+
+	_player_hp_bar = ProgressBar.new()
+	_player_hp_bar.show_percentage = false
+	_player_hp_bar.max_value = cm.player.max_hp
+	_player_hp_bar.position = Vector2(45, 336)
+	_player_hp_bar.size = Vector2(240, 22)
+	_style_bar(_player_hp_bar, C_HP, C_HP_TRACK)
+	_player_hp_text = Label.new()
+	_player_hp_text.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_player_hp_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_player_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_player_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_player_hp_text.add_theme_font_size_override("font_size", 15)
+	_player_hp_bar.add_child(_player_hp_text)
+	add_child(_player_hp_bar)
+
+	_player_status = Label.new()
+	_player_status.position = Vector2(20, 362)
+	_player_status.size = Vector2(280, 22)
+	_player_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_player_status.add_theme_font_size_override("font_size", 16)
+	add_child(_player_status)
+
 func _build_fit_strip() -> void:
-	var lbl := Label.new()
-	lbl.text = "fit:"
-	lbl.position = Vector2(16, 44)
-	lbl.add_theme_font_size_override("font_size", 13)
-	lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.66))
-	add_child(lbl)
-	var x := 52.0
+	var x := 16.0
 	for p in GameState.equipped_pieces():
 		var tex := SpriteBank.item_texture(p.id)
 		if tex == null:
@@ -140,10 +161,10 @@ func _build_fit_strip() -> void:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tr.position = Vector2(x, 38)
-		tr.size = Vector2(26, 26)
+		tr.position = Vector2(x, 64)
+		tr.size = Vector2(24, 24)
 		add_child(tr)
-		x += 30
+		x += 27
 
 # --- rendering -----------------------------------------------------------
 
@@ -153,23 +174,202 @@ func _refresh() -> void:
 	var over := cm.state == CombatManager.State.WIN or cm.state == CombatManager.State.LOSE
 	_turn_banner.text = "THEIR TURN" if cm.state == CombatManager.State.ENEMY_TURN else "TURN %d" % cm.turn
 	_gold.text = "💰 %d" % GameState.gold
-	_artifacts.text = _artifact_text()
+	_log_line.text = cm.log_lines[-1] if not cm.log_lines.is_empty() else ""
 
-	_player_hp_bar.value = cm.player.hp
-	_player_hp_text.text = "%d / %d" % [cm.player.hp, cm.player.max_hp]
-	_player_status.text = _status_text(cm.player)
+	if _player_hp_bar != null:
+		_player_hp_bar.value = cm.player.hp
+		_player_hp_text.text = "%d / %d" % [cm.player.hp, cm.player.max_hp]
+		_player_status.text = _status_text(cm.player)
+
 	_energy.text = "⚡ Energy  %d / %d" % [cm.energy, cm.max_energy]
 	_swag_value.text = "✦ AURA  %d   (+%d/turn)" % [cm.swag, cm.drip]
 	_swag_bar.value = min(cm.swag, _swag_bar.max_value)
 	_thresholds.text = _threshold_text()
-	_piles.text = "🂠 Draw %d    🗑 Discard %d" % [cm.draw_pile.size(), cm.discard_pile.size()]
-	_log.text = "\n".join(cm.log_lines)
 	_end_turn.disabled = over or cm.state != CombatManager.State.PLAYER_TURN
 
 	_rebuild_enemies(over)
 	_rebuild_hand(over)
 	_emit_popups()
 	_banter()
+
+func _rebuild_enemies(over: bool) -> void:
+	for c in _enemies_box.get_children():
+		c.queue_free()
+	_enemy_widgets = []
+	_enemy_sprites = []
+	for i in cm.enemies.size():
+		var pair := _make_enemy_widget(cm.enemies[i], i, over)
+		_enemy_widgets.append(pair[0])
+		_enemy_sprites.append(pair[1])
+		_enemies_box.add_child(pair[0])
+
+func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
+	var dead := e.is_dead()
+	var targeted := (not over) and (cm.target_index == index) and not dead
+	var w := Control.new()
+	w.custom_minimum_size = Vector2(150, 210)
+	if not dead and not over:
+		w.gui_input.connect(func(ev: InputEvent):
+			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+				cm.set_target(index))
+
+	# info above the monster
+	var intent := Label.new()
+	intent.text = "" if (over or dead) else _intent_text_for(e)
+	intent.position = Vector2(0, 0)
+	intent.size = Vector2(150, 22)
+	intent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	intent.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intent.add_theme_font_size_override("font_size", 17)
+	intent.add_theme_color_override("font_color", C_INTENT)
+	w.add_child(intent)
+
+	var nm := Label.new()
+	nm.text = e.display_name
+	nm.position = Vector2(0, 26)
+	nm.size = Vector2(150, 18)
+	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.autowrap_mode = TextServer.AUTOWRAP_WORD
+	nm.add_theme_font_size_override("font_size", 14)
+	w.add_child(nm)
+
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.max_value = e.max_hp
+	bar.value = e.hp
+	bar.position = Vector2(14, 50)
+	bar.size = Vector2(122, 18)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_style_bar(bar, C_HP, C_HP_TRACK)
+	var hptext := Label.new()
+	hptext.text = "%d / %d" % [e.hp, e.max_hp]
+	hptext.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hptext.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hptext.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hptext.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hptext.add_theme_font_size_override("font_size", 12)
+	bar.add_child(hptext)
+	w.add_child(bar)
+
+	var st := Label.new()
+	st.text = _status_text(e)
+	st.position = Vector2(0, 70)
+	st.size = Vector2(150, 22)
+	st.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	st.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	st.add_theme_font_size_override("font_size", 13)
+	w.add_child(st)
+
+	# ground shadow + monster sprite
+	var shadow := Panel.new()
+	var ss := StyleBoxFlat.new()
+	ss.bg_color = Color(0, 0, 0, 0.3)
+	ss.set_corner_radius_all(14)
+	shadow.add_theme_stylebox_override("panel", ss)
+	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shadow.position = Vector2(40, 188)
+	shadow.size = Vector2(70, 12)
+	w.add_child(shadow)
+
+	var sprite := TextureRect.new()
+	var tex: Texture2D = null if dead else SpriteBank.texture(e.data.id)
+	sprite.texture = tex
+	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sprite.position = Vector2(33, 100)
+	sprite.size = Vector2(84, 90)
+	if dead:
+		var skull := Label.new()
+		skull.text = "☠"
+		skull.set_anchors_preset(Control.PRESET_FULL_RECT)
+		skull.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		skull.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		skull.add_theme_font_size_override("font_size", 40)
+		sprite.add_child(skull)
+	w.add_child(sprite)
+
+	if targeted:
+		var arrow := Label.new()
+		arrow.text = "▼"
+		arrow.position = Vector2(0, 90)
+		arrow.size = Vector2(150, 18)
+		arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		arrow.add_theme_color_override("font_color", C_TARGET)
+		w.add_child(arrow)
+	return [w, sprite]
+
+func _rebuild_hand(over: bool) -> void:
+	for child in _hand.get_children():
+		child.queue_free()
+	if over:
+		return
+	for card in cm.hand:
+		var btn := CardView.build(card, cm.can_play(card), Callable())
+		if cm.can_play(card):
+			btn.pressed.connect(_play_card.bind(card, btn))
+		_hand.add_child(btn)
+
+func _play_card(card: CardData, btn: Button) -> void:
+	if cm.state != CombatManager.State.PLAYER_TURN or not cm.can_play(card):
+		return
+	var gpos := btn.global_position
+	_hand.remove_child(btn)
+	_popups.add_child(btn)
+	btn.global_position = gpos
+	btn.disabled = true
+	btn.pivot_offset = btn.size * 0.5
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(btn, "position:y", gpos.y - 140, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(btn, "scale", Vector2(1.3, 1.3), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(btn, "rotation", deg_to_rad(5), 0.3)
+	tw.chain().tween_property(btn, "modulate:a", 0.0, 0.18)
+	tw.chain().tween_callback(btn.queue_free)
+
+	var is_attack := card.type == "Attack"
+	var blk0 := cm.player.block
+	cm.play_card(card)
+	if is_attack:
+		_lunge(_player_sprite)
+	if cm.player.block > blk0:
+		_block_flash()
+
+# --- animations ----------------------------------------------------------
+
+func _lunge(node: Control) -> void:
+	if node == null:
+		return
+	var home := _player_home
+	var tw := create_tween()
+	tw.tween_property(node, "position:x", home.x + 34, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(node, "position:x", home.x, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _punch(node: Control) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	var sz := node.size if node.size != Vector2.ZERO else node.custom_minimum_size
+	node.pivot_offset = sz * 0.5
+	node.scale = Vector2(1.18, 0.85)
+	node.modulate = Color(1.7, 1.7, 1.7)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(node, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(node, "modulate", Color.WHITE, 0.24)
+
+func _block_flash() -> void:
+	_float_text(Vector2(150, 250), "🛡", Color(0.45, 0.7, 1.0))
+	var fl := ColorRect.new()
+	fl.color = Color(0.3, 0.55, 1.0, 0.0)
+	fl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_popups.add_child(fl)
+	var tw := create_tween()
+	tw.tween_property(fl, "color:a", 0.12, 0.05)
+	tw.tween_property(fl, "color:a", 0.0, 0.25)
+	tw.tween_callback(fl.queue_free)
 
 func _emit_popups() -> void:
 	if _popups == null:
@@ -179,23 +379,49 @@ func _emit_popups() -> void:
 			var d: int = int(_prev_enemy_hp[i]) - cm.enemies[i].hp
 			if d > 0:
 				_float_text(_enemy_center(i), "-%d" % d, C_HP.lightened(0.25))
-				if i < _enemy_panels.size() and is_instance_valid(_enemy_panels[i]):
-					_punch(_enemy_panels[i])
+				if i < _enemy_sprites.size() and is_instance_valid(_enemy_sprites[i]):
+					_punch(_enemy_sprites[i])
 	if _prev_player_hp >= 0 and cm.player.hp < _prev_player_hp:
-		_float_text(Vector2(180, 320), "-%d" % (_prev_player_hp - cm.player.hp), Color(1, 0.5, 0.4))
+		_float_text(Vector2(150, 250), "-%d" % (_prev_player_hp - cm.player.hp), Color(1, 0.5, 0.4))
 		_hurt_flash()
-		_punch($PlayerPanel)
+		_punch(_player_sprite)
 	_prev_enemy_hp = []
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
 	_prev_player_hp = cm.player.hp
 
+func _banter() -> void:
+	if _popups == null:
+		return
+	for thr in [12, 18]:
+		if _prev_swag < thr and cm.swag >= thr:
+			_say_bubble(Vector2(150, 130), PLAYER_LINES[randi() % PLAYER_LINES.size()], C_SWAG)
+			break
+	_prev_swag = cm.swag
+	if cm.state == CombatManager.State.ENEMY_TURN and _prev_state != CombatManager.State.ENEMY_TURN:
+		var alive := cm.living_enemies()
+		if not alive.is_empty():
+			var idx: int = cm.enemies.find(alive[randi() % alive.size()])
+			_say_bubble(_enemy_center(idx) + Vector2(0, -120), ENEMY_TAUNTS[randi() % ENEMY_TAUNTS.size()], C_INTENT)
+	_prev_state = cm.state
+
+func _hurt_flash() -> void:
+	var fl := ColorRect.new()
+	fl.color = Color(0.9, 0.12, 0.12, 0.0)
+	fl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_popups.add_child(fl)
+	var tw := create_tween()
+	tw.tween_property(fl, "color:a", 0.16, 0.05)
+	tw.tween_property(fl, "color:a", 0.0, 0.25)
+	tw.tween_callback(fl.queue_free)
+
 func _enemy_center(i: int) -> Vector2:
 	var n := cm.enemies.size()
-	var wper := 186.0 + 22.0
-	var total := n * 186.0 + (n - 1) * 22.0
-	var start_x := 300.0 + (812.0 - total) * 0.5
-	return Vector2(start_x + i * wper + 93.0, 150.0)
+	var wper := 150.0 + 18.0
+	var total := n * 150.0 + (n - 1) * 18.0
+	var start_x := 432.0 + (700.0 - total) * 0.5
+	return Vector2(start_x + i * wper + 75.0, 240.0)
 
 func _float_text(pos: Vector2, text: String, color: Color) -> void:
 	var lbl := Label.new()
@@ -210,38 +436,11 @@ func _float_text(pos: Vector2, text: String, color: Color) -> void:
 	tw.tween_property(lbl, "modulate:a", 0.0, 0.7)
 	tw.chain().tween_callback(lbl.queue_free)
 
-func _punch(node: Control) -> void:
-	if node == null:
-		return
-	var sz := node.size if node.size != Vector2.ZERO else node.custom_minimum_size
-	node.pivot_offset = sz * 0.5
-	node.scale = Vector2(1.08, 1.08)
-	node.modulate = Color(1.6, 1.6, 1.6)
-	var tw := create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(node, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(node, "modulate", Color.WHITE, 0.2)
-
-func _banter() -> void:
-	if _popups == null:
-		return
-	for thr in [12, 18]:
-		if _prev_swag < thr and cm.swag >= thr:
-			_say_bubble(Vector2(214, 240), PLAYER_LINES[randi() % PLAYER_LINES.size()], C_SWAG)
-			break
-	_prev_swag = cm.swag
-	if cm.state == CombatManager.State.ENEMY_TURN and _prev_state != CombatManager.State.ENEMY_TURN:
-		var alive := cm.living_enemies()
-		if not alive.is_empty():
-			var idx: int = cm.enemies.find(alive[randi() % alive.size()])
-			_say_bubble(_enemy_center(idx) + Vector2(-103, -88), ENEMY_TAUNTS[randi() % ENEMY_TAUNTS.size()], C_INTENT)
-	_prev_state = cm.state
-
 func _say_bubble(pos: Vector2, text: String, accent: Color) -> void:
 	var w := 206.0
 	var h := 46.0
 	var c := Control.new()
-	c.position = pos
+	c.position = pos - Vector2(w * 0.5, 0)
 	c.size = Vector2(w, h)
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var tail := Polygon2D.new()
@@ -279,148 +478,6 @@ func _say_bubble(pos: Vector2, text: String, accent: Color) -> void:
 	tw.tween_property(c, "modulate:a", 0.0, 0.3)
 	tw.tween_callback(c.queue_free)
 
-func _hurt_flash() -> void:
-	var fl := ColorRect.new()
-	fl.color = Color(0.9, 0.12, 0.12, 0.0)
-	fl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_popups.add_child(fl)
-	var tw := create_tween()
-	tw.tween_property(fl, "color:a", 0.16, 0.05)
-	tw.tween_property(fl, "color:a", 0.0, 0.25)
-	tw.tween_callback(fl.queue_free)
-
-func _rebuild_enemies(over: bool) -> void:
-	for c in _enemies_box.get_children():
-		c.queue_free()
-	_enemy_panels = []
-	for i in cm.enemies.size():
-		var w := _make_enemy_widget(cm.enemies[i], i, over)
-		_enemy_panels.append(w)
-		_enemies_box.add_child(w)
-
-func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Control:
-	var dead := e.is_dead()
-	var targeted := (not over) and (cm.target_index == index) and not dead
-	var panel := Panel.new()
-	panel.custom_minimum_size = Vector2(186, 188)
-	var border := C_TARGET if targeted else C_PANEL_BORDER
-	panel.add_theme_stylebox_override("panel", _panel_box(C_BG_PANEL if not dead else Color(0.1, 0.09, 0.11), border, 3 if targeted else 2))
-	if not dead and not over:
-		panel.gui_input.connect(func(ev: InputEvent):
-			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-				cm.set_target(index))
-
-	if not dead:
-		var shadow := Panel.new()
-		var ss := StyleBoxFlat.new()
-		ss.bg_color = Color(0, 0, 0, 0.25)
-		ss.set_corner_radius_all(12)
-		shadow.add_theme_stylebox_override("panel", ss)
-		shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		shadow.position = Vector2(56, 62)
-		shadow.size = Vector2(74, 12)
-		panel.add_child(shadow)
-
-	var tex: Texture2D = null if dead else SpriteBank.texture(e.data.id)
-	if tex != null:
-		var tr := TextureRect.new()
-		tr.texture = tex
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tr.position = Vector2(48, 0)
-		tr.size = Vector2(90, 66)
-		panel.add_child(tr)
-	else:
-		var sprite := Label.new()
-		sprite.text = "☠" if dead else e.data.emoji
-		sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		sprite.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		sprite.add_theme_font_size_override("font_size", 50)
-		sprite.position = Vector2(43, 6)
-		sprite.size = Vector2(100, 60)
-		panel.add_child(sprite)
-
-	var intent := Label.new()
-	intent.text = "" if (over or dead) else _intent_text_for(e)
-	intent.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	intent.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	intent.add_theme_font_size_override("font_size", 18)
-	intent.add_theme_color_override("font_color", C_INTENT)
-	intent.position = Vector2(8, 64)
-	intent.size = Vector2(170, 24)
-	panel.add_child(intent)
-
-	var nm := Label.new()
-	nm.text = e.display_name
-	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nm.add_theme_font_size_override("font_size", 14)
-	nm.position = Vector2(6, 92)
-	nm.size = Vector2(174, 20)
-	panel.add_child(nm)
-
-	var bar := ProgressBar.new()
-	bar.show_percentage = false
-	bar.max_value = e.max_hp
-	bar.value = e.hp
-	bar.position = Vector2(14, 118)
-	bar.size = Vector2(158, 22)
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_style_bar(bar, C_HP, C_HP_TRACK)
-	var hptext := Label.new()
-	hptext.text = "%d / %d" % [e.hp, e.max_hp]
-	hptext.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hptext.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hptext.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	hptext.add_theme_font_size_override("font_size", 13)
-	hptext.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bar.add_child(hptext)
-	panel.add_child(bar)
-
-	var st := Label.new()
-	st.text = _status_text(e)
-	st.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	st.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	st.add_theme_font_size_override("font_size", 13)
-	st.position = Vector2(6, 144)
-	st.size = Vector2(174, 38)
-	st.autowrap_mode = TextServer.AUTOWRAP_WORD
-	panel.add_child(st)
-	return panel
-
-func _rebuild_hand(over: bool) -> void:
-	for child in _hand.get_children():
-		child.queue_free()
-	if over:
-		return
-	for card in cm.hand:
-		var btn := CardView.build(card, cm.can_play(card), Callable())
-		if cm.can_play(card):
-			btn.pressed.connect(_play_card.bind(card, btn))
-		_hand.add_child(btn)
-
-func _play_card(card: CardData, btn: Button) -> void:
-	if cm.state != CombatManager.State.PLAYER_TURN or not cm.can_play(card):
-		return
-	# detach the played card so the hand rebuild won't free it, then fly it up & fade
-	var gpos := btn.global_position
-	_hand.remove_child(btn)
-	_popups.add_child(btn)
-	btn.global_position = gpos
-	btn.disabled = true
-	btn.pivot_offset = btn.size * 0.5
-	var tw := create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(btn, "position:y", gpos.y - 140, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(btn, "scale", Vector2(1.35, 1.35), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(btn, "rotation", deg_to_rad(5), 0.3)
-	tw.chain().tween_property(btn, "modulate:a", 0.0, 0.18)
-	tw.chain().tween_callback(btn.queue_free)
-	cm.play_card(card)
-
 # --- text helpers --------------------------------------------------------
 
 func _status_text(c: Combatant) -> String:
@@ -453,19 +510,9 @@ func _threshold_text() -> String:
 	var d := func(n): return "●" if cm.swag >= n else "○"
 	return "%s ≥6 +2dmg    %s ≥12 +draw    %s ≥18 pierce" % [d.call(6), d.call(12), d.call(18)]
 
-func _artifact_text() -> String:
-	if GameState.run_artifacts.is_empty():
-		return ""
-	var parts: Array[String] = []
-	for aid in GameState.run_artifacts:
-		var a := Database.get_artifact(aid)
-		if a != null:
-			parts.append(a.emoji)
-	return "🎒 " + " ".join(parts)
-
 # --- styles --------------------------------------------------------------
 
-func _panel_box(bg: Color, border: Color, bw: int = 2) -> StyleBoxFlat:
+func _panel_box(bg: Color, border: Color, bw := 2) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg
 	s.set_border_width_all(bw)
