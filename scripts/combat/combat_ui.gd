@@ -177,6 +177,10 @@ func _build_fit_strip() -> void:
 func _refresh() -> void:
 	if cm == null:
 		return
+	# After a winning blow the combat_ended signal swaps the scene out; a trailing
+	# `changed` emission must not run the animation helpers (they need get_tree()).
+	if not is_inside_tree():
+		return
 	var over := cm.state == CombatManager.State.WIN or cm.state == CombatManager.State.LOSE
 	_turn_banner.text = "THEIR TURN" if cm.state == CombatManager.State.ENEMY_TURN else "TURN %d" % cm.turn
 	_gold.text = "💰 %d" % GameState.gold

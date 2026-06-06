@@ -384,8 +384,10 @@ func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: 
 func _finish(victory: bool) -> void:
 	state = State.WIN if victory else State.LOSE
 	_say("✦ BIG W ✦" if victory else "you took an L 💀")
-	combat_ended.emit(victory)
+	# Emit the final UI update first (death poofs/popups run while the combat scene
+	# is still in the tree), THEN signal the end — which may change scene and detach us.
 	_emit()
+	combat_ended.emit(victory)
 
 func _disp(s: StringName) -> String:
 	return _DISP.get(s, String(s).capitalize())
