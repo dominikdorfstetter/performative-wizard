@@ -16,7 +16,9 @@ const LOG_KEEP := 6
 const THRESHOLD_DAMAGE := 6
 const THRESHOLD_DRAW := 12
 const THRESHOLD_PIERCE := 18
+const THRESHOLD_ENCORE := 24    # spotlight line (P3 Commit to the Bit)
 const SWAG_DAMAGE_BONUS := 2
+const BOOED_LOSS := 4           # soft floor: falling out of the spotlight stings, doesn't cascade
 
 # Gen-Z display names for the internal status keywords.
 const _DISP := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed", &"poison": "Toxic"}
@@ -33,9 +35,17 @@ var swag := 0
 var drip := 0
 var spells_this_turn := 0
 
-# --- The Critic: style scoring inputs (see compute_show_rating) -----------
+# --- The Critic: style fingerprint (see compute_show_rating / style_signature) ---
 var peak_swag := 0          # high-water mark of Aura reached this fight
 var finisher_clean := false # a finisher (Aura cash-out) landed the killing blow
+var finisher_kind: StringName = &""   # which cash-out did it (swag_x3/encore/spread/drain)
+var aoe_plays := 0          # cards that hit all enemies (spread style)
+var single_plays := 0       # cards that hit one target (single-target style)
+var flexed := false         # took a hit while hoarding above the pierce line (a risky flex)
+
+# --- Commit to the Bit (P3) ----------------------------------------------
+var encore := 0             # turns held in the spotlight (>= THRESHOLD_ENCORE)
+var booed := false          # fell out of the spotlight last turn-start
 
 var draw_pile: Array[CardData] = []
 var hand: Array[CardData] = []
@@ -73,6 +83,12 @@ func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_va
 	log_lines.clear()
 	peak_swag = 0
 	finisher_clean = false
+	finisher_kind = &""
+	aoe_plays = 0
+	single_plays = 0
+	flexed = false
+	encore = 0
+	booed = false
 	state = State.PLAYER_TURN
 	_apply_combat_start_passives()
 	peak_swag = swag                 # seed the high-water mark after outfit seeding
@@ -170,6 +186,18 @@ func _start_player_turn() -> void:
 	var before := swag
 	gain_swag(drip)
 	_tick_powers()
+	# Commit to the Bit: holding above the spotlight builds an Encore; sliding back
+	# under it (a mistimed cash-out or an enemy knocking you down) gets you booed.
+	booed = false
+	if swag >= THRESHOLD_ENCORE:
+		encore += 1
+		_say(Loc.t("🎤 ENCORE ×%d — the crowd wants MORE") % encore)
+	elif encore > 0:
+		var lost: int = min(swag, BOOED_LOSS)
+		swag = max(0, swag - lost)
+		encore = 0
+		booed = true
+		_say(Loc.t("📉 BOOED OFF — you fell out of the spotlight (−%d Aura)") % lost)
 	if has_passive(&"strength_at_10_swag") and swag >= THRESHOLD_DRAW:
 		player.add_status(&"strength", 1)
 		_say("Catwalk Heels: +1 Rizz")
@@ -223,6 +251,7 @@ func play_card(card: CardData) -> bool:
 
 	var tgt := target()
 	var is_attack := card.type == "Attack"
+	_classify_play(card)
 	var first_spell := spells_this_turn == 0
 	var pierced := is_attack and first_spell and swag_pierces()
 	var atk_bonus := swag_damage_bonus() if is_attack else 0
@@ -275,22 +304,78 @@ func play_card(card: CardData) -> bool:
 	_emit()
 	return true
 
+## Finishers spend ALL banked Aura for a burst. Each one is a distinct "cash-out
+## style" so WHICH finisher you close on becomes part of the Critic's fingerprint.
 func _resolve_finisher(e: Dictionary, ctx: Dictionary) -> void:
 	var tgt: Combatant = ctx.get("target")
-	if tgt == null:
-		return
+	var bonus := int(ctx.get("bonus_damage", 0))
+	var pierce := bool(ctx.get("pierce", false))
+	var crit := bool(ctx.get("crit", false))
+	var boost := 1.5 if has_passive(&"finisher_boost") else 1.0   # "flash" outfit persona
 	match String(e.get("op", "")):
 		"finisher_swag_x3":
-			var raw := swag * 3 + int(ctx.get("bonus_damage", 0))
-			var dmg := EffectResolver.compute_damage(raw, player, tgt)
-			if ctx.get("crit", false):
-				dmg *= 2
-			tgt.take_damage(dmg, ctx.get("pierce", false))
+			if tgt == null:
+				return
+			_finisher_hit(tgt, int(swag * 3 * boost) + bonus, crit, pierce)
 			swag = 0
-			if all_dead():
-				finisher_clean = true   # the Aura cash-out was the killing blow
+			_mark_finisher(&"swag_x3")
+		"finisher_encore":
+			if tgt == null:
+				return
+			# Take a Bow: the longer you held the spotlight, the bigger the bow.
+			_finisher_hit(tgt, int(swag * (2 + encore) * boost) + bonus, crit, pierce)
+			swag = 0
+			encore = 0
+			_mark_finisher(&"encore")
+		"finisher_spread":
+			# Encore for the Fans: spend it all across the whole room.
+			var per := int(swag * 1.5 * boost) + bonus
+			for en in enemies:
+				if not en.is_dead():
+					var d := EffectResolver.compute_damage(per, player, en)
+					if crit:
+						d *= 2
+					en.take_damage(d, pierce)
+			swag = 0
+			_mark_finisher(&"spread")
+		"finisher_drain":
+			# Soak It In: a smaller cash-out that heals you for half of what it deals.
+			if tgt == null:
+				return
+			var dealt := _finisher_hit(tgt, int(swag * 2 * boost) + bonus, crit, pierce)
+			player.heal(int(dealt / 2.0))
+			swag = 0
+			_mark_finisher(&"drain")
 		_:
 			push_warning("[CombatManager] unknown finisher: " + String(e.get("op", "")))
+
+func _finisher_hit(tgt: Combatant, raw: int, crit: bool, pierce: bool) -> int:
+	var dmg := EffectResolver.compute_damage(raw, player, tgt)
+	if crit:
+		dmg *= 2
+	var before := tgt.hp
+	tgt.take_damage(dmg, pierce)
+	return before - tgt.hp
+
+func _mark_finisher(kind: StringName) -> void:
+	finisher_kind = kind
+	if all_dead():
+		finisher_clean = true   # the Aura cash-out landed the killing blow
+
+# Classify a played card as spread (hits all) or single-target, for the fingerprint.
+func _classify_play(card: CardData) -> void:
+	var is_aoe := false
+	var is_single := false
+	for ef in card.effects:
+		var o := String(ef.get("op", ""))
+		if o == "damage_all" or o == "finisher_spread":
+			is_aoe = true
+		elif o.begins_with("damage") or o == "sacrifice_strike" or o.begins_with("finisher"):
+			is_single = true
+	if is_aoe:
+		aoe_plays += 1
+	elif is_single:
+		single_plays += 1
 
 # --- The Critic: show rating ---------------------------------------------
 
@@ -323,7 +408,24 @@ func compute_show_rating() -> Dictionary:
 		"finisher_clean": finisher_clean,
 		"turns": turn,
 		"hp_lost": (player.max_hp - player.hp) if player != null else 0,
+		"signature": style_signature(),
+		"finisher_kind": finisher_kind,
+		"booed": booed,
 	}
+
+## The fingerprint of HOW this fight was won — the dimension the Critic's taste
+## drifts across (P2). A clean cash-out is named by its style (so different
+## finishers read as different); otherwise spread vs flex vs hoard vs grind.
+func style_signature() -> StringName:
+	if finisher_clean and finisher_kind != &"":
+		return finisher_kind
+	if aoe_plays > single_plays and aoe_plays > 0:
+		return &"spread"
+	if flexed:
+		return &"flex"
+	if peak_swag >= THRESHOLD_PIERCE:
+		return &"hoard"
+	return &"grind"
 
 ## Just the letter — for the live in-combat readout.
 func live_rating() -> String:
@@ -399,6 +501,9 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 				_say(Loc.t("%s went off — %d×%d (%d)") % [name, dmg, hits, hp0 - player.hp])
 			else:
 				_say(Loc.t("%s threw hands for %d") % [name, hp0 - player.hp])
+			# took a hit while hoarding above the pierce line → a risky flex (fingerprint)
+			if swag >= THRESHOLD_PIERCE and player.hp < hp0:
+				flexed = true
 			if not src.is_dead() and has_passive(&"thorns_3"):
 				src.take_damage(3)
 				_say(Loc.t("thorns! %s caught a fade for 3") % name)
@@ -421,6 +526,15 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 			var before := swag
 			swag = max(0, swag - amount)
 			_say(Loc.t("%s drained %d of your Aura 😤") % [name, before - swag])
+		"tax":
+			# Counter-play to hoarding: taxes your Aura only while you sit on a pile.
+			var thr := int(intent.get("threshold", THRESHOLD_DRAW))
+			if swag >= thr:
+				var before2 := swag
+				swag = max(0, swag - amount)
+				_say(Loc.t("%s taxed your hoard for %d 💸") % [name, before2 - swag])
+			else:
+				_say(Loc.t("%s wants to tax you but you're broke 💀") % name)
 		"summon_ally":
 			var sid := StringName(intent.get("enemy", &""))
 			var ed := Database.get_enemy(sid)

@@ -18,15 +18,21 @@ Last updated: 2026-06-06.
 > source of truth for *why* things are the way they are.
 
 ### Current snapshot (2026-06-06)
-- **Content:** 38 cards, 23 enemies + **2 bosses** (The Hater, The Algorithm), **3 wizards**
-  (Fire / Necro / Rizzard), 17 outfits, 14 artifacts.
+- **Content:** 41 cards, 24 enemy types + **2 bosses** (The Critic, The Algorithm), **3
+  wizards** (Fire / Necro / Rizzard), 19 outfits, 14 artifacts.
+- **USP — The Critic:** a rival grades every fight on how boldly you played your Aura and
+  rewrites the run in response (live grade in combat; S → VIP room, C → heckler; her taste
+  drifts so variety is the meta). Full rationale + build log in [`docs/USP.md`](docs/USP.md).
 - **Progression:** wizards, cards, and relics unlock via lifetime **Clout**; **3 acts** with
   per-act scaling; an **ascension** hard-mode ladder banked on each clear.
-- **Combat depth:** the banked-Aura economy (thresholds 6/12/18), crit/luck, **Power** cards
-  (persistent per-turn effects: ritual / aura-engine / hive-mind / barrier), and a full
-  status set — Roasted (burn), Cooked (vulnerable), Mid (weak), Jinxed, **Exposed** (frail),
-  **Toxic** (poison ramp), Rizz (strength), Goons (undead). Enemies multi-hit, heal, drain
-  Aura, **enrage**, and **summon adds** mid-fight.
+- **Combat depth:** the banked-Aura economy (thresholds 6/12/18) with a tiered lit/unlit
+  meter; **four finishers** (Aura×3 / spread / lifedrain / Encore); **Commit to the Bit**
+  (a spotlight at 24 builds an Encore, falling out gets you *booed*); a **tax** verb that
+  punishes hoarding; the **Feed** (per-act Aura-income Trend); crit/luck, **Power** cards
+  (ritual / aura-engine / hive-mind / barrier), and a full status set — Roasted (burn),
+  Cooked (vulnerable), Mid (weak), Jinxed, **Exposed** (frail), **Toxic** (poison ramp),
+  Rizz (strength), Goons (undead). Enemies multi-hit, heal, drain/tax Aura, **enrage**, and
+  **summon adds** mid-fight.
 - **Presentation:** procedural pixel-art (`SpriteBank`) — varied enemy silhouettes, per-class
   wizards, summoned-goon minions, 5 biome backdrops; a pixel battle scene with idle bob,
   projectiles, hit sparks, crits, screen shake.

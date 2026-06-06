@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"flash_cannon"
+title = "Flash Cannon"
+slot = "Staff"
+element = "Neutral"
+drip = 0
+passive_text = "Finishers deal +50%. Low drip — you live for the cash-out, not the slow build."
+passive_id = &"finisher_boost"
+injected_cards = []

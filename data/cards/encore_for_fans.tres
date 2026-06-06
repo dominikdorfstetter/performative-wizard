@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"encore_for_fans"
+title = "Encore for the Fans"
+description = "Finisher. Spend ALL Aura. Deal Aura × 1.5 to ALL enemies."
+cost = 2
+type = "Attack"
+rarity = "Rare"
+swag_gain = 0
+swag_cost = 0
+effects = [{ "op": "finisher_spread", "target": "enemy" }]
+
+unlock_clout = 90

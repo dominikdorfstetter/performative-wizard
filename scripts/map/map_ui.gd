@@ -140,6 +140,9 @@ func _build_info() -> void:
 		w.emoji, w.title, GameState.act, GameState.MAX_ACTS, asc,
 		GameState.player_hp, GameState.player_max_hp,
 		GameState.gold, GameState.clout, _artifact_text()]
+	var trend := GameState.trend_label()
+	if trend != "":
+		_info.text += "\n%s    👀 Critic ✦%d" % [trend, GameState.critic_score]
 	add_child(_info)
 	var deck_btn := Button.new()
 	deck_btn.text = "🃏 deck (%d)" % GameState.deck.size()

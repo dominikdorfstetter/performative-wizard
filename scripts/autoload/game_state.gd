@@ -29,6 +29,8 @@ const BOUTIQUE: Array[Dictionary] = [
 	{"id": &"showstopper_hat", "cost": 110},
 	{"id": &"phoenix_gown", "cost": 130},
 	{"id": &"diva_heels", "cost": 160},
+	{"id": &"flash_cannon", "cost": 90},
+	{"id": &"slow_burn_robe", "cost": 90},
 ]
 
 # --- Meta: persists across runs ---
@@ -63,7 +65,15 @@ var pos_col := -1
 # The Critic (run-scoped): her verdict on the LAST fight, and the verdict still
 # waiting to reshape the NEXT room the player enters.
 var critic_last_rating := ""
+var critic_last_signature: StringName = &""
+var critic_last_freshness := 1.0
 var pending_critic := ""
+var pending_freshness := 1.0
+# P2 anti-solve: how tired she is of each style you keep serving (run-scoped).
+var critic_fatigue: Dictionary = {}
+
+# The Feed (P4): a Trend that re-prices Aura income, rotating per act.
+var trend: StringName = &""
 
 var message := ""
 
@@ -159,6 +169,11 @@ func start_run(wid: StringName) -> void:
 	run_artifacts = []
 	card_upgrades = {}
 	_validate_equip_for(w.element)
+	critic_fatigue = {}
+	pending_critic = ""
+	pending_freshness = 1.0
+	critic_last_rating = ""
+	_roll_trend()
 	map = MapGenerator.generate(randi())
 	pos_row = -1
 	pos_col = -1
@@ -314,48 +329,93 @@ func combat_reward(node: Dictionary) -> int:
 
 # --- The Critic: review the run ------------------------------------------
 
-# Two voice lines per grade so back-to-back fights don't repeat verbatim.
+# Several voice lines per grade so back-to-back fights don't repeat verbatim.
 const CRITIC_LINES := {
-	"S": ["S — serve. obsessed. devastating. 💅", "S — the giiirls are SERVING. iconic."],
-	"A": ["A — ate. left a crumb on the plate.", "A — a real look. almost made me clap."],
-	"B": ["B — mid showing, bestie. do better.", "B — it was giving... fine. i guess."],
-	"C": ["C — flop era. who told you that was giving?", "C — boo. i've seen NPCs with more drip."],
+	"S": ["S — serve. obsessed. devastating. 💅", "S — the giiirls are SERVING. iconic.", "S — i felt that in my SOUL. headliner."],
+	"A": ["A — ate. left a crumb on the plate.", "A — a real look. almost made me clap.", "A — so close to perfect it's annoying."],
+	"B": ["B — mid showing, bestie. do better.", "B — it was giving... fine. i guess.", "B — i've seen worse. i've seen way better."],
+	"C": ["C — flop era. who told you that was giving?", "C — boo. i've seen NPCs with more drip.", "C — that wasn't a fit, that was a cry for help."],
 }
 
-## Bank The Critic's verdict on the fight that just ended: remember it for the
-## reward screen and queue it to reshape the NEXT room the player enters.
+## Bank The Critic's verdict on the fight that just ended. Her taste DRIFTS (P2):
+## the style you just served tires her (its bonus shrinks next time), while styles
+## you've laid off recover. Repeating the same cash-out — the degenerate
+## hoard-then-one-finisher line — decays its own reward, so variety is the meta.
 func record_show_rating(r: Dictionary) -> void:
 	var rating := String(r.get("rating", "B"))
+	var sig: StringName = r.get("signature", &"grind")
+	var fat := int(critic_fatigue.get(sig, 0))
 	critic_last_rating = rating
+	critic_last_signature = sig
+	critic_last_freshness = maxf(0.0, 1.0 - 0.34 * fat)
 	pending_critic = rating
+	pending_freshness = critic_last_freshness
 	critic_score += {"S": 3, "A": 2, "B": 1, "C": 0}.get(rating, 0)
+	# drift: every style cools by 1, then the style just served heats by 2 (net +1)
+	for k in critic_fatigue.keys():
+		critic_fatigue[k] = max(0, int(critic_fatigue[k]) - 1)
+	critic_fatigue[sig] = min(3, fat + 2)
 	save_meta()
 
-## Her review rewrites the room ahead. S-rank opens a VIP room (richer reward);
-## C-rank sends a heckler into the fight. Penalties touch ROOMS ONLY — never the
-## starting-combat math (no starting-Aura debuff, no death spiral). Non-fight
-## rooms (Rest/Shop/Event/Boss) are left alone.
+## Her review rewrites the room ahead. An S opens a VIP room (richer reward) — but
+## only if the style was FRESH; serve the same finish over and over and she's seen
+## it (no VIP). A C sends a heckler into the next fight. Penalties touch ROOMS ONLY
+## — never the starting-combat math (no starting-Aura debuff, no death spiral).
+## Non-fight rooms (Rest/Shop/Event/Boss) are left alone.
 func apply_critic_mutation(n: Dictionary) -> void:
 	if pending_critic == "":
 		return
 	var rating := pending_critic
+	var freshness := pending_freshness
 	pending_critic = ""
+	pending_freshness = 1.0
 	var t := String(n.get("type", ""))
 	if t != "Combat" and t != "Elite":
 		return
 	if rating == "S":
-		n["critic_bonus_gold"] = int(n.get("critic_bonus_gold", 0)) + 20
-		n["critic_note"] = "vip"
+		var bonus := int(round(20 * freshness))
+		if bonus > 0:
+			n["critic_bonus_gold"] = int(n.get("critic_bonus_gold", 0)) + bonus
+			n["critic_note"] = "vip"
+		else:
+			n["critic_note"] = "bored"   # she's seen this exact finish too many times
 	elif rating == "C":
 		var ens: Array = n.get("enemies", []).duplicate()
 		ens.append(&"heckler")
 		n["enemies"] = ens
 		n["critic_note"] = "heckler"
 
-## The Critic's spoken verdict for a grade (localized; varies by run progress).
+## The Critic's spoken verdict (localized). When you keep serving the same fresh-out
+## style she gets bored and demands something new — the drift made audible.
 func critic_quip(rating: String) -> String:
+	if (rating == "S" or rating == "A") and critic_last_freshness <= 0.0:
+		return Loc.t("again? 🥱 serve me something NEW.")
 	var arr: Array = CRITIC_LINES.get(rating, CRITIC_LINES["C"])
 	return Loc.t(arr[critic_score % arr.size()])
+
+# --- The Feed: rotating Trend (P4) ---------------------------------------
+
+# Trend → Aura-income modifier. Re-prices the show without ever zeroing income.
+const TRENDS: Array[StringName] = [&"its_giving", &"flop_era", &"going_viral"]
+const TREND_MOD := {&"its_giving": 1, &"flop_era": -1, &"going_viral": 1}
+const TREND_LABEL := {
+	&"its_giving": "📈 TREND: it's giving abundance  (+1 Aura/turn)",
+	&"flop_era": "📉 TREND: flop era  (−1 Aura/turn)",
+	&"going_viral": "🔥 TREND: going viral  (+1 Aura/turn)",
+}
+
+func _roll_trend() -> void:
+	trend = TRENDS[(act - 1) % TRENDS.size()]
+
+func trend_drip_mod() -> int:
+	return int(TREND_MOD.get(trend, 0))
+
+## Aura income with the current Trend priced in (floored at 0 — never negative).
+func effective_drip() -> int:
+	return max(0, drip + trend_drip_mod())
+
+func trend_label() -> String:
+	return Loc.t(String(TREND_LABEL.get(trend, "")))
 
 func finish_run(victory: bool) -> void:
 	var earned := 20 + int(gold / 3)
@@ -387,6 +447,7 @@ func advance_act() -> bool:
 		return false
 	act += 1
 	gold += 15
+	_roll_trend()
 	map = MapGenerator.generate(randi())
 	pos_row = -1
 	pos_col = -1

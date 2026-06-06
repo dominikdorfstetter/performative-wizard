@@ -42,6 +42,8 @@ var _prev_swag := 0
 var _prev_state := -1
 var _prev_lit := 0           # how many Aura tiers were lit last refresh (for the pulse)
 var _prev_rating := ""       # The Critic's last shown verdict (for the tick-up pulse)
+var _prev_encore := 0        # spotlight counter last refresh (for the encore tell)
+var _prev_booed := false     # were we booed last refresh (so we only float it once)
 var _player_home := Vector2.ZERO
 
 @onready var _bg: TextureRect = $Background
@@ -149,7 +151,7 @@ func _start_fight() -> void:
 	cm = CombatManager.new()
 	cm.changed.connect(_refresh)
 	cm.combat_ended.connect(_on_combat_ended)
-	cm.start_combat(player, encounter, deck, GameState.drip, false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
+	cm.start_combat(player, encounter, deck, GameState.effective_drip(), false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
 	_build_player_widget(w)
 	_build_fit_strip()
 	_prev_enemy_hp = []
@@ -160,6 +162,8 @@ func _start_fight() -> void:
 	_prev_state = cm.state
 	_prev_lit = 0
 	_prev_rating = ""
+	_prev_encore = 0
+	_prev_booed = false
 	_refresh()
 
 # --- player widget (left, persistent) ------------------------------------
@@ -731,6 +735,15 @@ func _banter() -> void:
 			Audio.play("aura", -5.0)
 			break
 	_prev_swag = cm.swag
+	# Commit-to-the-Bit tells: the spotlight building, or the boo when it drops.
+	if cm.encore > _prev_encore and cm.encore > 0:
+		_say_bubble(Vector2(150, 130), Loc.t("🎤 ENCORE ×%d!") % cm.encore, C_GOLD)
+		Audio.play("buff", -5.0)
+	_prev_encore = cm.encore
+	if cm.booed and not _prev_booed:
+		_float_text(Vector2(150, 200), Loc.t("BOOED 📉"), Color(0.95, 0.42, 0.45))
+		Audio.play("debuff", -4.0)
+	_prev_booed = cm.booed
 	if cm.state == CombatManager.State.ENEMY_TURN and _prev_state != CombatManager.State.ENEMY_TURN:
 		var alive := cm.living_enemies()
 		if not alive.is_empty():
@@ -889,6 +902,10 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 			icon = "star"
 			text = "−%d" % int(it.get("amount", 0))
 			col = Color(0.95, 0.85, 0.45)
+		"tax":
+			icon = "star"
+			text = "💸%d" % int(it.get("amount", 0))
+			col = Color(0.95, 0.78, 0.4)
 		"summon_ally":
 			icon = "bones"
 			text = "backup"
