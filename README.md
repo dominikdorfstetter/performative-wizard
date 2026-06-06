@@ -5,6 +5,14 @@ A roguelike deckbuilder (à la *Slay the Spire*) where a wizard's power comes fr
 wizardry: you fight ordinary modern things turned hostile (an Angry Toaster, a
 Possessed Router, The Algorithm) and win by serving looks.
 
+## ⬇️ Download
+
+**[Download for macOS (v1.0.0)](https://github.com/dominikdorfstetter/performative-wizard/releases/latest/download/PerformativeWizard.zip)** ·
+[all releases](https://github.com/dominikdorfstetter/performative-wizard/releases)
+
+Universal macOS app (arm64 + Intel). It's unsigned, so on first launch **right-click →
+Open** (or System Settings → Privacy & Security → *Open Anyway*).
+
 📄 **Design:** [`DESIGN.md`](DESIGN.md) (vision) · **Reviews & roadmap:** [`docs/`](docs/)
 
 ## Status
