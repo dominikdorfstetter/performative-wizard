@@ -249,6 +249,32 @@ func _ready() -> void:
 	cmf.play_card(cmf.hand[0])
 	_check("frail softens block (9->6)", cmf.player.block, 6)
 
+	# --- second-tier statuses: poison + enrage -------------------------------
+	print("--- poison / enrage ---")
+	# poison ramps down and ticks at the victim's turn start
+	var cmpo := CombatManager.new()
+	var ppo := Combatant.new()
+	ppo.max_hp = 72
+	ppo.hp = 72
+	cmpo.start_combat(ppo, [Database.get_enemy(&"garden_gnome")], [Database.get_card(&"spread_rumors")], 0, true)
+	cmpo.hand = [Database.get_card(&"spread_rumors")]
+	cmpo.play_card(cmpo.hand[0])               # apply poison 4
+	var ehp0: int = cmpo.enemies[0].hp
+	cmpo.end_turn()                            # enemy turn: poison ticks 4, then ->3
+	_check("poison ticked 4", ehp0 - cmpo.enemies[0].hp, 4)
+	_check("poison ramped to 3", cmpo.enemies[0].status(&"poison"), 3)
+
+	# enrage: gym_rat gains Strength when hit
+	var cme := CombatManager.new()
+	var pe := Combatant.new()
+	pe.max_hp = 72
+	pe.hp = 72
+	cme.start_combat(pe, [Database.get_enemy(&"gym_rat")], [Database.get_card(&"ember")], 0, true)
+	_check("gym rat starts at 0 Rizz", cme.enemies[0].status(&"strength"), 0)
+	cme.hand = [Database.get_card(&"ember")]
+	cme.play_card(cme.hand[0])                 # deal 6 -> enrage +2
+	_check("gym rat enraged +2", cme.enemies[0].status(&"strength"), 2)
+
 	# --- Power cards: persistent start-of-turn effects -----------------------
 	print("--- powers ---")
 	var cm_pow := CombatManager.new()

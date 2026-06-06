@@ -9,3 +9,5 @@ title = "Possessed Wardrobe"
 emoji = "🚪"
 max_hp = 70
 intents = [{ "op": "attack", "amount": 10 }, { "op": "apply_status", "status": "weak", "amount": 2, "target": "player" }, { "op": "attack", "amount": 17 }, { "op": "buff", "status": "strength", "amount": 2 }]
+
+enrage = 1

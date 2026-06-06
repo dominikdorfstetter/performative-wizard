@@ -11,3 +11,6 @@ extends Resource
 ## Ordered, looping list of intents. Each is a dict like
 ## {"op": "attack", "amount": 7} or {"op": "apply_status", "status": "weak", "amount": 2}.
 @export var intents: Array[Dictionary] = []
+
+## Enrage: gains this much Strength each time it's damaged by a card (0 = none).
+@export var enrage: int = 0

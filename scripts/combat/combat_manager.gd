@@ -19,7 +19,7 @@ const THRESHOLD_PIERCE := 18
 const SWAG_DAMAGE_BONUS := 2
 
 # Gen-Z display names for the internal status keywords.
-const _DISP := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed"}
+const _DISP := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed", &"poison": "Toxic"}
 
 var state: State = State.PLAYER_TURN
 var player: Combatant
@@ -150,6 +150,12 @@ func _start_player_turn() -> void:
 	state = State.PLAYER_TURN
 	spells_this_turn = 0
 	turn += 1
+	var pois := _tick_poison(player)
+	if pois > 0:
+		_say("you're Toxic'd for %d" % pois)
+		if player.is_dead():
+			_finish(false)
+			return
 	energy = max_energy
 	var before := swag
 	gain_swag(drip)
@@ -225,6 +231,10 @@ func play_card(card: CardData) -> bool:
 	var pblk0 := player.block
 	var tburn0 := tgt.status(&"burn") if tgt != null else 0
 
+	var enemy_hp_before: Array = []
+	for e in enemies:
+		enemy_hp_before.append(e.hp)
+
 	var normal: Array = []
 	for e in card.effects:
 		if String(e.get("op", "")).begins_with("finisher"):
@@ -232,6 +242,13 @@ func play_card(card: CardData) -> bool:
 		else:
 			normal.append(e)
 	EffectResolver.apply(normal, ctx)
+
+	# Enrage: an enemy that got hit this card gains Strength.
+	for i in enemies.size():
+		var en := enemies[i]
+		if not en.is_dead() and en.data != null and en.data.enrage > 0 and en.hp < int(enemy_hp_before[i]):
+			en.add_status(&"strength", en.data.enrage)
+			_say("%s is ENRAGED → +%d Rizz" % [en.display_name, en.data.enrage])
 
 	if is_attack:
 		spells_this_turn += 1
@@ -287,6 +304,9 @@ func _enemy_turn() -> void:
 		var burned := _tick_burn(e)
 		if burned > 0:
 			_say("%s got Roasted for %d" % [e.display_name, burned])
+		var poisoned := _tick_poison(e)
+		if poisoned > 0:
+			_say("%s is Toxic'd for %d" % [e.display_name, poisoned])
 		if e.is_dead():
 			continue
 		if e.data == null or e.data.intents.is_empty():
@@ -366,6 +386,18 @@ func _tick_burn(c: Combatant) -> int:
 	else:
 		c.statuses[&"burn"] = b - 1
 	return b
+
+# Poison: deal stacks as unblockable damage at the victim's turn start, then ramp down 1.
+func _tick_poison(c: Combatant) -> int:
+	var p := c.status(&"poison")
+	if p <= 0:
+		return 0
+	c.take_damage(p, true)
+	if p - 1 <= 0:
+		c.statuses.erase(&"poison")
+	else:
+		c.statuses[&"poison"] = p - 1
+	return p
 
 func _decay(c: Combatant) -> void:
 	for s in [&"weak", &"vulnerable", &"jinx", &"frail"]:

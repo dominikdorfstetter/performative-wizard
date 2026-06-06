@@ -14,6 +14,6 @@ max_hp = 68
 base_drip = 2
 accent = Color(0.55, 0.78, 0.45, 1)
 starter_deck = [&"bone_dart", &"bone_dart", &"bone_dart", &"bone_dart", &"shroud", &"shroud", &"shroud", &"raise_dead", &"raise_dead", &"drain"]
-reward_pool = [&"macabre_bow", &"hex", &"raise_dead", &"drain", &"grand_finale", &"bone_wall", &"soul_siphon", &"mass_grave", &"strike_a_pose", &"vogue", &"quick_read", &"second_wind", &"touch_grass", &"hive_mind", &"grindset"]
+reward_pool = [&"macabre_bow", &"hex", &"raise_dead", &"drain", &"grand_finale", &"bone_wall", &"soul_siphon", &"mass_grave", &"strike_a_pose", &"vogue", &"quick_read", &"second_wind", &"touch_grass", &"hive_mind", &"grindset", &"spread_rumors"]
 
 unlock_clout = 120

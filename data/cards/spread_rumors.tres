@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"spread_rumors"
+title = "Spread Rumors"
+description = "Apply 4 Toxic. it ramps down each turn but it hurts."
+cost = 1
+type = "Skill"
+rarity = "Uncommon"
+swag_gain = 0
+swag_cost = 0
+unlock_clout = 50
+effects = [{ "op": "apply_status", "status": "poison", "amount": 4, "target": "enemy" }]
