@@ -361,6 +361,7 @@ func _ready() -> void:
 	pcr.hp = 72
 	cmcr.start_combat(pcr, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"grand_finale")], 0, true)
 	cmcr.gain_swag(18)
+	cmcr.flexed = true                                # the bold tell S now requires
 	_check("peak tracks gains", cmcr.peak_swag, 18)
 	cmcr.energy = 9
 	cmcr.hand = [Database.get_card(&"grand_finale")]
@@ -397,6 +398,18 @@ func _ready() -> void:
 	cma.hand = [Database.get_card(&"ember")]
 	cma.play_card(cma.hand[0])
 	_check("A rank: parked high, no clean finisher", cma.compute_show_rating()["rating"], "A")
+
+	# A (not S): a clean finisher with NO bold tell (no flex, no spotlight) caps at A
+	var cmco := CombatManager.new()
+	var pco := Combatant.new()
+	pco.max_hp = 72
+	pco.hp = 72
+	cmco.start_combat(pco, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"grand_finale")], 0, true)
+	cmco.gain_swag(18)
+	cmco.energy = 9
+	cmco.hand = [Database.get_card(&"grand_finale")]
+	cmco.play_card(cmco.hand[0])
+	_check("coasted clean finisher caps at A (no bold tell)", cmco.compute_show_rating()["rating"], "A")
 
 	# --- The Critic: score + map mutation + persistence (P1c) ----------------
 	print("--- critic: score + map mutation ---")

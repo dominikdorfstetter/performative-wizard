@@ -312,12 +312,15 @@ func enter(row: int, col: int) -> Dictionary:
 
 func node_scales(node: Dictionary) -> Array:
 	# deeper acts and ascension make everything tougher
-	var act_hp := 1.0 + 0.35 * (act - 1) + 0.08 * asc_level
-	var act_dmg := 1.0 + 0.22 * (act - 1) + 0.06 * asc_level
+	# Softened 2026-06-07 after the balance playtest: the act2→act3 spike was a
+	# damage-driven attrition cliff. Lowered per-act/row HP+dmg to smooth the ramp;
+	# asc-HP kept at 0.08 so the ascension endgame stays brutal. (See docs/USP.md.)
+	var act_hp := 1.0 + 0.30 * (act - 1) + 0.08 * asc_level
+	var act_dmg := 1.0 + 0.17 * (act - 1) + 0.05 * asc_level
 	if node.get("type") == "Boss":
 		return [act_hp, act_dmg]
 	var r: int = node.get("row", 0)
-	return [act_hp + 0.09 * r, act_dmg + 0.07 * r]
+	return [act_hp + 0.07 * r, act_dmg + 0.05 * r]
 
 func combat_reward(node: Dictionary) -> int:
 	var base := 9 + int(node.get("row", 0)) * 2
