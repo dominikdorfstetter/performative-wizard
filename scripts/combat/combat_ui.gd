@@ -565,7 +565,9 @@ func _punch(node: Control) -> void:
 	node.pivot_offset = sz * 0.5
 	node.scale = Vector2(1.18, 0.85)
 	node.modulate = Color(1.7, 1.7, 1.7)
-	var tw := create_tween()
+	# bind to node: enemy sprites are freed on the next _rebuild_enemies, and a
+	# self-bound tween would then animate a freed node.
+	var tw := node.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(node, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(node, "modulate", Color.WHITE, 0.24)

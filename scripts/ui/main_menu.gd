@@ -157,7 +157,9 @@ func _show_bubble(b: Control, text: String) -> void:
 	b.visible = true
 	b.pivot_offset = Vector2(b.size.x * 0.5, b.size.y)
 	b.scale = Vector2(0.4, 0.4)
-	var tw := create_tween()
+	# bind the tween to the bubble, not to self — so _clear() freeing the bubble
+	# kills its tween instead of leaving it animating a freed node.
+	var tw := b.create_tween()
 	tw.tween_property(b, "scale", Vector2.ONE, 0.34).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _hide_bubble(b: Control) -> void:
@@ -166,7 +168,9 @@ func _hide_bubble(b: Control) -> void:
 
 func _bob(tr: TextureRect, delay: float) -> void:
 	var y := tr.position.y
-	var tw := create_tween().set_loops()
+	# Bind to tr (not self): a looping tween whose target is freed by _clear() while
+	# the menu lives on would spin a zero-duration loop and hang the window.
+	var tw := tr.create_tween().set_loops()
 	tw.tween_interval(delay)
 	tw.tween_property(tr, "position:y", y - 9, 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(tr, "position:y", y, 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -176,7 +180,7 @@ func _react(tr: TextureRect) -> void:
 		return
 	tr.pivot_offset = tr.size * 0.5
 	tr.scale = Vector2(1.14, 0.88)
-	var tw := create_tween()
+	var tw := tr.create_tween()
 	tw.tween_property(tr, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 func _continue_label() -> String:
