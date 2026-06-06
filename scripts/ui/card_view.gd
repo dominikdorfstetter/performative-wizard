@@ -66,9 +66,13 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	bs.set_corner_radius_all(7)
 	body.add_theme_stylebox_override("panel", bs)
 	b.add_child(body)
-	_add_label(b, card.description, Vector2(9, 122), Vector2(132, 52), 13, Color(0.87, 0.87, 0.92))
-	if card.swag_gain > 0:
-		_add_label(b, "✦ Aura +%d" % card.swag_gain, Vector2(6, 178), Vector2(138, 16), 13, C_SWAG)
+	# description fills the inset box; shrinks for long text; leaves room for the footer
+	var has_footer := card.swag_gain > 0
+	var dh := 48 if has_footer else 72
+	var dsize := 13 if card.description.length() <= 58 else 12
+	_add_label(b, card.description, Vector2(9, 120), Vector2(132, dh), dsize, Color(0.87, 0.87, 0.92))
+	if has_footer:
+		_add_label(b, "✦ Aura +%d" % card.swag_gain, Vector2(6, 176), Vector2(138, 16), 13, C_SWAG)
 	return b
 
 static func _hover(b: Button, on: bool) -> void:

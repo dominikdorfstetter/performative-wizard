@@ -13,13 +13,13 @@ func _build() -> void:
 	NodeUI.sub(self, "Spend Clout on permanent drip. You have ✦ %d Clout." % GameState.clout)
 
 	var scroll := ScrollContainer.new()
-	scroll.position = Vector2(252, 166)
-	scroll.custom_minimum_size = Vector2(652, 400)
-	scroll.size = Vector2(652, 400)
+	scroll.position = Vector2(78, 160)
+	scroll.custom_minimum_size = Vector2(996, 412)
+	scroll.size = Vector2(996, 412)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(scroll)
 	var grid := GridContainer.new()
-	grid.columns = 2
+	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 24)
 	grid.add_theme_constant_override("v_separation", 20)
 	scroll.add_child(grid)

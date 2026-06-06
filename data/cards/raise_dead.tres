@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"raise_dead"
 title = "Summon NPC"
-description = "Summon 1 Goon (hits 2 at end of turn). Aura +1."
+description = "Summon 1 Goon. Aura +1."
 cost = 1
 type = "Skill"
 rarity = "Common"

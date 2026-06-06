@@ -9,6 +9,6 @@ title = "Drip Robe"
 slot = "Robe"
 element = "Neutral"
 drip = 1
-passive_text = "Start each combat with 5 Block."
+passive_text = "Start combat with 5 Block."
 passive_id = &"start_block_5"
 injected_cards = []

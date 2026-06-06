@@ -9,6 +9,6 @@ title = "Influencer Ring"
 slot = "Trinket"
 element = "Neutral"
 drip = 1
-passive_text = "When an enemy hits you, deal 3 back."
+passive_text = "Hit back for 3 when struck."
 passive_id = &"thorns_3"
 injected_cards = []

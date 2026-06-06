@@ -30,9 +30,20 @@ func _ready() -> void:
 	for id in pool.slice(0, min(3, pool.size())):
 		var card := Database.get_card(id)
 		if card != null:
-			_options.add_child(CardView.build(card, true, _take.bind(id)))
+			_options.add_child(_big_card(card, id))
 
 	$Skip.pressed.connect(_to_map)
+
+# scale cards up and box them so they spread across the screen instead of clustering
+func _big_card(card: CardData, id: StringName) -> Control:
+	var view := CardView.build(card, true, _take.bind(id))
+	view.pivot_offset = Vector2(75, 100)
+	view.scale = Vector2(1.45, 1.45)
+	view.position = Vector2(34, 45)
+	var holder := Control.new()
+	holder.custom_minimum_size = Vector2(218, 290)
+	holder.add_child(view)
+	return holder
 
 func _random_unowned_artifact() -> StringName:
 	var all := Database.all_artifact_ids().duplicate()
