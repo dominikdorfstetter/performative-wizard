@@ -15,6 +15,7 @@ const ICON_BY_ID := {
 	&"grand_finale": "crown", &"flourish": "wing", &"vogue": "wing", &"strike_a_pose": "star",
 	&"macabre_bow": "arrow", &"touch_grass": "drop", &"shroud": "wing", &"hot_streak": "bolt",
 	&"soul_siphon": "heart", &"drain": "heart",
+	&"slow_burn": "fire", &"hive_mind": "bones", &"grindset": "fist",
 }
 
 const RARITY_COLOR := {

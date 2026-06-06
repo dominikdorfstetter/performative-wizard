@@ -4,12 +4,13 @@
 
 [resource]
 script = ExtResource("1")
-id = &"pickup_line"
-title = "Pickup Line"
-description = "Power: gain 1 Rizz at the start of every turn. it just works."
+id = &"grindset"
+title = "Sigma Grindset"
+description = "Power: gain 3 Block at the start of every turn. rise and grind."
 cost = 1
 type = "Power"
 rarity = "Uncommon"
 swag_gain = 0
 swag_cost = 0
-effects = [{ "op": "self_status", "status": "ritual", "amount": 1 }]
+unlock_clout = 40
+effects = [{ "op": "self_status", "status": "barrier", "amount": 3 }]

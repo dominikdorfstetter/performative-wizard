@@ -3,8 +3,8 @@ extends Node
 
 func _ready() -> void:
 	var rows := [
-		[&"grand_finale", &"quick_read", &"lucky_strike", &"finger_guns", &"flourish", &"second_wind"],
-		[&"soul_siphon", &"macabre_bow", &"delulu", &"touch_grass", &"flex", &"rizz_up"],
+		[&"pickup_line", &"slow_burn", &"hive_mind", &"grindset", &"grand_finale", &"flex"],
+		[&"soul_siphon", &"macabre_bow", &"delulu", &"touch_grass", &"lucky_strike", &"rizz_up"],
 	]
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)

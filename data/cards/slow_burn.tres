@@ -4,12 +4,13 @@
 
 [resource]
 script = ExtResource("1")
-id = &"pickup_line"
-title = "Pickup Line"
-description = "Power: gain 1 Rizz at the start of every turn. it just works."
+id = &"slow_burn"
+title = "Slow Burn"
+description = "Power: +1 Aura at the start of every turn. let it cook."
 cost = 1
 type = "Power"
 rarity = "Uncommon"
 swag_gain = 0
 swag_cost = 0
-effects = [{ "op": "self_status", "status": "ritual", "amount": 1 }]
+unlock_clout = 30
+effects = [{ "op": "self_status", "status": "aura_engine", "amount": 1 }]

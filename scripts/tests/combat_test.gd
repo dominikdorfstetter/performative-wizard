@@ -249,6 +249,26 @@ func _ready() -> void:
 	cmf.play_card(cmf.hand[0])
 	_check("frail softens block (9->6)", cmf.player.block, 6)
 
+	# --- Power cards: persistent start-of-turn effects -----------------------
+	print("--- powers ---")
+	var cm_pow := CombatManager.new()
+	var p_pow := Combatant.new()
+	p_pow.max_hp = 72
+	p_pow.hp = 72
+	var deck_pow: Array[CardData] = []
+	for n in 6:
+		deck_pow.append(Database.get_card(&"ember"))
+	cm_pow.start_combat(p_pow, [Database.get_enemy(&"alley_cat")], deck_pow, 2, true)
+	cm_pow.hand = [Database.get_card(&"pickup_line"), Database.get_card(&"slow_burn")]
+	cm_pow.energy = 9
+	cm_pow.play_card(cm_pow.hand[0])   # ritual 1
+	cm_pow.play_card(cm_pow.hand[0])   # aura_engine 1
+	var str0: int = cm_pow.player.status(&"strength")
+	var swag0: int = cm_pow.swag
+	cm_pow.end_turn()                  # enemy turn -> player start: powers tick
+	_check("ritual ramped Rizz", cm_pow.player.status(&"strength"), str0 + 1)
+	_check("aura engine + drip added", cm_pow.swag >= swag0 + 1 + 2, true)
+
 	# --- progression: wizard unlock + multi-act ------------------------------
 	print("--- progression ---")
 	var saved_ce: int = GameState.clout_earned

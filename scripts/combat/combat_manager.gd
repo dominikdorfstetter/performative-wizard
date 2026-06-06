@@ -153,6 +153,7 @@ func _start_player_turn() -> void:
 	energy = max_energy
 	var before := swag
 	gain_swag(drip)
+	_tick_powers()
 	if has_passive(&"strength_at_10_swag") and swag >= THRESHOLD_DRAW:
 		player.add_status(&"strength", 1)
 		_say("Catwalk Heels: +1 Rizz")
@@ -167,6 +168,23 @@ func _start_player_turn() -> void:
 	else:
 		_say("— Your turn %d —" % turn)
 	_emit()
+
+## Persistent Power-card effects, applied at the start of each player turn.
+func _tick_powers() -> void:
+	var ritual := player.status(&"ritual")          # ramp Rizz each turn
+	if ritual > 0:
+		player.add_status(&"strength", ritual)
+		_say("locked in: +%d Rizz" % ritual)
+	var engine := player.status(&"aura_engine")      # bonus Aura each turn
+	if engine > 0:
+		gain_swag(engine)
+	var hive := player.status(&"hive_mind")          # raise goons each turn
+	if hive > 0:
+		player.add_status(&"undead", hive)
+		_say("the squad multiplies: +%d Goon" % hive)
+	var barrier := player.status(&"barrier")         # standing Block each turn
+	if barrier > 0:
+		player.block += barrier
 
 func can_play(card: CardData) -> bool:
 	return state == State.PLAYER_TURN and energy >= card.cost

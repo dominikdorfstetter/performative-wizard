@@ -18,8 +18,8 @@ const GOON_X0 := 252.0
 const GOON_STEP := 40.0
 const GOON_SIZE := 50.0
 
-const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed"}
-const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl", &"frail": "crack"}
+const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed", &"ritual": "Locked In", &"aura_engine": "Aura Farm", &"hive_mind": "Hive", &"barrier": "Barrier"}
+const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl", &"frail": "crack", &"ritual": "crown", &"aura_engine": "star", &"hive_mind": "bones", &"barrier": "shield"}
 const PLAYER_LINES := ["aura farming fr 🧿", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy ✨", "locked TF in", "we mogging rn 😤"]
 const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you? 💀", "stay mad bestie"]
 
