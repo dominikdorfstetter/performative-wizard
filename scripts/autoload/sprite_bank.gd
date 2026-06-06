@@ -147,6 +147,15 @@ const ICON := {
 
 # Outfit item icons, one silhouette per slot, drawn in 3 shades of the element colour.
 const ELEM_BASE := {"Fire": "e07a2c", "Necro": "5fa84a", "Neutral": "8a90a6"}
+# Per-outfit signature tint so pieces sharing a slot silhouette still look distinct.
+const ITEM_TINT := {
+	&"apprentice_hat": "6a78c0", &"drip_robe": "3aa0a0", &"plain_wand": "b89a6a",
+	&"worn_boots": "8a6a4a", &"lucky_charm": "5fb45f", &"pointed_hat_swag": "9a5ad0",
+	&"smolder_boots": "e0531f", &"char_wand": "d97a2a", &"bone_scepter": "d8d2c0",
+	&"robe_of_excess": "e0b040", &"crowd_pleaser": "ff6aa0", &"influencer_ring": "40c0d0",
+	&"lucky_cap": "8fd96b", &"catwalk_heels": "d04a9a", &"showstopper_hat": "ff4f8a",
+	&"phoenix_gown": "f2792a", &"diva_heels": "8a3ad0",
+}
 # Per-artefact tint for their charm icon.
 const ARTI := {
 	"glitter_brooch": "ff5ab0", "phoenix_feather": "f2792a", "ember_pin": "e0531f",
@@ -348,7 +357,8 @@ func item_texture(id: StringName) -> Texture2D:
 	var piece = Database.get_outfit(id)
 	var tex: Texture2D = null
 	if piece != null:
-		tex = ImageTexture.create_from_image(item_image(piece.slot, piece.element))
+		var col: Color = Color(ITEM_TINT[id]) if ITEM_TINT.has(id) else Color(ELEM_BASE.get(piece.element, "8a90a6"))
+		tex = ImageTexture.create_from_image(_item(piece.slot, col))
 	_cache[key] = tex
 	return tex
 
