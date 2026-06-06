@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = &"pointed_hat_swag"
-title = "Pointed Hat of Swag"
+title = "Swag Cap"
 slot = "Hat"
 element = "Neutral"
 drip = 1
-passive_text = "Start each combat with 3 Swag."
+passive_text = "Start combat with 3 Aura."
 passive_id = &"swag_start_3"
 injected_cards = []

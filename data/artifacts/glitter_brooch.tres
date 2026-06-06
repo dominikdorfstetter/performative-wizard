@@ -7,6 +7,6 @@ script = ExtResource("1")
 id = &"glitter_brooch"
 title = "Glitter Brooch"
 emoji = "📿"
-description = "Pose cards grant +1 Swag."
+description = "Aura cards grant +1 Aura."
 passive_id = &"pose_plus_1"
 gold_per_combat = 0

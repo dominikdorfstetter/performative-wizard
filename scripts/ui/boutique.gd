@@ -38,7 +38,18 @@ func _stall(entry: Dictionary) -> Control:
 		p.slot, p.drip, p.passive_text,
 		("OWNED" if owned else "✦ %d Clout" % entry.cost)]
 	var accent := Color(0.55, 0.78, 0.45) if owned else (NodeUI.GOLD if afford else Color(0.5, 0.5, 0.56))
-	return NodeUI.choice(p.title, desc, accent, _buy.bind(entry), afford)
+	var ab := NodeUI.choice(p.title, desc, accent, _buy.bind(entry), afford)
+	var itex := SpriteBank.item_texture(entry.id)
+	if itex != null:
+		var tr := TextureRect.new()
+		tr.texture = itex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.position = Vector2(248, 12)
+		tr.size = Vector2(42, 42)
+		ab.add_child(tr)
+	return ab
 
 func _buy(entry: Dictionary) -> void:
 	if GameState.buy_boutique(entry.id, entry.cost):

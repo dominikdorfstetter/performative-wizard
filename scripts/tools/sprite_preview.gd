@@ -7,6 +7,9 @@ func _ready() -> void:
 		ids.append(wid)
 	for icn in SpriteBank.ICON.keys():
 		ids.append("icon:" + icn)
+	for slot in ["Hat", "Robe", "Staff", "Boots", "Trinket"]:
+		for el in ["Fire", "Necro", "Neutral"]:
+			ids.append("item:%s:%s" % [slot, el])
 	var scale := 8
 	var cell := SpriteBank.SIZE * scale
 	var pad := 10
@@ -21,6 +24,9 @@ func _ready() -> void:
 		var img: Image
 		if typeof(id) == TYPE_STRING and id.begins_with("icon:"):
 			img = SpriteBank.icon_image(id.substr(5))
+		elif typeof(id) == TYPE_STRING and id.begins_with("item:"):
+			var parts = id.split(":")
+			img = SpriteBank.item_image(parts[1], parts[2])
 		elif SpriteBank.WIZ.has(id):
 			img = SpriteBank.wizard_image(id)
 		else:

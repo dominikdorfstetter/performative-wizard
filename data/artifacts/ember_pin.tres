@@ -7,6 +7,6 @@ script = ExtResource("1")
 id = &"ember_pin"
 title = "Ember Pin"
 emoji = "🔥"
-description = "Your Burn applies +1 stack."
+description = "Your Roast applies +1 stack."
 passive_id = &"burn_plus_1"
 gold_per_combat = 0

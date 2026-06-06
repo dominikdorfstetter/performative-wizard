@@ -9,6 +9,6 @@ title = "Char Wand"
 slot = "Staff"
 element = "Fire"
 drip = 2
-passive_text = "Your Burn applies +1 stack."
+passive_text = "Your Roast applies +1 stack."
 passive_id = &"burn_plus_1"
 injected_cards = [&"flame_lash", &"flame_lash"]

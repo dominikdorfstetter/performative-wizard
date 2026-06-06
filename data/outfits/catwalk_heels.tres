@@ -9,6 +9,6 @@ title = "Catwalk Heels"
 slot = "Boots"
 element = "Neutral"
 drip = 3
-passive_text = "While at 10+ Swag, gain 1 Strength each turn."
+passive_text = "At 10+ Aura, gain 1 Rizz each turn."
 passive_id = &"strength_at_10_swag"
 injected_cards = []

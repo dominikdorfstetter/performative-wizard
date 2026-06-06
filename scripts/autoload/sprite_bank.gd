@@ -73,6 +73,36 @@ const ICON := {
 	],
 }
 
+# Outfit item icons, one silhouette per slot, drawn in 3 shades of the element colour.
+const ELEM_BASE := {"Fire": "e07a2c", "Necro": "5fa84a", "Neutral": "8a90a6"}
+const ITEM := {
+	"Hat": [
+		["d", [[8, 3, 13]]],
+		["b", [[2, 8, 8], [3, 7, 9], [4, 7, 9], [5, 6, 10], [6, 6, 10], [7, 5, 11]]],
+		["l", [[3, 7, 7], [4, 7, 7], [5, 6, 6], [6, 6, 6], [7, 5, 5]]],
+	],
+	"Robe": [
+		["b", [[3, 7, 8], [4, 6, 9], [5, 6, 9], [6, 6, 9], [7, 5, 10], [8, 5, 10], [9, 4, 11], [10, 4, 11], [11, 4, 12], [12, 3, 12], [13, 3, 12]]],
+		["d", [[9, 4, 11]]],
+		["l", [[4, 6, 6], [5, 6, 6], [7, 5, 5], [9, 4, 4], [11, 4, 4], [12, 3, 3]]],
+	],
+	"Staff": [
+		["d", [[4, 8, 8], [5, 8, 8], [6, 8, 8], [7, 8, 8], [8, 8, 8], [9, 8, 8], [10, 8, 8], [11, 8, 8], [12, 8, 8], [13, 8, 8]]],
+		["b", [[2, 7, 9], [3, 6, 10], [4, 7, 9]]],
+		["l", [[2, 7, 7], [3, 6, 6]]],
+	],
+	"Boots": [
+		["b", [[8, 4, 6], [9, 4, 6], [10, 4, 6], [11, 4, 6], [8, 9, 11], [9, 9, 11], [10, 9, 11], [11, 9, 11]]],
+		["d", [[12, 3, 7], [13, 3, 7], [12, 8, 12], [13, 8, 12]]],
+		["l", [[8, 4, 4], [9, 4, 4], [8, 9, 9], [9, 9, 9]]],
+	],
+	"Trinket": [
+		["d", [[3, 5, 5], [3, 10, 10], [4, 6, 6], [4, 9, 9]]],
+		["b", [[5, 7, 8], [6, 6, 9], [7, 6, 9], [8, 7, 8], [9, 7, 8]]],
+		["l", [[6, 7, 7], [7, 7, 7]]],
+	],
+}
+
 var _cache := {}
 
 func texture(id: StringName) -> Texture2D:
@@ -179,6 +209,31 @@ func _blot(img: Image, x: int, y: int, w: int, h: int, c: Color) -> void:
 		for xx in range(x, x + w):
 			if xx >= 0 and xx < SIZE and yy >= 0 and yy < SIZE:
 				img.set_pixel(xx, yy, c)
+
+func item_texture(id: StringName) -> Texture2D:
+	var key := "item_" + String(id)
+	if _cache.has(key):
+		return _cache[key]
+	var piece = Database.get_outfit(id)
+	var tex: Texture2D = null
+	if piece != null:
+		tex = ImageTexture.create_from_image(item_image(piece.slot, piece.element))
+	_cache[key] = tex
+	return tex
+
+func item_image(slot: String, element: String) -> Image:
+	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var base := Color(ELEM_BASE.get(element, "8a90a6"))
+	var shades := {"b": base, "l": base.lightened(0.24), "d": base.darkened(0.3)}
+	for layer in ITEM.get(slot, []):
+		var c: Color = shades[layer[0]]
+		for s in layer[1]:
+			for x in range(s[1], s[2] + 1):
+				if x >= 0 and x < SIZE and s[0] >= 0 and s[0] < SIZE:
+					img.set_pixel(x, s[0], c)
+	_outline(img)
+	return img
 
 func icon_texture(name: StringName) -> Texture2D:
 	var key := "ic_" + String(name)

@@ -9,6 +9,6 @@ title = "Showstopper Hat"
 slot = "Hat"
 element = "Neutral"
 drip = 2
-passive_text = "+2 Swag income each turn."
+passive_text = "+2 Aura income each turn."
 passive_id = &"swag_income_2"
 injected_cards = []

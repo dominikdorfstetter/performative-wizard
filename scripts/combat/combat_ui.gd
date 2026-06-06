@@ -374,9 +374,28 @@ func _rebuild_hand(over: bool) -> void:
 	if over:
 		return
 	for card in cm.hand:
-		_hand.add_child(CardView.build(card, cm.can_play(card), _play.bind(card)))
+		var btn := CardView.build(card, cm.can_play(card), Callable())
+		if cm.can_play(card):
+			btn.pressed.connect(_play_card.bind(card, btn))
+		_hand.add_child(btn)
 
-func _play(card: CardData) -> void:
+func _play_card(card: CardData, btn: Button) -> void:
+	if cm.state != CombatManager.State.PLAYER_TURN or not cm.can_play(card):
+		return
+	# detach the played card so the hand rebuild won't free it, then fly it up & fade
+	var gpos := btn.global_position
+	_hand.remove_child(btn)
+	_popups.add_child(btn)
+	btn.global_position = gpos
+	btn.disabled = true
+	btn.pivot_offset = btn.size * 0.5
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(btn, "position:y", gpos.y - 140, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(btn, "scale", Vector2(1.35, 1.35), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(btn, "rotation", deg_to_rad(5), 0.3)
+	tw.chain().tween_property(btn, "modulate:a", 0.0, 0.18)
+	tw.chain().tween_callback(btn.queue_free)
 	cm.play_card(card)
 
 # --- text helpers --------------------------------------------------------

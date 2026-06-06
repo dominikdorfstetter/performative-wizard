@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = &"crowd_pleaser"
-title = "Crowd-Pleaser Charm"
+title = "Hype Charm"
 slot = "Trinket"
 element = "Neutral"
 drip = 2
-passive_text = "Pose cards grant +1 Swag."
+passive_text = "Aura cards grant +1 Aura."
 passive_id = &"pose_plus_1"
 injected_cards = []

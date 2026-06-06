@@ -82,8 +82,18 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 		GameState.save_meta()
 		_rebuild())
 
+	var itex := SpriteBank.item_texture(piece.id)
+	if itex != null:
+		var tr := TextureRect.new()
+		tr.texture = itex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.position = Vector2(152, 9)
+		tr.size = Vector2(38, 38)
+		b.add_child(tr)
 	var title := ("✓ " if equipped else "") + piece.title
-	_lbl(b, title, Vector2(8, 6), Vector2(180, 20), 14, ec.lightened(0.35))
+	_lbl(b, title, Vector2(8, 6), Vector2(140, 20), 14, ec.lightened(0.35))
 	var sub := "✦ +%d" % piece.drip
 	if not piece.injected_cards.is_empty():
 		sub += "   +%d card" % piece.injected_cards.size()

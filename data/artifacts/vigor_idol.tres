@@ -7,6 +7,6 @@ script = ExtResource("1")
 id = &"vigor_idol"
 title = "Gym Membership"
 emoji = "💪"
-description = "Start each combat with 2 Strength."
+description = "Start each combat with 2 Rizz."
 passive_id = &"strength_start_2"
 gold_per_combat = 0

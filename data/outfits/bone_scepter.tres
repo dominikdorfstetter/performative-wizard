@@ -9,6 +9,6 @@ title = "Bone Scepter"
 slot = "Staff"
 element = "Necro"
 drip = 2
-passive_text = "Summons summon +1 Undead."
+passive_text = "Summons summon +1 Goon."
 passive_id = &"undead_plus_1_on_summon"
 injected_cards = [&"raise_dead"]
