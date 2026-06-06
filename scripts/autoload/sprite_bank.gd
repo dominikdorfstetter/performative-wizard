@@ -203,16 +203,16 @@ func icon_image(name: StringName) -> Image:
 					img.set_pixel(x, s[0], c)
 	return img
 
-func wizard_texture(id: StringName) -> Texture2D:
-	var key := "wiz_" + String(id)
+func wizard_texture(id: StringName, look := 0) -> Texture2D:
+	var key := "wiz_%s_%d" % [String(id), look]
 	if _cache.has(key):
 		return _cache[key]
-	var img := wizard_image(id)
+	var img := wizard_image(id, look)
 	var tex: Texture2D = ImageTexture.create_from_image(img) if img != null else null
 	_cache[key] = tex
 	return tex
 
-func wizard_image(id: StringName) -> Image:
+func wizard_image(id: StringName, look := 0) -> Image:
 	var d = WIZ.get(id)
 	if d == null:
 		return null
@@ -237,8 +237,8 @@ func wizard_image(id: StringName) -> Image:
 	for y in range(7, 10):
 		for x in range(5, 11):
 			img.set_pixel(x, y, skin)
-	img.set_pixel(6, 8, Color("241a2e"))
-	img.set_pixel(9, 8, Color("241a2e"))
+	img.set_pixel(6 + look, 8, Color("241a2e"))
+	img.set_pixel(9 + look, 8, Color("241a2e"))
 
 	# robe
 	for y in range(10, 16):
