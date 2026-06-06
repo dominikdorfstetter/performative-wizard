@@ -59,6 +59,10 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 		"self_status":
 			if source != null:
 				source.add_status(StringName(e.get("status", &"")), amount)
+		"cleanse":
+			if source != null:
+				for s in [&"weak", &"vulnerable", &"jinx"]:
+					source.statuses.erase(s)
 		"summon":
 			if source != null:
 				var n := amount

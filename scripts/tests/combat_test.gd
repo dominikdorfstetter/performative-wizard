@@ -201,5 +201,20 @@ func _ready() -> void:
 	cmj.player.add_status(&"jinx", 20)
 	_check("crit floored at 0", cmj.live_crit_chance(), 0.0)
 
+	# touch grass cleanses debuffs
+	var cmt := CombatManager.new()
+	var pt := Combatant.new()
+	pt.max_hp = 72
+	pt.hp = 72
+	cmt.start_combat(pt, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"touch_grass")], 0, true)
+	cmt.player.add_status(&"weak", 2)
+	cmt.player.add_status(&"vulnerable", 2)
+	cmt.player.add_status(&"jinx", 3)
+	cmt.hand = [Database.get_card(&"touch_grass")]
+	cmt.play_card(cmt.hand[0])
+	_check("cleanse cleared weak", cmt.player.status(&"weak"), 0)
+	_check("cleanse cleared jinx", cmt.player.status(&"jinx"), 0)
+	_check("touch grass gave block", cmt.player.block, 5)
+
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

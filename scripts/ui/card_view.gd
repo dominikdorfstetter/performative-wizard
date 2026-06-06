@@ -92,7 +92,7 @@ static func icon_for(card: CardData) -> StringName:
 			return &"bones"
 		if op == "sacrifice_strike" or op.begins_with("finisher"):
 			return &"skull"
-		if op == "heal":
+		if op == "heal" or op == "cleanse":
 			return &"drop"
 		if op == "damage_x_burn":
 			return &"fire"
