@@ -4,7 +4,7 @@ extends Node
 func _ready() -> void:
 	GameState.start_run(&"fire")
 	GameState.finalize_loadout()
-	# force a 2-enemy node so we can see the multi-enemy layout
+	# force a 3-enemy node so we can see the multi-enemy layout
 	GameState.map[0][0]["enemies"] = [&"feral_houseplant", &"rabid_roomba", &"cursed_mirror"]
 	GameState.enter(0, 0)
 	var combat: Node = load("res://scenes/combat/combat.tscn").instantiate()

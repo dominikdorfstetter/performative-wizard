@@ -12,9 +12,11 @@ A roguelike deckbuilder (à la *Slay the Spire*) where a wizard's power comes fr
 click-to-target and AoE, difficulty scaling with depth, a gold economy, shops, events,
 chests, and run-scoped **artefacts** (relics). Meta progression: persistent wardrobe +
 **Clout** currency. Procedural **pixel-art** enemy sprites; floating damage numbers. The
-combat engine is covered by 34 headless tests. Content: 22 cards, 15 enemy types, 16
-outfits, 11 artefacts, two named wizards (Vesper Vermillion & Morticia Graves) with
-pixel-art portraits.
+combat engine is covered by 40 headless tests. Content: 32 cards, 15 enemy types, 17
+outfits, 12 artefacts, three wizards — Vesper Vermillion (Hot Girl / fire), Morticia
+Graves (Goth Bestie / necro), and Chadwick Suave (the Rizzard / crit-on-Rizz). Combat is
+a pixel battle scene with idle animation, projectiles, hit sparks, crits, and screen
+shake. Systems: banked Aura economy, crit/luck, enemy aura-drain, run-scoped artefacts.
 
 ## Running
 
