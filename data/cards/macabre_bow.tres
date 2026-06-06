@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"macabre_bow"
-title = "Macabre Bow"
-description = "Sacrifice an Undead: deal 7 and gain 3 Swag."
+title = "Sacrifice the Opp"
+description = "Sacrifice a Goon: deal 7, Aura +3."
 cost = 1
 type = "Skill"
 rarity = "Rare"

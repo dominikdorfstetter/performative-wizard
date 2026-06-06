@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"cinder_spray"
-title = "Cinder Spray"
-description = "Deal 4 to ALL enemies."
+title = "Subtweet"
+description = "Deal 4 to ALL opps."
 cost = 1
 type = "Attack"
 rarity = "Common"

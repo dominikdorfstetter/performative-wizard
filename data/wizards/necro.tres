@@ -5,11 +5,11 @@
 [resource]
 script = ExtResource("1")
 id = &"necro"
-title = "Necromancer"
+title = "Goth Bestie"
 pname = "Morticia Graves"
 element = "Necro"
 emoji = "💀"
-blurb = "Summon & sacrifice. Raise Undead that chip away, then sacrifice them for bursts."
+blurb = "summons goons, sacrifices them for clout, steals aura. unbothered & moisturized 💀"
 max_hp = 68
 base_drip = 2
 accent = Color(0.55, 0.78, 0.45, 1)

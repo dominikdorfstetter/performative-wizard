@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"ember"
-title = "Ember"
-description = "Deal 6 damage."
+title = "Lil Spark"
+description = "Deal 6. it's giving warm 🔥"
 cost = 1
 type = "Attack"
 rarity = "Common"

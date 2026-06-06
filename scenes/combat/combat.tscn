@@ -162,7 +162,7 @@ offset_top = 232.0
 offset_right = 1128.0
 offset_bottom = 278.0
 theme_override_font_sizes/font_size = 20
-text = "End Turn"
+text = "Bye ✌"
 
 [node name="Piles" type="Label" parent="."]
 layout_mode = 0
@@ -181,7 +181,7 @@ offset_right = 1128.0
 offset_bottom = 440.0
 theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.6, 0.6, 0.68, 1)
-text = "click an enemy to choose your target"
+text = "tap an opp to throw hands at"
 horizontal_alignment = 2
 
 [node name="Hand" type="HBoxContainer" parent="."]

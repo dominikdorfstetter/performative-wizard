@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"grand_finale"
-title = "Grand Finale"
-description = "Finisher. Spend ALL Swag. Deal Swag x 3 damage."
+title = "Main Character Moment"
+description = "Finisher. Spend ALL Aura. Deal Aura × 3."
 cost = 2
 type = "Attack"
 rarity = "Rare"

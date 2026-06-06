@@ -35,7 +35,7 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	_add_label(b, card.type.to_upper(), Vector2(6, 92), Vector2(138, 16), 11, C_DIM)
 	_add_label(b, card.description, Vector2(8, 112), Vector2(134, 56), 13, Color(0.86, 0.86, 0.9))
 	if card.swag_gain > 0:
-		_add_label(b, "✦ Pose +%d" % card.swag_gain, Vector2(6, 170), Vector2(138, 18), 13, C_SWAG)
+		_add_label(b, "✦ Aura +%d" % card.swag_gain, Vector2(6, 170), Vector2(138, 18), 13, C_SWAG)
 	return b
 
 static func icon_for(card: CardData) -> StringName:

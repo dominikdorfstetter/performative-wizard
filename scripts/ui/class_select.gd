@@ -9,7 +9,7 @@ func _ready() -> void:
 	$Background.visible = false
 	NodeUI.gradient_bg(self)
 	$Title.add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
-	$Subtitle.text = "Choose your base robe set — all power comes from the clothes.    ✦ Clout: %d" % GameState.clout
+	$Subtitle.text = "pick your fighter — all your power is in the fit.    ✦ Clout: %d" % GameState.clout
 	if GameState.message != "":
 		_message.text = GameState.message
 		_message.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))

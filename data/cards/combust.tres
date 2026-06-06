@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"combust"
-title = "Combust"
-description = "Deal damage equal to 2× the target's Burn."
+title = "Cancel Them"
+description = "Deal 2× their Roasted stacks."
 cost = 1
 type = "Attack"
 rarity = "Rare"

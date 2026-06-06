@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"ignite"
-title = "Ignite"
-description = "Apply 3 Burn. Pose: gain 1 Swag."
+title = "Roast 'Em"
+description = "Roast for 3. Aura +1."
 cost = 1
 type = "Attack"
 rarity = "Common"

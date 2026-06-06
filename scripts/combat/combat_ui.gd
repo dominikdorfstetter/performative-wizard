@@ -13,11 +13,17 @@ const C_GOLD := Color(1.0, 0.82, 0.29)
 const C_INTENT := Color(1.0, 0.62, 0.36)
 const C_TARGET := Color(1.0, 0.82, 0.29)
 
+const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons"}
+const PLAYER_LINES := ["aura farming fr 🧿", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy ✨", "locked TF in", "we mogging rn 😤"]
+const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you? 💀", "stay mad bestie"]
+
 var cm: CombatManager
 var _popups: Control
 var _enemy_panels: Array = []
 var _prev_enemy_hp: Array = []
 var _prev_player_hp := -1
+var _prev_swag := 0
+var _prev_state := -1
 
 @onready var _turn_banner: Label = $TurnBanner
 @onready var _gold: Label = $GoldLabel
@@ -110,6 +116,8 @@ func _start_fight() -> void:
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
 	_prev_player_hp = cm.player.hp
+	_prev_swag = cm.swag
+	_prev_state = cm.state
 	print("[Combat] node %s row %d: %d enemies, scale %.2f/%.2f"
 		% [node.get("type"), node.get("row"), encounter.size(), scales[0], scales[1]])
 	_refresh()
@@ -120,7 +128,7 @@ func _refresh() -> void:
 	if cm == null:
 		return
 	var over := cm.state == CombatManager.State.WIN or cm.state == CombatManager.State.LOSE
-	_turn_banner.text = "ENEMY TURN" if cm.state == CombatManager.State.ENEMY_TURN else "TURN %d" % cm.turn
+	_turn_banner.text = "THEIR TURN" if cm.state == CombatManager.State.ENEMY_TURN else "TURN %d" % cm.turn
 	_gold.text = "💰 %d" % GameState.gold
 	_artifacts.text = _artifact_text()
 
@@ -128,7 +136,7 @@ func _refresh() -> void:
 	_player_hp_text.text = "%d / %d" % [cm.player.hp, cm.player.max_hp]
 	_player_status.text = _status_text(cm.player)
 	_energy.text = "⚡ Energy  %d / %d" % [cm.energy, cm.max_energy]
-	_swag_value.text = "✦ SWAG  %d   (+%d/turn)" % [cm.swag, cm.drip]
+	_swag_value.text = "✦ AURA  %d   (+%d/turn)" % [cm.swag, cm.drip]
 	_swag_bar.value = min(cm.swag, _swag_bar.max_value)
 	_thresholds.text = _threshold_text()
 	_piles.text = "🂠 Draw %d    🗑 Discard %d" % [cm.draw_pile.size(), cm.discard_pile.size()]
@@ -138,6 +146,7 @@ func _refresh() -> void:
 	_rebuild_enemies(over)
 	_rebuild_hand(over)
 	_emit_popups()
+	_banter()
 
 func _emit_popups() -> void:
 	if _popups == null:
@@ -189,6 +198,63 @@ func _punch(node: Control) -> void:
 	tw.set_parallel(true)
 	tw.tween_property(node, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(node, "modulate", Color.WHITE, 0.2)
+
+func _banter() -> void:
+	if _popups == null:
+		return
+	for thr in [10, 15]:
+		if _prev_swag < thr and cm.swag >= thr:
+			_say_bubble(Vector2(214, 240), PLAYER_LINES[randi() % PLAYER_LINES.size()], C_SWAG)
+			break
+	_prev_swag = cm.swag
+	if cm.state == CombatManager.State.ENEMY_TURN and _prev_state != CombatManager.State.ENEMY_TURN:
+		var alive := cm.living_enemies()
+		if not alive.is_empty():
+			var idx: int = cm.enemies.find(alive[randi() % alive.size()])
+			_say_bubble(_enemy_center(idx) + Vector2(-103, -88), ENEMY_TAUNTS[randi() % ENEMY_TAUNTS.size()], C_INTENT)
+	_prev_state = cm.state
+
+func _say_bubble(pos: Vector2, text: String, accent: Color) -> void:
+	var w := 206.0
+	var h := 46.0
+	var c := Control.new()
+	c.position = pos
+	c.size = Vector2(w, h)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tail := Polygon2D.new()
+	tail.polygon = PackedVector2Array([Vector2(w * 0.5 - 9, h - 2), Vector2(w * 0.5 + 9, h - 2), Vector2(w * 0.5, h + 13)])
+	tail.color = Color(0.96, 0.95, 0.98)
+	c.add_child(tail)
+	var panel := Panel.new()
+	panel.size = Vector2(w, h)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.96, 0.95, 0.98)
+	sb.set_corner_radius_all(12)
+	sb.set_border_width_all(2)
+	sb.border_color = accent
+	panel.add_theme_stylebox_override("panel", sb)
+	c.add_child(panel)
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_color_override("font_color", Color(0.14, 0.1, 0.17))
+	lbl.add_theme_font_size_override("font_size", 16)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	lbl.offset_left = 8
+	lbl.offset_right = -8
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.add_child(lbl)
+	_popups.add_child(c)
+	c.pivot_offset = Vector2(w * 0.5, h)
+	c.scale = Vector2(0.4, 0.4)
+	var tw := create_tween()
+	tw.tween_property(c, "scale", Vector2.ONE, 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(1.5)
+	tw.tween_property(c, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(c.queue_free)
 
 func _hurt_flash() -> void:
 	var fl := ColorRect.new()
@@ -321,7 +387,7 @@ func _status_text(c: Combatant) -> String:
 		parts.append("🛡 %d" % c.block)
 	for k in c.statuses:
 		if c.statuses[k] > 0:
-			parts.append("%s %d" % [String(k).capitalize(), c.statuses[k]])
+			parts.append("%s %d" % [STATUS_NAME.get(k, String(k).capitalize()), c.statuses[k]])
 	return "  ".join(parts)
 
 func _intent_text_for(e: Combatant) -> String:
@@ -335,9 +401,10 @@ func _intent_text_for(e: Combatant) -> String:
 		"block":
 			return "🛡️ %d" % int(it.get("amount", 0))
 		"apply_status":
-			return "%s %d" % [String(it.get("status", &"")).capitalize(), int(it.get("amount", 0))]
+			var sid := StringName(it.get("status", &""))
+			return "%s %d" % [STATUS_NAME.get(sid, String(sid).capitalize()), int(it.get("amount", 0))]
 		"buff":
-			return "Str +%d" % int(it.get("amount", 0))
+			return "Rizz +%d" % int(it.get("amount", 0))
 	return "?"
 
 func _threshold_text() -> String:
@@ -401,7 +468,7 @@ func _on_combat_ended(victory: bool) -> void:
 			get_tree().change_scene_to_file("res://scenes/reward.tscn")
 		return
 	GameState.finish_run(false)
-	_result_label.text = "DEFEAT"
+	_result_label.text = "BIG L 💀"
 	_result_label.add_theme_color_override("font_color", C_HP)
 	_result_panel.visible = true
 	_refresh()

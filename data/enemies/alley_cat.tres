@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"alley_cat"
-title = "Hexed Housecat"
+title = "Unhinged Housecat"
 emoji = "🐱"
 max_hp = 28
 intents = [{ "op": "attack", "amount": 6 }, { "op": "apply_status", "status": "weak", "amount": 1, "target": "player" }, { "op": "attack", "amount": 9 }]

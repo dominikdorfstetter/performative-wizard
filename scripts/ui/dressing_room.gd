@@ -94,9 +94,9 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 
 func _update_summary() -> void:
 	var lines: Array[String] = []
-	lines.append("LOADOUT")
+	lines.append("THE FIT")
 	lines.append("")
-	lines.append("✦ Swag income: +%d / turn" % GameState.preview_drip())
+	lines.append("✦ Aura income: +%d / turn" % GameState.preview_drip())
 	var injected := 0
 	var passives: Array[String] = []
 	for p in GameState.equipped_pieces():
@@ -105,7 +105,7 @@ func _update_summary() -> void:
 			passives.append("• " + p.passive_text)
 	lines.append("🃏 Cards added to deck: %d" % injected)
 	lines.append("")
-	lines.append("Passives:")
+	lines.append("drip perks:")
 	if passives.is_empty():
 		lines.append("  (none)")
 	else:

@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"mass_grave"
-title = "Mass Grave"
-description = "Summon 2 Undead. Pose: gain 1 Swag."
+title = "Summon the Squad"
+description = "Summon 2 Goons. Aura +1."
 cost = 2
 type = "Skill"
 rarity = "Rare"

@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"raise_dead"
-title = "Raise Dead"
-description = "Summon 1 Undead (each deals 2 at end of your turn). Pose: gain 1 Swag."
+title = "Summon NPC"
+description = "Summon 1 Goon (hits 2 at end of turn). Aura +1."
 cost = 1
 type = "Skill"
 rarity = "Common"

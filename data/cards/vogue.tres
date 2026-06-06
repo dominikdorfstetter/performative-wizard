@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"vogue"
-title = "Vogue"
-description = "Pose: gain 2 Swag. Gain 3 Block."
+title = "Slay"
+description = "Aura +2. Gain 3 Block."
 cost = 0
 type = "Skill"
 rarity = "Common"

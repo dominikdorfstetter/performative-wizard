@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"strike_a_pose"
-title = "Strike a Pose"
-description = "Pose: gain 3 Swag."
+title = "Serve Looks"
+description = "Aura +3."
 cost = 1
 type = "Skill"
 rarity = "Common"

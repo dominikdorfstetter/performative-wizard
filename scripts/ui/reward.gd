@@ -21,7 +21,7 @@ func _ready() -> void:
 		if aid != &"":
 			GameState.add_artifact(aid)
 			var a := Database.get_artifact(aid)
-			$Banner.text = "🎒  Artefact found:  %s %s — %s" % [a.emoji, a.title, a.description]
+			$Banner.text = "🎒  you looted:  %s %s — %s" % [a.emoji, a.title, a.description]
 			$Banner.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
 
 	var w := Database.get_wizard(GameState.wizard_id)

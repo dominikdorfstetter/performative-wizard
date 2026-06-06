@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"flame_lash"
-title = "Flame Lash"
-description = "Deal 4. If the target has Burn, deal 4 more."
+title = "Add Fuel"
+description = "Deal 4. If they're Roasted, deal 4 more."
 cost = 1
 type = "Attack"
 rarity = "Common"

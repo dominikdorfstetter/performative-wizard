@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"flashfire"
-title = "Flashfire"
-description = "Deal 8 to ALL enemies. Pose: gain 2 Swag."
+title = "Go Viral"
+description = "Deal 8 to ALL opps. Aura +2."
 cost = 2
 type = "Attack"
 rarity = "Common"

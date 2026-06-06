@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"soul_siphon"
-title = "Soul Siphon"
+title = "Steal Their Aura"
 description = "Deal 7. Heal 4."
 cost = 2
 type = "Attack"

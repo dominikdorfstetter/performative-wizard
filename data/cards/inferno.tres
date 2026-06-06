@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"inferno"
-title = "Inferno"
-description = "Apply 5 Burn. Pose: gain 2 Swag."
+title = "Absolutely Cooked"
+description = "Roast for 5. Aura +2."
 cost = 2
 type = "Attack"
 rarity = "Rare"

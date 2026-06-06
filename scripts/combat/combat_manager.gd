@@ -18,6 +18,9 @@ const THRESHOLD_DRAW := 10
 const THRESHOLD_PIERCE := 15
 const SWAG_DAMAGE_BONUS := 2
 
+# Gen-Z display names for the internal status keywords.
+const _DISP := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons"}
+
 var state: State = State.PLAYER_TURN
 var player: Combatant
 var enemies: Array[Combatant] = []
@@ -67,7 +70,7 @@ func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_va
 	var names := []
 	for e in enemies:
 		names.append(e.display_name)
-	_say("Encounter: %s" % ", ".join(names))
+	_say("the opps pulled up: %s" % ", ".join(names))
 	_start_player_turn()
 
 func has_passive(id: StringName) -> bool:
@@ -133,7 +136,7 @@ func _start_player_turn() -> void:
 	gain_swag(drip)
 	if has_passive(&"strength_at_10_swag") and swag >= 10:
 		player.add_status(&"strength", 1)
-		_say("Catwalk Heels: +1 Strength")
+		_say("Catwalk Heels: +1 Rizz")
 	if has_passive(&"heal_3_per_turn") and turn > 1:
 		player.heal(3)
 	var draw_n := HAND_SIZE + swag_extra_draw()
@@ -141,7 +144,7 @@ func _start_player_turn() -> void:
 		draw_n += 1
 	_draw(draw_n)
 	if drip > 0:
-		_say("— Your turn %d  (+%d swag → %d) —" % [turn, swag - before, swag])
+		_say("— Your turn %d  (+%d aura → %d) —" % [turn, swag - before, swag])
 	else:
 		_say("— Your turn %d —" % turn)
 	_emit()
@@ -223,7 +226,7 @@ func end_turn() -> void:
 		var tgt := target()
 		if tgt != null:
 			tgt.take_damage(undead * 2)
-			_say("Your %d Undead strike for %d" % [undead, undead * 2])
+			_say("your %d Goons threw hands for %d" % [undead, undead * 2])
 			if all_dead():
 				_finish(true)
 				return
@@ -239,7 +242,7 @@ func _enemy_turn() -> void:
 			continue
 		var burned := _tick_burn(e)
 		if burned > 0:
-			_say("%s takes %d burn" % [e.display_name, burned])
+			_say("%s got Roasted for %d" % [e.display_name, burned])
 		if e.is_dead():
 			continue
 		if e.data == null or e.data.intents.is_empty():
@@ -265,21 +268,21 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 			var dmg := int(round(amount * enemy_dmg_scale))
 			var hp0 := player.hp
 			player.take_damage(EffectResolver.compute_damage(dmg, src, player))
-			_say("%s hits you for %d" % [name, hp0 - player.hp])
+			_say("%s threw hands for %d" % [name, hp0 - player.hp])
 			if not src.is_dead() and has_passive(&"thorns_3"):
 				src.take_damage(3)
-				_say("Thorns! %s takes 3" % name)
+				_say("thorns! %s caught a fade for 3" % name)
 		"block":
 			src.block += amount
-			_say("%s braces (Block %d)" % [name, amount])
+			_say("%s is being unbothered (Block %d)" % [name, amount])
 		"apply_status":
 			var s := StringName(intent.get("status", &""))
 			player.add_status(s, amount)
-			_say("%s inflicts %s %d" % [name, String(s).capitalize(), amount])
+			_say("%s hit you with %s %d" % [name, _disp(s), amount])
 		"buff":
 			var s2 := StringName(intent.get("status", &""))
 			src.add_status(s2, amount)
-			_say("%s gains %s %d" % [name, String(s2).capitalize(), amount])
+			_say("%s locked in: %s +%d" % [name, _disp(s2), amount])
 		_:
 			push_warning("[CombatManager] unknown intent: " + String(intent.get("op", "")))
 
@@ -335,9 +338,9 @@ func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: 
 	if burn_added > 0:
 		parts.append("%d burn" % burn_added)
 	if swag_delta > 0:
-		parts.append("+%d swag" % swag_delta)
+		parts.append("+%d aura" % swag_delta)
 	elif swag_delta < 0:
-		parts.append("spent %d swag" % -swag_delta)
+		parts.append("spent %d aura" % -swag_delta)
 	if pierced and dmg > 0:
 		parts.append("pierced!")
 	var msg := "You play %s" % card.title
@@ -347,9 +350,12 @@ func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: 
 
 func _finish(victory: bool) -> void:
 	state = State.WIN if victory else State.LOSE
-	_say("✦ VICTORY ✦" if victory else "You have been defeated...")
+	_say("✦ BIG W ✦" if victory else "you took an L 💀")
 	combat_ended.emit(victory)
 	_emit()
+
+func _disp(s: StringName) -> String:
+	return _DISP.get(s, String(s).capitalize())
 
 func _say(msg: String) -> void:
 	log_lines.append(msg)

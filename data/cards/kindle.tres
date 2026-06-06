@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"kindle"
-title = "Kindle"
-description = "Gain 5 Block."
+title = "Gatekeep"
+description = "Gain 5 Block. gatekeeping my HP"
 cost = 1
 type = "Skill"
 rarity = "Common"

@@ -70,7 +70,7 @@ offset_top = 512.0
 offset_right = 1112.0
 offset_bottom = 562.0
 theme_override_font_sizes/font_size = 22
-text = "Enter the Gauntlet →"
+text = "let's get it →"
 
 [node name="BackButton" type="Button" parent="."]
 layout_mode = 0

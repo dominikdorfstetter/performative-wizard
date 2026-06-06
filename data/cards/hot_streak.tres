@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"hot_streak"
-title = "Hot Streak"
-description = "Deal 5. Pose: gain 2 Swag."
+title = "On a Streak"
+description = "Deal 5. Aura +2."
 cost = 1
 type = "Attack"
 rarity = "Common"

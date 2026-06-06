@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"shroud"
-title = "Shroud"
+title = "Ghost Them"
 description = "Gain 5 Block."
 cost = 1
 type = "Skill"

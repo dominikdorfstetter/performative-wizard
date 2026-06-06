@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"hex"
-title = "Hex"
-description = "Apply 1 Vulnerable. Pose: gain 1 Swag."
+title = "You're Cooked"
+description = "Make them Cooked +1. Aura +1."
 cost = 0
 type = "Skill"
 rarity = "Common"
