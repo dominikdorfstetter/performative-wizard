@@ -30,6 +30,49 @@ const WIZ := {
 	&"necro": {"hat": "2e2440", "robe": "57804a", "skin": "cdd2dd", "trim": "8fd96b"},
 }
 
+# Small 16x16 motif icons for cards/keywords. Each is layers of horizontal spans
+# [row, x0, x1] painted in order.
+const ICON := {
+	"sword": [
+		{"c": "8a5a3a", "s": [[12, 3, 4], [11, 4, 5]]},
+		{"c": "ffd24a", "s": [[11, 4, 7], [10, 5, 6]]},
+		{"c": "cdd3dd", "s": [[3, 11, 12], [4, 10, 11], [5, 9, 10], [6, 8, 9], [7, 7, 8], [8, 6, 7], [9, 6, 6], [10, 5, 6]]},
+		{"c": "f4f8ff", "s": [[2, 12, 13], [3, 12, 12]]},
+	],
+	"fire": [
+		{"c": "d9531f", "s": [[4, 8, 8], [5, 7, 9], [6, 7, 9], [7, 6, 10], [8, 6, 10], [9, 5, 11], [10, 5, 11], [11, 6, 10], [12, 7, 9]]},
+		{"c": "f2902f", "s": [[7, 8, 9], [8, 7, 9], [9, 7, 10], [10, 7, 10], [11, 8, 9]]},
+		{"c": "ffd24a", "s": [[9, 8, 9], [10, 8, 9], [11, 8, 8]]},
+	],
+	"shield": [
+		{"c": "3f72c8", "s": [[3, 5, 10], [4, 4, 11], [5, 4, 11], [6, 4, 11], [7, 4, 11], [8, 5, 10], [9, 5, 10], [10, 6, 9], [11, 7, 8]]},
+		{"c": "cfe0ff", "s": [[5, 7, 8], [6, 7, 8], [7, 7, 8]]},
+	],
+	"star": [
+		{"c": "ff5ab0", "s": [[3, 7, 8], [4, 7, 8], [5, 7, 8], [6, 7, 8], [7, 3, 12], [8, 3, 12], [9, 7, 8], [10, 7, 8], [11, 7, 8], [12, 7, 8]]},
+		{"c": "ffd6ef", "s": [[7, 7, 8], [8, 7, 8]]},
+	],
+	"skull": [
+		{"c": "e8e8ee", "s": [[3, 5, 10], [4, 4, 11], [5, 4, 11], [6, 4, 11], [7, 4, 11], [8, 4, 11], [9, 5, 10], [10, 5, 10], [11, 6, 9]]},
+		{"c": "201826", "s": [[6, 5, 6], [7, 5, 6], [6, 9, 10], [7, 9, 10], [8, 7, 8], [10, 6, 6], [10, 8, 8], [10, 10, 10]]},
+	],
+	"bones": [
+		{"c": "e8e8ee", "s": [[3, 3, 4], [4, 4, 5], [5, 5, 6], [6, 6, 7], [7, 7, 8], [8, 8, 9], [9, 9, 10], [10, 10, 11], [11, 11, 12], [3, 11, 12], [4, 10, 11], [5, 9, 10], [6, 8, 9], [8, 6, 7], [9, 5, 6], [10, 4, 5], [11, 3, 4]]},
+	],
+	"drop": [
+		{"c": "4fae5a", "s": [[3, 8, 8], [4, 7, 9], [5, 7, 9], [6, 6, 10], [7, 6, 10], [8, 5, 11], [9, 5, 11], [10, 6, 10], [11, 7, 9], [12, 8, 8]]},
+		{"c": "bdf0c4", "s": [[6, 7, 7], [7, 7, 7]]},
+	],
+	"burst": [
+		{"c": "f2902f", "s": [[3, 8, 8], [4, 8, 8], [7, 8, 9], [8, 7, 9], [9, 7, 9], [12, 8, 8], [13, 8, 8], [8, 3, 5], [8, 11, 13], [4, 4, 4], [5, 5, 5], [11, 11, 11], [10, 10, 10], [4, 12, 12], [5, 11, 11], [11, 5, 5], [12, 4, 4]]},
+		{"c": "ffd24a", "s": [[8, 8, 8]]},
+	],
+	"swirl": [
+		{"c": "a878d8", "s": [[3, 6, 9], [4, 5, 5], [4, 10, 10], [5, 4, 4], [6, 4, 4], [7, 4, 5], [8, 5, 6], [9, 6, 9], [10, 9, 10]]},
+		{"c": "e0caf5", "s": [[6, 8, 9], [7, 8, 9]]},
+	],
+}
+
 var _cache := {}
 
 func texture(id: StringName) -> Texture2D:
@@ -136,6 +179,29 @@ func _blot(img: Image, x: int, y: int, w: int, h: int, c: Color) -> void:
 		for xx in range(x, x + w):
 			if xx >= 0 and xx < SIZE and yy >= 0 and yy < SIZE:
 				img.set_pixel(xx, yy, c)
+
+func icon_texture(name: StringName) -> Texture2D:
+	var key := "ic_" + String(name)
+	if _cache.has(key):
+		return _cache[key]
+	var img := icon_image(name)
+	var tex: Texture2D = ImageTexture.create_from_image(img) if img != null else null
+	_cache[key] = tex
+	return tex
+
+func icon_image(name: StringName) -> Image:
+	var layers = ICON.get(String(name))
+	if layers == null:
+		return null
+	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for layer in layers:
+		var c := Color(layer.c)
+		for s in layer.s:
+			for x in range(s[1], s[2] + 1):
+				if x >= 0 and x < SIZE and s[0] >= 0 and s[0] < SIZE:
+					img.set_pixel(x, s[0], c)
+	return img
 
 func wizard_texture(id: StringName) -> Texture2D:
 	var key := "wiz_" + String(id)

@@ -15,7 +15,8 @@ const ELEM_COLOR := {
 var _wizard: WizardData
 
 func _ready() -> void:
-	$Background.color = Color(0.08, 0.06, 0.11)
+	$Background.visible = false
+	NodeUI.gradient_bg(self)
 	$Title.add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
 	$SummaryPanel.add_theme_stylebox_override("panel", _panel(Color(0.13, 0.11, 0.17), Color(0.28, 0.24, 0.36)))
 	_wizard = Database.get_wizard(GameState.wizard_id)
@@ -28,8 +29,8 @@ func _ready() -> void:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tr.position = Vector2(548, 54)
-		tr.size = Vector2(56, 56)
+		tr.position = Vector2(28, 14)
+		tr.size = Vector2(54, 54)
 		add_child(tr)
 	$EnterButton.pressed.connect(_enter)
 	$BackButton.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
@@ -71,7 +72,7 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 	var ec: Color = ELEM_COLOR.get(piece.element, Color.GRAY)
 	var border := Color(1.0, 0.82, 0.29) if equipped else ec.darkened(0.1)
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(176, 78)
+	b.custom_minimum_size = Vector2(222, 78)
 	b.add_theme_stylebox_override("normal", _panel(Color(0.18, 0.16, 0.22) if equipped else Color(0.12, 0.11, 0.15), border, 3 if equipped else 1))
 	b.add_theme_stylebox_override("hover", _panel(Color(0.22, 0.19, 0.27), border.lightened(0.2), 3 if equipped else 1))
 	b.add_theme_stylebox_override("pressed", _panel(Color(0.2, 0.18, 0.25), border, 3))
@@ -82,13 +83,13 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 		_rebuild())
 
 	var title := ("✓ " if equipped else "") + piece.title
-	_lbl(b, title, Vector2(8, 6), Vector2(160, 20), 14, ec.lightened(0.35))
+	_lbl(b, title, Vector2(8, 6), Vector2(206, 20), 14, ec.lightened(0.35))
 	var sub := "✦ +%d" % piece.drip
 	if not piece.injected_cards.is_empty():
 		sub += "   +%d card" % piece.injected_cards.size()
-	_lbl(b, sub, Vector2(8, 28), Vector2(160, 16), 12, Color(0.8, 0.8, 0.85))
+	_lbl(b, sub, Vector2(8, 28), Vector2(206, 16), 12, Color(0.8, 0.8, 0.85))
 	var pt := piece.passive_text if piece.passive_text != "" else "—"
-	_lbl(b, pt, Vector2(8, 46), Vector2(162, 28), 11, Color(0.66, 0.66, 0.72))
+	_lbl(b, pt, Vector2(8, 46), Vector2(208, 30), 11, Color(0.66, 0.66, 0.72))
 	return b
 
 func _update_summary() -> void:

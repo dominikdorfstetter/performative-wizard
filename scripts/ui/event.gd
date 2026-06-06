@@ -92,7 +92,7 @@ func _leave() -> void:
 
 func _outcome(text: String) -> void:
 	for c in get_children():
-		if not (c is ColorRect):
+		if not (c is ColorRect or c is TextureRect):
 			c.queue_free()
 	NodeUI.title(self, "❓  Event", Color(0.4, 0.7, 0.9))
 	NodeUI.sub(self, text, 230)

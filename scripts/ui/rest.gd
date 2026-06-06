@@ -44,7 +44,7 @@ func _deck_grid(on_pick: Callable) -> void:
 
 func _clear() -> void:
 	for c in get_children():
-		if not (c is ColorRect):
+		if not (c is ColorRect or c is TextureRect):
 			c.queue_free()
 
 func _to_map() -> void:

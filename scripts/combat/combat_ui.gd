@@ -38,6 +38,7 @@ var _prev_player_hp := -1
 @onready var _result_label: Label = $ResultPanel/ResultLabel
 
 func _ready() -> void:
+	NodeUI.gradient_bg(self)
 	_style_chrome()
 	_end_turn.pressed.connect(_on_end_turn)
 	$ResultPanel/RestartButton.pressed.connect(_to_menu)

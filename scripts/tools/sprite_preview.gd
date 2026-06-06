@@ -5,6 +5,8 @@ func _ready() -> void:
 	var ids: Array = SpriteBank.DEF.keys()
 	for wid in SpriteBank.WIZ.keys():
 		ids.append(wid)
+	for icn in SpriteBank.ICON.keys():
+		ids.append("icon:" + icn)
 	var scale := 8
 	var cell := SpriteBank.SIZE * scale
 	var pad := 10
@@ -15,7 +17,14 @@ func _ready() -> void:
 	var m := Image.create(w, h, false, Image.FORMAT_RGBA8)
 	m.fill(Color("241d30"))
 	for i in ids.size():
-		var img: Image = SpriteBank.wizard_image(ids[i]) if SpriteBank.WIZ.has(ids[i]) else SpriteBank.get_image(ids[i])
+		var id = ids[i]
+		var img: Image
+		if typeof(id) == TYPE_STRING and id.begins_with("icon:"):
+			img = SpriteBank.icon_image(id.substr(5))
+		elif SpriteBank.WIZ.has(id):
+			img = SpriteBank.wizard_image(id)
+		else:
+			img = SpriteBank.get_image(id)
 		img.resize(cell, cell, Image.INTERPOLATE_NEAREST)
 		var cx := i % cols
 		var cy := i / cols

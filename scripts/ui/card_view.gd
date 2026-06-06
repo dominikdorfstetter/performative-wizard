@@ -21,12 +21,45 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 		b.pressed.connect(on_press)
 
 	_add_label(b, str(card.cost), Vector2(8, 8), Vector2(34, 34), 20, Color.BLACK, _circle(C_GOLD.darkened(0.1)))
-	_add_label(b, card.title, Vector2(6, 46), Vector2(138, 44), 17, accent.lightened(0.35))
+	var ic := SpriteBank.icon_texture(icon_for(card))
+	if ic != null:
+		var tr := TextureRect.new()
+		tr.texture = ic
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.position = Vector2(56, 6)
+		tr.size = Vector2(38, 38)
+		b.add_child(tr)
+	_add_label(b, card.title, Vector2(6, 48), Vector2(138, 42), 17, accent.lightened(0.35))
 	_add_label(b, card.type.to_upper(), Vector2(6, 92), Vector2(138, 16), 11, C_DIM)
 	_add_label(b, card.description, Vector2(8, 112), Vector2(134, 56), 13, Color(0.86, 0.86, 0.9))
 	if card.swag_gain > 0:
 		_add_label(b, "✦ Pose +%d" % card.swag_gain, Vector2(6, 170), Vector2(138, 18), 13, C_SWAG)
 	return b
+
+static func icon_for(card: CardData) -> StringName:
+	for e in card.effects:
+		var op := String(e.get("op", ""))
+		if op == "damage_all":
+			return &"burst"
+		if op == "summon":
+			return &"bones"
+		if op == "sacrifice_strike" or op.begins_with("finisher"):
+			return &"skull"
+		if op == "heal":
+			return &"drop"
+		if op == "damage_x_burn":
+			return &"fire"
+		if op == "apply_status" and StringName(e.get("status", &"")) == &"burn":
+			return &"fire"
+	if card.type == "Attack":
+		return &"sword"
+	if card.swag_gain > 0:
+		return &"star"
+	if card.type == "Skill":
+		return &"shield"
+	return &"swirl"
 
 static func type_color(t: String) -> Color:
 	match t:

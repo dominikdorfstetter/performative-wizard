@@ -7,7 +7,7 @@ func _ready() -> void:
 
 func _build() -> void:
 	for c in get_children():
-		if not (c is ColorRect):
+		if not (c is ColorRect or c is TextureRect):
 			c.queue_free()
 	NodeUI.title(self, "✦ The Boutique", NodeUI.PINK)
 	NodeUI.sub(self, "Spend Clout on permanent drip. You have ✦ %d Clout." % GameState.clout)

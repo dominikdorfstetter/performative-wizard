@@ -6,7 +6,8 @@ extends Control
 @onready var _choices: HBoxContainer = $Choices
 
 func _ready() -> void:
-	$Background.color = Color(0.08, 0.06, 0.11)
+	$Background.visible = false
+	NodeUI.gradient_bg(self)
 	$Title.add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
 	$Subtitle.text = "Choose your base robe set — all power comes from the clothes.    ✦ Clout: %d" % GameState.clout
 	if GameState.message != "":

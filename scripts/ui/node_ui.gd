@@ -8,11 +8,26 @@ const PINK := Color(1.0, 0.31, 0.70)
 const GOLD := Color(1.0, 0.82, 0.29)
 
 static func background(parent: Control) -> void:
-	var c := ColorRect.new()
-	c.color = BG
-	c.set_anchors_preset(Control.PRESET_FULL_RECT)
-	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(c)
+	gradient_bg(parent)
+
+## A subtle vertical gradient backdrop, inserted behind everything.
+static func gradient_bg(parent: Control, top := Color(0.12, 0.09, 0.17), bottom := Color(0.05, 0.04, 0.09)) -> void:
+	var grad := Gradient.new()
+	grad.set_color(0, top)
+	grad.set_color(1, bottom)
+	var gt := GradientTexture2D.new()
+	gt.gradient = grad
+	gt.fill_from = Vector2(0, 0)
+	gt.fill_to = Vector2(0, 1)
+	gt.width = 8
+	gt.height = 64
+	var tr := TextureRect.new()
+	tr.texture = gt
+	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tr.stretch_mode = TextureRect.STRETCH_SCALE
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(tr)
+	parent.move_child(tr, 0)
 
 static func title(parent: Control, text: String, color: Color = PINK) -> Label:
 	var l := Label.new()

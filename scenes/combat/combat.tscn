@@ -9,13 +9,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_ui")
 
-[node name="Background" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-color = Color(0.09, 0.07, 0.13, 1)
-
 [node name="TurnBanner" type="Label" parent="."]
 layout_mode = 0
 offset_left = 16.0
@@ -174,20 +167,22 @@ text = "End Turn"
 [node name="Piles" type="Label" parent="."]
 layout_mode = 0
 offset_left = 24.0
-offset_top = 424.0
+offset_top = 420.0
 offset_right = 360.0
-offset_bottom = 446.0
+offset_bottom = 440.0
 theme_override_font_sizes/font_size = 14
 text = "Draw  Discard"
 
 [node name="HandLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 24.0
-offset_top = 452.0
-offset_right = 300.0
-offset_bottom = 474.0
+offset_left = 500.0
+offset_top = 420.0
+offset_right = 1128.0
+offset_bottom = 440.0
 theme_override_font_sizes/font_size = 14
-text = "YOUR HAND  ·  click an enemy to target"
+theme_override_colors/font_color = Color(0.6, 0.6, 0.68, 1)
+text = "click an enemy to choose your target"
+horizontal_alignment = 2
 
 [node name="Hand" type="HBoxContainer" parent="."]
 layout_mode = 0
