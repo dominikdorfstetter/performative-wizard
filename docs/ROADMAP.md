@@ -24,29 +24,39 @@ The weakest pillar and the user's explicit ask. Detailed plan in `ENEMY_REDESIGN
 ## Next — Progression & unlock arc
 The missing roguelite hook.
 
-- [ ] **Unlock wizards through play** — start with Fire; unlock Necro/Rizz via Clout
-  milestones or beating the boss. Gate `class_select` on `GameState.unlocked_wizards`.
-- [ ] **Card/relic unlock pool** — seed each wizard with a small pool, unlock the
-  rest via wins/Clout so the meta *expands options*, not just buys outfits.
-- [ ] **Act 2 (+ Act 3)** — chain acts with escalating scaling and a boss each.
-  Generalize the map to `act` count; reset per act, carry deck/HP/artifacts.
-- [ ] **Ascension/"Hard Mode" ladder** — post-win difficulty modifiers for replay.
+- [x] **Unlock wizards through play** — Fire free; Necro at 120 lifetime Clout, Rizz
+  at 320. `class_select` greys locked wizards with an unlock hint.
+- [x] **Card/relic unlock pool** — CardData/ArtifactData `unlock_clout`; reward/shop/
+  chest/elite pools filter by lifetime Clout so the meta expands options.
+- [x] **Act 2 + Act 3** — runs are 3 acts; a boss win regenerates the map and carries
+  deck/HP/artifacts; `node_scales` scales by act. Map header shows "Act n/3".
+- [x] **Ascension / Hard-Mode ladder** — clearing banks the next tier; class_select
+  picker dials 0..ascension (+8% HP, +6% dmg, +10 Clout per tier).
 
-## Later — Content depth & systems
-- [ ] **De-dupe & expand cards** — merge functional duplicates; add real archetypes
-  (draw engine, energy ramp, exhaust bombs, X-cost, multi-hit, scaling Powers).
-- [ ] **Make `Power` cards real** — persistent in-combat buffs (e.g. "+1 Aura/turn",
-  "every 3rd card crits"), the natural home for the drip fantasy.
-- [ ] **More artifacts & outfit passives** tied to the new statuses (frail, jinx).
-- [ ] **Second-tier statuses** — `poison` (ramps), `frail`, `entangle` (skip a card),
-  enemy-side `enrage`.
-- [ ] **Events with real choices** — current events are 50/50 coin flips; add
-  build-shaping decisions (remove/transform/upgrade cards, swap outfits).
+## Later — Content depth & systems ✅
+- [x] **De-dupe & expand cards** — repurposed the strict-dominant Pickup Line; added
+  Power cards + Spread Rumors (poison). 38 cards.
+- [x] **Make `Power` cards real** — ritual/aura_engine/hive_mind/barrier tick each turn
+  (`_tick_powers`); Slow Burn, Hive Mind, Sigma Grindset, Pickup Line.
+- [x] **More artifacts tied to new statuses** — Venom Vial (poison +1), Spotlight
+  (enemies start Cooked). 14 artifacts.
+- [x] **Second-tier statuses** — `poison` (ramping, ticks for both sides) and reactive
+  `enrage` (EnemyData.enrage); `frail` shipped earlier.
+- [x] **Events with real choices** — The Therapist (remove a card) and Cursed Bargain
+  (MAX HP ↔ artefact); merchant rolls respect unlocks.
 
-## Polish backlog (carried from the graphics grind)
-- [ ] Combat status-effect popup animations (gain/expire tells).
-- [ ] Richer title screen.
-- [ ] Card upgrade system (a "+" version per card).
+## Polish backlog ✅
+- [x] Combat status-gain tells (debuff name floats over the wizard + sting).
+- [x] Richer title screen (ambient sparkles, twinkles, title glow pulse).
+- [x] Card upgrade system — Rest "Glow Up" makes a card cost 1 less (per-id, run-scoped).
+
+## Done — deferred item
+- [x] **Enemy summoners** — `summon_ally` intent spawns adds mid-fight (Possessed
+  Wardrobe → Sock Puppet, The Algorithm → Roomba bot); UI rebuilds the row.
+
+---
+**Roadmap complete (2026-06-06).** Roster: 38 cards, 23 enemies + 2 bosses, 3 wizards,
+17 outfits, 14 artifacts. 73/73 tests. Future ideas live in `DESIGN_REVIEW.md`.
 
 ## Definition of done per slice
 Each slice: data/code change → `godot --headless scenes/test_combat.tscn` green →
