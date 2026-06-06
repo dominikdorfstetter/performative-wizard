@@ -19,7 +19,7 @@ func _ready() -> void:
 	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
 	(%SummaryPanel as Panel).add_theme_stylebox_override("panel", _panel(Color(0.13, 0.11, 0.17), Color(0.28, 0.24, 0.36)))
 	_wizard = Database.get_wizard(GameState.wizard_id)
-	(%WizardLabel as Label).text = "%s, the %s    —    pick your drip" % [_wizard.pname, _wizard.title]
+	(%WizardLabel as Label).text = Loc.t("%s, the %s    —    pick your drip") % [_wizard.pname, Loc.t(_wizard.title)]
 	(%WizardLabel as Label).add_theme_color_override("font_color", _wizard.accent.lightened(0.3))
 	var tex := SpriteBank.wizard_texture(_wizard.id)
 	if tex != null:
@@ -32,6 +32,7 @@ func _ready() -> void:
 		tr.size = Vector2(54, 54)
 		add_child(tr)
 	var enter := %EnterButton as Button
+	enter.text = Loc.t("let's get it →")
 	enter.pressed.connect(_enter)
 	enter.add_theme_stylebox_override("normal", _panel(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
 	enter.add_theme_stylebox_override("hover", _panel(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
@@ -50,7 +51,7 @@ func _make_slot_row(slot: String) -> Control:
 	row.add_theme_constant_override("separation", 8)
 
 	var label := Label.new()
-	label.text = slot
+	label.text = Loc.t(slot)
 	label.custom_minimum_size = Vector2(70, 80)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 18)
@@ -60,7 +61,7 @@ func _make_slot_row(slot: String) -> Control:
 	var options := GameState.owned_for(slot, _wizard.element)
 	if options.is_empty():
 		var none := Label.new()
-		none.text = "(nothing owned)"
+		none.text = Loc.t("(nothing owned)")
 		none.add_theme_color_override("font_color", Color(0.5, 0.5, 0.55))
 		row.add_child(none)
 	for id in options:
@@ -92,32 +93,32 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 		tr.position = Vector2(150, 8)
 		tr.size = Vector2(40, 40)
 		b.add_child(tr)
-	var title := ("✓ " if equipped else "") + piece.title
+	var title := ("✓ " if equipped else "") + Loc.t(piece.title)
 	_lbl(b, title, Vector2(8, 6), Vector2(136, 20), 14, ec.lightened(0.35))
 	var sub := "✦ +%d" % piece.drip
 	if not piece.injected_cards.is_empty():
 		sub += "   +%d card" % piece.injected_cards.size()
 	_lbl(b, sub, Vector2(8, 27), Vector2(136, 16), 12, Color(0.8, 0.8, 0.85))
-	var pt := piece.passive_text if piece.passive_text != "" else "—"
+	var pt := Loc.t(piece.passive_text) if piece.passive_text != "" else "—"
 	_lbl(b, pt, Vector2(8, 45), Vector2(182, 36), 11, Color(0.66, 0.66, 0.72))
 	return b
 
 func _update_summary() -> void:
 	var lines: Array[String] = []
-	lines.append("THE FIT")
+	lines.append(Loc.t("THE FIT"))
 	lines.append("")
-	lines.append("✦ Aura income: +%d / turn" % GameState.preview_drip())
+	lines.append(Loc.t("✦ Aura income: +%d / turn") % GameState.preview_drip())
 	var injected := 0
 	var passives: Array[String] = []
 	for p in GameState.equipped_pieces():
 		injected += p.injected_cards.size()
 		if p.passive_text != "":
-			passives.append("• " + p.passive_text)
-	lines.append("🃏 Cards added to deck: %d" % injected)
+			passives.append("• " + Loc.t(p.passive_text))
+	lines.append(Loc.t("🃏 Cards added to deck: %d") % injected)
 	lines.append("")
-	lines.append("drip perks:")
+	lines.append(Loc.t("drip perks:"))
 	if passives.is_empty():
-		lines.append("  (none)")
+		lines.append(Loc.t("  (none)"))
 	else:
 		lines.append_array(passives)
 	_summary.text = "\n".join(lines)

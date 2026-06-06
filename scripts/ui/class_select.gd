@@ -8,7 +8,7 @@ extends Control
 func _ready() -> void:
 	NodeUI.gradient_bg(self)
 	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
-	(%Subtitle as Label).text = "pick your fighter — all your power is in the fit.    ✦ Clout: %d" % GameState.clout
+	(%Subtitle as Label).text = Loc.t("pick your fighter — all your power is in the fit.    ✦ Clout: %d") % GameState.clout
 	if GameState.message != "":
 		_message.text = GameState.message
 		_message.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
@@ -19,9 +19,10 @@ func _ready() -> void:
 		var w := Database.get_wizard(id)
 		if w != null:
 			_choices.add_child(_make_wizard_button(w))
+	(%Boutique as Button).text = Loc.t("✦ Boutique  (spend Clout)")
 	(%Boutique as Button).pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/boutique.tscn"))
 	var menu := Button.new()
-	menu.text = "← Menu"
+	menu.text = Loc.t("← Menu")
 	menu.add_theme_font_size_override("font_size", 16)
 	menu.position = Vector2(24, 24)
 	menu.size = Vector2(120, 38)
@@ -55,12 +56,12 @@ func _make_wizard_button(w: WizardData) -> Button:
 		b.add_child(tr)
 	var nm: Color = Color(0.6, 0.6, 0.66) if locked else w.accent.lightened(0.35)
 	_label(b, w.pname, Vector2(12, 114), Vector2(276, 32), 24, nm)
-	_label(b, "the " + w.title, Vector2(12, 148), Vector2(276, 24), 17, Color(0.7, 0.7, 0.78))
+	_label(b, Loc.t("the %s") % Loc.t(w.title), Vector2(12, 148), Vector2(276, 24), 17, Color(0.7, 0.7, 0.78))
 	if locked:
 		_label(b, GameState.locked_wizard_hint(w.id), Vector2(14, 184), Vector2(272, 110), 16, Color(0.85, 0.7, 0.4))
 	else:
-		_label(b, "❤ %d HP" % w.max_hp, Vector2(12, 176), Vector2(276, 24), 16, Color(0.8, 0.8, 0.85))
-		_label(b, w.blurb, Vector2(18, 204), Vector2(264, 104), 16, Color(0.78, 0.78, 0.82))
+		_label(b, Loc.t("❤ %d HP") % w.max_hp, Vector2(12, 176), Vector2(276, 24), 16, Color(0.8, 0.8, 0.85))
+		_label(b, Loc.t(w.blurb), Vector2(18, 204), Vector2(264, 104), 16, Color(0.78, 0.78, 0.82))
 	return b
 
 var _asc_label: Label
@@ -99,9 +100,9 @@ func _asc_change(delta: int) -> void:
 func _update_asc_label() -> void:
 	var n := GameState.asc_level
 	if n == 0:
-		_asc_label.text = "🔥 Ascension 0 / %d  —  base difficulty" % GameState.ascension
+		_asc_label.text = Loc.t("🔥 Ascension 0 / %d  —  base difficulty") % GameState.ascension
 	else:
-		_asc_label.text = "🔥 Ascension %d / %d  —  +%d%% enemy HP, +%d%% dmg, +%d Clout" % [
+		_asc_label.text = Loc.t("🔥 Ascension %d / %d  —  +%d%% enemy HP, +%d%% dmg, +%d Clout") % [
 			n, GameState.ascension, n * 8, n * 6, n * 10]
 
 func _choose(id: StringName) -> void:

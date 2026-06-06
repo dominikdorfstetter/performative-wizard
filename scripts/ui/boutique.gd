@@ -10,7 +10,7 @@ func _build() -> void:
 		if not (c is ColorRect or c is TextureRect):
 			c.queue_free()
 	NodeUI.title(self, "✦ The Boutique", NodeUI.PINK)
-	NodeUI.sub(self, "Spend Clout on permanent drip. You have ✦ %d Clout." % GameState.clout)
+	NodeUI.sub(self, Loc.t("Spend Clout on permanent drip. You have ✦ %d Clout.") % GameState.clout)
 
 	var scroll := ScrollContainer.new()
 	scroll.position = Vector2(78, 160)
@@ -35,8 +35,8 @@ func _stall(entry: Dictionary) -> Control:
 	var owned: bool = entry.id in GameState.unlocked_outfits
 	var afford: bool = not owned and GameState.clout >= entry.cost
 	var desc := "%s\n✦ +%d/turn\n%s\n\n%s" % [
-		p.slot, p.drip, p.passive_text,
-		("OWNED" if owned else "✦ %d Clout" % entry.cost)]
+		Loc.t(p.slot), p.drip, Loc.t(p.passive_text),
+		(Loc.t("OWNED") if owned else "✦ %d Clout" % entry.cost)]
 	var accent := Color(0.55, 0.78, 0.45) if owned else (NodeUI.GOLD if afford else Color(0.5, 0.5, 0.56))
 	var ab := NodeUI.choice(p.title, desc, accent, _buy.bind(entry), afford)
 	var itex := SpriteBank.item_texture(entry.id)

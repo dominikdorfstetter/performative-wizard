@@ -31,7 +31,7 @@ static func gradient_bg(parent: Control, top := Color(0.12, 0.09, 0.17), bottom 
 
 static func title(parent: Control, text: String, color: Color = PINK) -> Label:
 	var l := Label.new()
-	l.text = text
+	l.text = Loc.t(text)
 	l.add_theme_font_size_override("font_size", 36)
 	l.add_theme_color_override("font_color", color)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -42,7 +42,7 @@ static func title(parent: Control, text: String, color: Color = PINK) -> Label:
 
 static func sub(parent: Control, text: String, y: float = 108.0) -> Label:
 	var l := Label.new()
-	l.text = text
+	l.text = Loc.t(text)
 	l.add_theme_font_size_override("font_size", 18)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.position = Vector2(0, y)
@@ -76,8 +76,8 @@ static func choice(text: String, desc: String, accent: Color, cb: Callable, enab
 	b.add_child(vb)
 	if icon != "":
 		vb.add_child(_vlabel(icon, 42, Color.WHITE))
-	vb.add_child(_vlabel(text, 22, accent.lightened(0.35)))
-	vb.add_child(_vlabel(desc, 16, Color(0.82, 0.82, 0.88)))
+	vb.add_child(_vlabel(Loc.t(text), 22, accent.lightened(0.35)))
+	vb.add_child(_vlabel(Loc.t(desc), 16, Color(0.82, 0.82, 0.88)))
 	return b
 
 static func _vlabel(text: String, fs: int, color: Color) -> Label:
@@ -99,7 +99,7 @@ static func menu_button(text: String, cb: Callable, accent := Color(0.5, 0.55, 0
 	b.add_theme_stylebox_override("hover", box(Color(0.22, 0.19, 0.3), accent.lightened(0.3)))
 	b.add_theme_stylebox_override("pressed", box(Color(0.2, 0.17, 0.27), accent))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.text = text
+	b.text = Loc.t(text)
 	if cb.is_valid():
 		b.pressed.connect(cb)
 		b.pressed.connect(Audio.play.bind("click", -7.0))
@@ -112,7 +112,7 @@ static func small_button(text: String, cb: Callable, accent: Color = Color(0.4, 
 	b.add_theme_stylebox_override("normal", box(Color(0.15, 0.14, 0.2), accent))
 	b.add_theme_stylebox_override("hover", box(Color(0.2, 0.18, 0.27), accent.lightened(0.25)))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.text = text
+	b.text = Loc.t(text)
 	if cb.is_valid():
 		b.pressed.connect(cb)
 		b.pressed.connect(Audio.play.bind("click", -7.0))

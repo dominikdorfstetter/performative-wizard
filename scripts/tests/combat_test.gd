@@ -352,5 +352,17 @@ func _ready() -> void:
 	GameState.clout_earned = saved_ce
 	GameState.act = saved_act
 
+	# --- localization --------------------------------------------------------
+	print("--- localization ---")
+	Loc.set_locale("de")
+	_check("de translates card text", Loc.t("Deal 5."), "5 Schaden.")
+	_check("de keeps slang status", Loc.t("Cooked"), "Cooked")
+	_check("de passthrough untranslated", Loc.t("xyz not real"), "xyz not real")
+	Loc.set_locale("es")
+	_check("es translates card text", Loc.t("Deal 5."), "Inflige 5.")
+	_check("es translates enemy", Loc.t("Angry Toaster"), "Tostadora Furiosa")
+	Loc.set_locale("en")
+	_check("en is passthrough", Loc.t("Deal 5."), "Deal 5.")
+
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

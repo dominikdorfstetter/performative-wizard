@@ -40,13 +40,14 @@ var discard_pile: Array[CardData] = []
 var passives: Array[StringName] = []
 var enemy_dmg_scale := 1.0
 var enemy_hp_scale := 1.0
+var upgrades: Dictionary = {}        # card_id -> true (Glow'd Up: costs 1 less)
 var crit_chance := 0.0
 var last_crit := false
 var log_lines: Array[String] = []
 
 # --- setup ---------------------------------------------------------------
 
-func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_value: int, deterministic := false, outfit_passives: Array[StringName] = [], hp_scale := 1.0, dmg_scale := 1.0) -> void:
+func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_value: int, deterministic := false, outfit_passives: Array[StringName] = [], hp_scale := 1.0, dmg_scale := 1.0, card_upgrades: Dictionary = {}) -> void:
 	player = p
 	enemies.clear()
 	enemy_hp_scale = hp_scale
@@ -56,6 +57,7 @@ func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_va
 	enemy_dmg_scale = dmg_scale
 	drip = drip_value
 	passives = outfit_passives
+	upgrades = card_upgrades
 	_compute_crit()
 	draw_pile = deck.duplicate()
 	if not deterministic:
@@ -192,13 +194,16 @@ func _tick_powers() -> void:
 	if barrier > 0:
 		player.block += barrier
 
+func card_cost(card: CardData) -> int:
+	return max(0, card.cost - (1 if upgrades.get(card.id, false) else 0))
+
 func can_play(card: CardData) -> bool:
-	return state == State.PLAYER_TURN and energy >= GameState.card_cost(card)
+	return state == State.PLAYER_TURN and energy >= card_cost(card)
 
 func play_card(card: CardData) -> bool:
 	if not can_play(card) or card not in hand:
 		return false
-	energy -= GameState.card_cost(card)
+	energy -= card_cost(card)
 	hand.erase(card)
 	discard_pile.append(card)
 

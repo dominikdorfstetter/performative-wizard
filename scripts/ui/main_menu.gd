@@ -96,7 +96,7 @@ func _title() -> void:
 	tw.tween_property(t, "modulate", Color(1.15, 1.0, 1.2), 1.6).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(t, "modulate", Color.WHITE, 1.6).set_trans(Tween.TRANS_SINE)
 	var s := Label.new()
-	s.text = "a roguelike deckbuilder about drip"
+	s.text = Loc.t("a roguelike deckbuilder about drip")
 	s.add_theme_font_size_override("font_size", 20)
 	s.add_theme_color_override("font_color", Color(0.7, 0.7, 0.78))
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -224,8 +224,8 @@ func _react(tr: TextureRect) -> void:
 
 func _continue_label() -> String:
 	if GameState.has_save():
-		return "↻   Continue   (✦ %d)" % GameState.clout
-	return "↻   Continue"
+		return Loc.t("↻   Continue   (✦ %d)") % GameState.clout
+	return Loc.t("↻   Continue")
 
 # --- actions -------------------------------------------------------------
 
@@ -274,7 +274,7 @@ func _to_class_select() -> void:
 
 func _footer(text: String) -> void:
 	var l := Label.new()
-	l.text = text
+	l.text = Loc.t(text)
 	l.add_theme_font_size_override("font_size", 14)
 	l.add_theme_color_override("font_color", Color(0.55, 0.55, 0.62))
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

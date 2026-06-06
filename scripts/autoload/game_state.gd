@@ -39,6 +39,7 @@ var clout_earned := 0                        # lifetime Clout (never spent down)
 var ascension := 0                           # highest cleared difficulty tier
 var sfx_on := true
 var music_on := true
+var locale := "en"
 
 const MAX_ACTS := 3
 
@@ -65,6 +66,12 @@ func _ready() -> void:
 	_ensure_defaults()
 	Audio.set_sfx_muted(not sfx_on)
 	Audio.set_music_muted(not music_on)
+	Loc.set_locale(locale)
+
+func set_language(l: String) -> void:
+	locale = l
+	Loc.set_locale(l)
+	save_meta()
 
 func set_audio(sfx: bool, music: bool) -> void:
 	sfx_on = sfx
@@ -159,7 +166,7 @@ func locked_wizard_hint(id: StringName) -> String:
 	var w := Database.get_wizard(id)
 	if w == null or wizard_unlocked(id):
 		return ""
-	return "🔒  Unlock at ✦ %d  (you have ✦ %d earned)" % [w.unlock_clout, clout_earned]
+	return Loc.t("🔒  Unlock at ✦ %d  (you have ✦ %d earned)") % [w.unlock_clout, clout_earned]
 
 func is_upgraded(id: StringName) -> bool:
 	return card_upgrades.get(id, false)
@@ -369,6 +376,7 @@ func load_meta() -> void:
 	ascension = int(data.get("ascension", 0))
 	sfx_on = bool(data.get("sfx_on", true))
 	music_on = bool(data.get("music_on", true))
+	locale = String(data.get("locale", "en"))
 
 func save_meta() -> void:
 	var owned: Array[String] = []
@@ -381,4 +389,4 @@ func save_meta() -> void:
 	if f == null:
 		push_warning("[GameState] could not open save file for writing")
 		return
-	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "sfx_on": sfx_on, "music_on": music_on}, "\t"))
+	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "sfx_on": sfx_on, "music_on": music_on, "locale": locale}, "\t"))

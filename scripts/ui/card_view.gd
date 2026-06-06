@@ -95,11 +95,12 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 		_add_label(b, "✦+", Vector2(96, 6), Vector2(22, 18), 13, C_SWAG)
 
 	# type tag ABOVE the title so 2-line titles never collide with it
-	_add_label(b, card.type.to_upper(), Vector2(6, 52), Vector2(138, 14), 10, C_DIM)
+	_add_label(b, Loc.t(card.type).to_upper(), Vector2(6, 52), Vector2(138, 14), 10, C_DIM)
 	# shrink the title font for longer names so 2-line titles aren't cramped
-	var tlen := card.title.length()
+	var disp_title := Loc.t(card.title)
+	var tlen := disp_title.length()
 	var tsize := 16 if tlen <= 11 else (14 if tlen <= 17 else 12)
-	_add_label(b, card.title, Vector2(5, 66), Vector2(140, 48), tsize, accent.lightened(0.45))
+	_add_label(b, disp_title, Vector2(5, 66), Vector2(140, 48), tsize, accent.lightened(0.45))
 	var body := Panel.new()
 	body.position = Vector2(8, 116)
 	body.size = Vector2(134, 80)
@@ -112,8 +113,9 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	# description fills the inset box; shrinks for long text; leaves room for the footer
 	var has_footer := card.swag_gain > 0
 	var dh := 48 if has_footer else 72
-	var dsize := 13 if card.description.length() <= 58 else 12
-	_add_label(b, card.description, Vector2(9, 120), Vector2(132, dh), dsize, Color(0.87, 0.87, 0.92))
+	var disp_desc := Loc.t(card.description)
+	var dsize := 13 if disp_desc.length() <= 58 else 12
+	_add_label(b, disp_desc, Vector2(9, 120), Vector2(132, dh), dsize, Color(0.87, 0.87, 0.92))
 	if has_footer:
 		_add_label(b, "✦ Aura +%d" % card.swag_gain, Vector2(6, 176), Vector2(138, 16), 13, C_SWAG)
 	return b

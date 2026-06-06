@@ -67,6 +67,7 @@ func _ready() -> void:
 	_energy.add_theme_color_override("font_color", C_GOLD)
 	_gold.add_theme_color_override("font_color", C_GOLD)
 	_end_turn.pressed.connect(_on_end_turn)
+	_end_turn.text = Loc.t("Bye ✌")
 	_end_turn.add_theme_stylebox_override("normal", _panel_box(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
 	_end_turn.add_theme_stylebox_override("hover", _panel_box(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
 	_result_panel.add_theme_stylebox_override("panel", _panel_box(Color(0.13, 0.11, 0.17), C_PANEL_BORDER))
@@ -142,7 +143,7 @@ func _start_fight() -> void:
 	cm = CombatManager.new()
 	cm.changed.connect(_refresh)
 	cm.combat_ended.connect(_on_combat_ended)
-	cm.start_combat(player, encounter, deck, GameState.drip, false, GameState.active_passives(), scales[0], scales[1])
+	cm.start_combat(player, encounter, deck, GameState.drip, false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
 	_build_player_widget(w)
 	_build_fit_strip()
 	_prev_enemy_hp = []
@@ -287,7 +288,7 @@ func _refresh() -> void:
 	if not is_inside_tree():
 		return
 	var over := cm.state == CombatManager.State.WIN or cm.state == CombatManager.State.LOSE
-	_turn_banner.text = "THEIR TURN" if cm.state == CombatManager.State.ENEMY_TURN else "TURN %d" % cm.turn
+	_turn_banner.text = Loc.t("THEIR TURN") if cm.state == CombatManager.State.ENEMY_TURN else Loc.t("TURN %d") % cm.turn
 	_gold.text = "💰 %d" % GameState.gold
 	_log_line.text = cm.log_lines[-1] if not cm.log_lines.is_empty() else ""
 
@@ -296,8 +297,8 @@ func _refresh() -> void:
 		_player_hp_text.text = "%d / %d" % [cm.player.hp, cm.player.max_hp]
 		_fill_status(_player_status_box, cm.player)
 
-	_energy.text = "⚡ Energy  %d / %d" % [cm.energy, cm.max_energy]
-	_swag_value.text = "✦ AURA  %d   (+%d/turn)" % [cm.swag, cm.drip]
+	_energy.text = Loc.t("⚡ Energy  %d / %d") % [cm.energy, cm.max_energy]
+	_swag_value.text = Loc.t("✦ AURA  %d   (+%d/turn)") % [cm.swag, cm.drip]
 	_swag_bar.value = min(cm.swag, _swag_bar.max_value)
 	_thresholds.text = _threshold_text()
 	_end_turn.disabled = over or cm.state != CombatManager.State.PLAYER_TURN
@@ -341,7 +342,7 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 	w.add_child(intent)
 
 	var nm := Label.new()
-	nm.text = e.display_name
+	nm.text = Loc.t(e.display_name)
 	nm.position = Vector2(0, 26)
 	nm.size = Vector2(150, 18)
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -861,7 +862,7 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 
 func _threshold_text() -> String:
 	var d := func(n): return "●" if cm.swag >= n else "○"
-	return "%s ≥6 +2dmg    %s ≥12 +draw    %s ≥18 pierce" % [d.call(6), d.call(12), d.call(18)]
+	return Loc.t("%s ≥6 +2dmg    %s ≥12 +draw    %s ≥18 pierce") % [d.call(6), d.call(12), d.call(18)]
 
 # --- styles --------------------------------------------------------------
 

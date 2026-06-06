@@ -11,6 +11,7 @@ config/features=PackedStringArray("4.4", "GL Compatibility")
 
 [autoload]
 
+Loc="*res://scripts/autoload/loc.gd"
 Database="*res://scripts/autoload/database.gd"
 SpriteBank="*res://scripts/autoload/sprite_bank.gd"
 Audio="*res://scripts/autoload/audio.gd"
