@@ -470,7 +470,6 @@ func end_turn() -> void:
 			if all_dead():
 				_finish(true)
 				return
-	player.block = 0
 	_decay(player)
 	_enemy_turn()
 
@@ -502,6 +501,10 @@ func _enemy_turn() -> void:
 	if all_dead():
 		_finish(true)
 		return
+	# Block held through the enemy turn (so it absorbed their attacks); clear it now,
+	# right before your next turn — StS-correct. (Was wrongly cleared in end_turn, so
+	# block never protected against enemies.)
+	player.block = 0
 	_start_player_turn()
 
 func _make_enemy(edata: EnemyData) -> Combatant:
