@@ -861,6 +861,29 @@ func _ready() -> void:
 	_check("Legendary unlocks at 150 clout", GameState.card_unlocked(&"flashpoint"), true)
 	GameState.clout_earned = saved_ce4
 
+	# --- archetypes slice 5: wide-S path + Necro swarm fingerprint ---
+	print("--- wide-S + swarm fingerprint ---")
+	var cmep := CombatManager.new()
+	var pep := Combatant.new()
+	pep.max_hp = 72
+	pep.hp = 72
+	cmep.start_combat(pep, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
+	cmep.peak_swag = 18
+	cmep.finisher_clean = true
+	cmep.aoe_plays = 2
+	_check("wide (>=2 AoE) clean finish -> S", cmep.compute_show_rating()["rating"], "S")
+	cmep.aoe_plays = 0
+	cmep.pose_swag = 12
+	_check("active-aura clean finish -> S", cmep.compute_show_rating()["rating"], "S")
+	cmep.pose_swag = 0
+	_check("coasted single-target clean finish still caps at A", cmep.compute_show_rating()["rating"], "A")
+	# swarm fingerprint from a big Goon board
+	cmep.finisher_clean = false
+	cmep.player.add_status(&"undead", 4)
+	cmep._emit()
+	_check("peak_undead tracks the board", cmep.peak_undead, 4)
+	_check("big goon board -> swarm signature", cmep.style_signature(), &"swarm")
+
 	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
 	print("--- rarity ladder ---")
 	var ladder := ["Common", "Rare", "Epic", "Legendary"]
