@@ -674,6 +674,91 @@ func _ready() -> void:
 	cmbk2.player.block = 7
 	cmbk2.end_turn()
 	_check("7 block vs 10 incoming -> take 3", cmbk2.player.hp, 69)
+	# --- archetypes slice 2: new commons + flame_lash fix ---
+	print("--- new commons + flame_lash fix ---")
+	# flame_lash: deal 4, +4 if Roasted
+	var cmfx := CombatManager.new()
+	var pfx := Combatant.new()
+	pfx.max_hp = 72
+	pfx.hp = 72
+	cmfx.start_combat(pfx, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"flame_lash")], 0, true)
+	cmfx.hand = [Database.get_card(&"flame_lash")]
+	cmfx.play_card(cmfx.hand[0])
+	_check("flame_lash base 4 (no Roast)", cmfx.enemies[0].hp, 24)
+	cmfx.enemies[0].add_status(&"burn", 3)
+	cmfx.energy = 3
+	cmfx.hand = [Database.get_card(&"flame_lash")]
+	cmfx.play_card(cmfx.hand[0])
+	_check("flame_lash +4 if Roasted (deal 8)", cmfx.enemies[0].hp, 16)
+
+	# serve_face: pose +2 (active aura)
+	var cmsf := CombatManager.new()
+	var psf := Combatant.new()
+	psf.max_hp = 72
+	psf.hp = 72
+	cmsf.start_combat(psf, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"serve_face")], 0, true)
+	cmsf.hand = [Database.get_card(&"serve_face")]
+	cmsf.play_card(cmsf.hand[0])
+	_check("serve_face poses +2 aura", cmsf.swag, 2)
+	_check("serve_face is active (pose_swag)", cmsf.pose_swag, 2)
+
+	# bone_offering: sacrifice a goon for +3 aura
+	var cmbf := CombatManager.new()
+	var pbf := Combatant.new()
+	pbf.max_hp = 68
+	pbf.hp = 68
+	cmbf.start_combat(pbf, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"bone_offering")], 0, true)
+	cmbf.player.add_status(&"undead", 1)
+	cmbf.hand = [Database.get_card(&"bone_offering")]
+	cmbf.play_card(cmbf.hand[0])
+	_check("bone_offering sacked the goon", cmbf.player.status(&"undead"), 0)
+	_check("bone_offering gave +3 aura", cmbf.swag, 3)
+
+	# gravecall: summon 1 + draw 1
+	var cmgc := CombatManager.new()
+	var pgc := Combatant.new()
+	pgc.max_hp = 68
+	pgc.hp = 68
+	cmgc.start_combat(pgc, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"bone_dart")], 0, true)
+	cmgc.draw_pile = [Database.get_card(&"bone_dart")]
+	cmgc.hand = [Database.get_card(&"gravecall")]
+	cmgc.play_card(cmgc.hand[0])
+	_check("gravecall summoned a goon", cmgc.player.status(&"undead"), 1)
+	_check("gravecall drew 1", cmgc.hand.size(), 1)
+
+	# double_tap: 3 twice (two crit rolls) = 6
+	var cmdt := CombatManager.new()
+	var pdt := Combatant.new()
+	pdt.max_hp = 72
+	pdt.hp = 72
+	cmdt.start_combat(pdt, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"double_tap")], 0, true)
+	cmdt.hand = [Database.get_card(&"double_tap")]
+	cmdt.play_card(cmdt.hand[0])
+	_check("double_tap deals 3 twice = 6", cmdt.enemies[0].hp, 22)
+
+	# smoulder: aura_engine power ticks +1/turn
+	var cmsm := CombatManager.new()
+	var psmo := Combatant.new()
+	psmo.max_hp = 72
+	psmo.hp = 72
+	var decksm: Array[CardData] = []
+	for n in 6:
+		decksm.append(Database.get_card(&"ember"))
+	cmsm.start_combat(psmo, [Database.get_enemy(&"alley_cat")], decksm, 0, true)
+	cmsm.hand = [Database.get_card(&"smoulder")]
+	cmsm.play_card(cmsm.hand[0])
+	var sw0: int = cmsm.swag
+	cmsm.end_turn()
+	_check("smoulder aura engine ticks +1", cmsm.swag >= sw0 + 1, true)
+
+	# unlock gate respects the new cards
+	var saved_ce2: int = GameState.clout_earned
+	GameState.clout_earned = 0
+	_check("double_tap locked at 0 clout", GameState.card_unlocked(&"double_tap"), false)
+	GameState.clout_earned = 30
+	_check("double_tap unlocks by 30 clout", GameState.card_unlocked(&"double_tap"), true)
+	GameState.clout_earned = saved_ce2
+
 	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
 	print("--- rarity ladder ---")
 	var ladder := ["Common", "Rare", "Epic", "Legendary"]

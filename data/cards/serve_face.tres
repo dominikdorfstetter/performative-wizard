@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"serve_face"
+title = "Serve Face"
+description = "Pose: gain 2 Aura."
+cost = 0
+type = "Skill"
+rarity = "Common"
+unlock_clout = 0
+archetype = &"viral"
+swag_gain = 2
+swag_cost = 0
+effects = []

@@ -4,12 +4,14 @@
 
 [resource]
 script = ExtResource("1")
-id = &"flame_lash"
-title = "Add Fuel"
-description = "Deal 4. If they're Roasted, deal 4 more."
+id = &"gravecall"
+title = "Gravecall"
+description = "Summon 1 Goon. Draw 1."
 cost = 1
-type = "Attack"
+type = "Skill"
 rarity = "Common"
+unlock_clout = 30
+archetype = &"swarm"
 swag_gain = 0
 swag_cost = 0
-effects = [{ "op": "damage_if_status", "amount": 4, "status": "burn", "bonus": 4, "target": "enemy" }]
+effects = [{ "op": "summon", "amount": 1 }, { "op": "draw", "amount": 1 }]

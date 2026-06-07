@@ -11,6 +11,10 @@ extends Resource
 @export var rarity: String = "Common"
 @export var unlock_clout: int = 0            # lifetime Clout to appear in pools (0 = always)
 
+## Build-archetype tag for reward biasing (fire: roast|viral, necro: sac|swarm,
+## rizz: storm|ramp). Empty = neutral/shared (basics, finishers).
+@export var archetype: StringName = &""
+
 ## "Pose" value — Swag gained when this card is played.
 @export var swag_gain: int = 0
 

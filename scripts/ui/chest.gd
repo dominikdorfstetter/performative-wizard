@@ -28,7 +28,11 @@ func _open(rng: RandomNumberGenerator) -> void:
 		_reveal_text("💰  +%d gold. secure the bag." % g)
 		return
 	var w := Database.get_wizard(GameState.wizard_id)
-	var pool := w.reward_pool.duplicate()
+	var pool := GameState.unlocked_cards(w.reward_pool)   # respect the unlock gate (was leaking locked cards)
+	if pool.is_empty():
+		GameState.gold += 40
+		_reveal_text("nothing new to cop — have 40 gold 💰")
+		return
 	pool.shuffle()
 	GameState.deck.append(pool[0])
 	_reveal_card(pool[0])
