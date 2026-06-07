@@ -10,6 +10,7 @@ description = "Make them Mid +2. Gain 1 Rizz."
 cost = 1
 type = "Skill"
 rarity = "Common"
+archetype = &"storm"
 swag_gain = 0
 swag_cost = 0
 effects = [{ "op": "apply_status", "status": "weak", "amount": 2, "target": "enemy" }, { "op": "self_status", "status": "strength", "amount": 1 }]

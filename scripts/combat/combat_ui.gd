@@ -106,6 +106,11 @@ func _combat_track() -> String:
 		"Elite":
 			return "elite"
 		_:
+			# later acts lean on the harder, more aggressive combat variant
+			if GameState.act >= 3:
+				return "combat2"
+			if GameState.act <= 1:
+				return "combat"
 			var v: int = int(node.get("row", 0)) + node.get("enemies", []).size()
 			return "combat2" if v % 2 == 1 else "combat"
 

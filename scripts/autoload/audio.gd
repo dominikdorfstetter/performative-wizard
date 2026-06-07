@@ -164,14 +164,16 @@ func _build_sfx() -> void:
 		_cat([_tone(523, 0.09, "square", 0.34), _tone(784, 0.09, "square", 0.36), _tone(1047, 0.18, "square", 0.4)]),
 		_glide(300, 900, 0.36, "noise", 0.22)))
 
-# Each track: a 4-chord arpeggio loop with bass and (optional) drums. Distinct
-# progression / tempo / waveform / arp give every context its own mood.
+# Trap-flavoured tracks: a dark 4-chord arp over a gliding 808 sub, with a half-time
+# snare on beat 3 and rolling hi-hats. `aggr` (0..1) is the intensity dial — the harder
+# the context, the more layers stack on (16th hats, roll fills, extra 808s, clap+ghost
+# snares). Tempos sit in trap territory and climb with difficulty.
 const TRACK_DEFS := {
-	"menu":    {"prog": [261.63, 220.0, 174.61, 196.0], "bpm": 96.0,  "lead": "sine",     "lvol": 0.13, "bass": "triangle", "bmult": 0.5, "drum": 0.0, "arp": [1.0, 1.5, 2.0, 1.5, 1.25, 1.5, 2.0, 3.0]},
-	"combat":  {"prog": [261.63, 220.0, 174.61, 196.0], "bpm": 112.0, "lead": "square",   "lvol": 0.15, "bass": "saw",      "bmult": 0.5, "drum": 0.5, "arp": [1.0, 1.25, 1.5, 2.0, 1.5, 1.25, 1.5, 2.0]},
-	"combat2": {"prog": [220.0, 174.61, 196.0, 261.63], "bpm": 120.0, "lead": "triangle", "lvol": 0.16, "bass": "saw",      "bmult": 0.5, "drum": 0.5, "arp": [2.0, 1.5, 1.25, 1.5, 2.0, 1.25, 1.0, 1.5]},
-	"elite":   {"prog": [246.94, 196.0, 164.81, 220.0], "bpm": 128.0, "lead": "square",   "lvol": 0.15, "bass": "saw",      "bmult": 0.5, "drum": 0.62, "arp": [1.0, 1.5, 1.25, 2.0, 1.5, 2.0, 1.25, 1.5]},
-	"boss":    {"prog": [164.81, 130.81, 196.0, 146.83], "bpm": 132.0, "lead": "square",  "lvol": 0.17, "bass": "saw",      "bmult": 1.0, "drum": 0.72, "arp": [1.0, 2.0, 1.5, 2.0, 3.0, 2.0, 1.5, 2.0]},
+	"menu":    {"prog": [261.63, 220.0, 174.61, 196.0], "bpm": 124.0, "lead": "sine",     "lvol": 0.12, "arp": [1.0, 1.5, 2.0, 1.5, 1.25, 1.5, 2.0, 3.0], "aggr": 0.18},
+	"combat":  {"prog": [261.63, 220.0, 174.61, 196.0], "bpm": 130.0, "lead": "square",   "lvol": 0.14, "arp": [1.0, 1.25, 1.5, 2.0, 1.5, 1.25, 1.5, 2.0], "aggr": 0.42},
+	"combat2": {"prog": [220.0, 174.61, 196.0, 261.63], "bpm": 136.0, "lead": "triangle", "lvol": 0.15, "arp": [2.0, 1.5, 1.25, 1.5, 2.0, 1.25, 1.0, 1.5], "aggr": 0.58},
+	"elite":   {"prog": [246.94, 196.0, 164.81, 220.0], "bpm": 142.0, "lead": "square",   "lvol": 0.15, "arp": [1.0, 1.5, 1.25, 2.0, 1.5, 2.0, 1.25, 1.5], "aggr": 0.80},
+	"boss":    {"prog": [164.81, 130.81, 196.0, 146.83], "bpm": 150.0, "lead": "square",  "lvol": 0.16, "arp": [1.0, 2.0, 1.5, 2.0, 3.0, 2.0, 1.5, 2.0], "aggr": 1.0},
 }
 
 func _build_tracks() -> void:
@@ -179,32 +181,105 @@ func _build_tracks() -> void:
 		_tracks[name] = _build_track(TRACK_DEFS[name])
 
 func _build_track(d: Dictionary) -> AudioStreamWAV:
-	var eighth: float = (60.0 / float(d.bpm)) / 2.0
+	var beat: float = 60.0 / float(d.bpm)
+	var bar_dur: float = beat * 4.0          # one 4/4 bar
+	var eighth: float = beat / 2.0
 	var arp: Array = d.arp
+	var aggr: float = float(d.get("aggr", 0.0))
 	var samples := PackedFloat32Array()
 	for root in d.prog:
 		var bar := PackedFloat32Array()
+		bar.resize(int(bar_dur * RATE))
+		# melodic arp across the bar (8 eighths)
+		var melody := PackedFloat32Array()
 		for k in arp:
-			var lead := _tone(float(root) * float(k), eighth, d.lead, d.lvol, true)
-			var bass := _tone(float(root) * float(d.bmult), eighth, d.bass, 0.1, false)
-			bar.append_array(_mix(lead, bass))
-		if float(d.drum) > 0.0:
-			bar = _mix(bar, _drum_bar(eighth, float(d.drum)))
+			melody.append_array(_tone(float(root) * float(k), eighth, d.lead, d.lvol, true))
+		_add(bar, melody, 0)
+		# 808 sub-bass: root an octave down, gliding, ringing most of the bar
+		_add(bar, _eight_o_eight(float(root) * 0.5, bar_dur * 0.9, 0.40), 0)
+		if aggr >= 0.6:                       # a second 808 punch late in the bar
+			_add(bar, _eight_o_eight(float(root) * 0.5, bar_dur * 0.4, 0.34), int(bar_dur * 0.625 * RATE))
+		if aggr > 0.0:
+			_add(bar, _trap_drums(bar_dur, aggr), 0)
 		samples.append_array(bar)
 	return _wav(samples, true)
 
-# One bar of drums: kick on beats 1 & 3, snare on 2 & 4, closed hat on offbeats.
-func _drum_bar(eighth: float, vol: float) -> PackedFloat32Array:
-	var step_n := int(eighth * RATE)
+# A trap drum bar (16-step grid): 808 kicks, a half-time snare/clap on beat 3, and
+# rolling hi-hats. Layers stack with `aggr`.
+func _trap_drums(bar_dur: float, aggr: float) -> PackedFloat32Array:
+	var n := int(bar_dur * RATE)
 	var bar := PackedFloat32Array()
-	bar.resize(step_n * 8)
-	var kick := _glide(150.0, 48.0, min(0.16, eighth * 1.6), "sine", 0.95)
-	var snare := _mix(_tone(0.0, 0.13, "noise", 0.5), _tone(190.0, 0.13, "triangle", 0.3))
-	var hat := _tone(0.0, 0.035, "noise", 0.28)
-	_overlay(bar, kick, [0, 4], step_n, vol)
-	_overlay(bar, snare, [2, 6], step_n, vol)
-	_overlay(bar, hat, [1, 3, 5, 7], step_n, vol * 0.6)
+	bar.resize(n)
+	var sn := int((bar_dur / 16.0) * RATE)   # one sixteenth, in samples
+	var kick := _glide(150.0, 46.0, min(0.18, bar_dur * 0.12), "sine", 0.9)
+	var snare := _mix(_tone(0.0, 0.14, "noise", 0.5), _tone(185.0, 0.14, "triangle", 0.28))
+	var clap := _tone(0.0, 0.10, "noise", 0.45)
+	var hat := _tone(0.0, 0.028, "noise", 0.22)
+	var ohat := _tone(0.0, 0.06, "noise", 0.20)
+	# 808 kicks — syncopated, denser when angrier
+	var kicks := [0, 10]
+	if aggr >= 0.5:
+		kicks.append(6)
+	if aggr >= 0.8:
+		kicks.append_array([3, 13])
+	_overlay(bar, kick, kicks, sn, 0.78)
+	# half-time backbeat: snare on beat 3 (step 8), with a clap stack + ghost snare when angry
+	_overlay(bar, snare, [8], sn, 0.72)
+	if aggr >= 0.6:
+		_overlay(bar, clap, [8], sn, 0.55)
+	if aggr >= 0.85:
+		_overlay(bar, snare, [14], sn, 0.4)
+	# hi-hats: eighths, upgrading to sixteenths, with accents
+	var hats: Array = [0, 2, 4, 6, 8, 10, 12, 14]
+	if aggr >= 0.4:
+		hats = range(16)
+	var hv: float = 0.38 + 0.3 * aggr
+	for s in hats:
+		_overlay(bar, hat, [s], sn, hv * (0.65 if int(s) % 2 == 1 else 1.0))
+	if aggr >= 0.5:
+		_overlay(bar, ohat, [15], sn, 0.5)   # open-hat lift into the next bar
+	# the trap signature: hat rolls (sub-step bursts)
+	if aggr >= 0.7:
+		_roll(bar, hat, 12, 16, sn, 6, 0.5)
+	if aggr >= 0.95:
+		_roll(bar, hat, 4, 6, sn, 6, 0.45)
 	return bar
+
+# A gliding 808 sub: pitch slides down into the note, soft-saturated, long decay tail.
+func _eight_o_eight(freq: float, dur: float, vol: float) -> PackedFloat32Array:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var glide_n: int = max(1, int(0.05 * RATE))   # 50 ms slide
+	var atk: float = 0.005 * RATE
+	var phase := 0.0
+	for i in n:
+		var f := freq
+		if i < glide_n:
+			f = lerp(freq * 1.7, freq, i / float(glide_n))
+		phase = fmod(phase + f / RATE, 1.0)
+		var s := tanh(sin(phase * TAU) * 1.5)     # warm sub saturation
+		var env := 1.0
+		if i < atk:
+			env = i / atk
+		else:
+			env = pow(1.0 - (i - atk) / float(n - atk), 0.5)
+		out[i] = s * vol * env
+	return out
+
+# Place `count` evenly-spaced hits across [start_step, end_step) — a hat/snare roll.
+func _roll(into: PackedFloat32Array, hit: PackedFloat32Array, start_step: int, end_step: int, step_n: int, count: int, vol: float) -> void:
+	var a := start_step * step_n
+	var b := end_step * step_n
+	for j in count:
+		_add(into, hit, a + int((b - a) * j / float(count)), vol)
+
+# Mix `src` into `into` starting at sample `offset`, scaled by `vol`, clamped.
+func _add(into: PackedFloat32Array, src: PackedFloat32Array, offset: int, vol := 1.0) -> void:
+	for i in src.size():
+		var idx: int = offset + i
+		if idx >= 0 and idx < into.size():
+			into[idx] = clampf(into[idx] + src[i] * vol, -1.0, 1.0)
 
 func _overlay(into: PackedFloat32Array, hit: PackedFloat32Array, steps: Array, step_n: int, vol: float) -> void:
 	for s in steps:

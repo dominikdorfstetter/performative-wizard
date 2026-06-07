@@ -18,7 +18,7 @@ Last updated: 2026-06-06.
 > source of truth for *why* things are the way they are.
 
 ### Current snapshot (2026-06-06)
-- **Content:** 41 cards, 24 enemy types + **2 bosses** (The Critic, The Algorithm), **3
+- **Content:** 49 cards, 24 enemy types + **2 bosses** (The Critic, The Algorithm), **3
   wizards** (Fire / Necro / Rizzard), 19 outfits, 14 artifacts.
 - **USP — The Critic:** a rival grades every fight on how boldly you played your Aura and
   rewrites the run in response (live grade in combat; S → VIP room, C → heckler; her taste

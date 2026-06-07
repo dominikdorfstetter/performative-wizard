@@ -4,13 +4,14 @@
 
 [resource]
 script = ExtResource("1")
-id = &"drain"
-title = "Vibe Check"
-description = "Deal 4. Heal 3."
+id = &"gravecall"
+title = "Gravecall"
+description = "Summon 1 Goon. Draw 1."
 cost = 1
-type = "Attack"
+type = "Skill"
 rarity = "Common"
-archetype = &"sac"
+unlock_clout = 30
+archetype = &"swarm"
 swag_gain = 0
 swag_cost = 0
-effects = [{ "op": "damage", "amount": 4, "target": "enemy" }, { "op": "heal", "amount": 3 }]
+effects = [{ "op": "summon", "amount": 1 }, { "op": "draw", "amount": 1 }]

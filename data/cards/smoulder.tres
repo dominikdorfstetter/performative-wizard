@@ -4,13 +4,14 @@
 
 [resource]
 script = ExtResource("1")
-id = &"flame_lash"
-title = "Add Fuel"
-description = "Deal 4. If they're Roasted, deal 4 more."
+id = &"smoulder"
+title = "Smoulder"
+description = "Power. Gain +1 Aura at the start of each turn."
 cost = 1
-type = "Attack"
+type = "Power"
 rarity = "Common"
+unlock_clout = 20
 archetype = &"roast"
 swag_gain = 0
 swag_cost = 0
-effects = [{ "op": "damage_if_status", "amount": 4, "status": "burn", "bonus": 4, "target": "enemy" }]
+effects = [{ "op": "self_status", "status": "aura_engine", "amount": 1 }]

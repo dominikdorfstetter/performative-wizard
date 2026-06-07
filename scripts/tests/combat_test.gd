@@ -674,6 +674,225 @@ func _ready() -> void:
 	cmbk2.player.block = 7
 	cmbk2.end_turn()
 	_check("7 block vs 10 incoming -> take 3", cmbk2.player.hp, 69)
+	# --- archetypes slice 2: new commons + flame_lash fix ---
+	print("--- new commons + flame_lash fix ---")
+	# flame_lash: deal 4, +4 if Roasted
+	var cmfx := CombatManager.new()
+	var pfx := Combatant.new()
+	pfx.max_hp = 72
+	pfx.hp = 72
+	cmfx.start_combat(pfx, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"flame_lash")], 0, true)
+	cmfx.hand = [Database.get_card(&"flame_lash")]
+	cmfx.play_card(cmfx.hand[0])
+	_check("flame_lash base 4 (no Roast)", cmfx.enemies[0].hp, 24)
+	cmfx.enemies[0].add_status(&"burn", 3)
+	cmfx.energy = 3
+	cmfx.hand = [Database.get_card(&"flame_lash")]
+	cmfx.play_card(cmfx.hand[0])
+	_check("flame_lash +4 if Roasted (deal 8)", cmfx.enemies[0].hp, 16)
+
+	# serve_face: pose +2 (active aura)
+	var cmsf := CombatManager.new()
+	var psf := Combatant.new()
+	psf.max_hp = 72
+	psf.hp = 72
+	cmsf.start_combat(psf, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"serve_face")], 0, true)
+	cmsf.hand = [Database.get_card(&"serve_face")]
+	cmsf.play_card(cmsf.hand[0])
+	_check("serve_face poses +2 aura", cmsf.swag, 2)
+	_check("serve_face is active (pose_swag)", cmsf.pose_swag, 2)
+
+	# bone_offering: sacrifice a goon for +3 aura
+	var cmbf := CombatManager.new()
+	var pbf := Combatant.new()
+	pbf.max_hp = 68
+	pbf.hp = 68
+	cmbf.start_combat(pbf, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"bone_offering")], 0, true)
+	cmbf.player.add_status(&"undead", 1)
+	cmbf.hand = [Database.get_card(&"bone_offering")]
+	cmbf.play_card(cmbf.hand[0])
+	_check("bone_offering sacked the goon", cmbf.player.status(&"undead"), 0)
+	_check("bone_offering gave +3 aura", cmbf.swag, 3)
+
+	# gravecall: summon 1 + draw 1
+	var cmgc := CombatManager.new()
+	var pgc := Combatant.new()
+	pgc.max_hp = 68
+	pgc.hp = 68
+	cmgc.start_combat(pgc, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"bone_dart")], 0, true)
+	cmgc.draw_pile = [Database.get_card(&"bone_dart")]
+	cmgc.hand = [Database.get_card(&"gravecall")]
+	cmgc.play_card(cmgc.hand[0])
+	_check("gravecall summoned a goon", cmgc.player.status(&"undead"), 1)
+	_check("gravecall drew 1", cmgc.hand.size(), 1)
+
+	# double_tap: 3 twice (two crit rolls) = 6
+	var cmdt := CombatManager.new()
+	var pdt := Combatant.new()
+	pdt.max_hp = 72
+	pdt.hp = 72
+	cmdt.start_combat(pdt, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"double_tap")], 0, true)
+	cmdt.hand = [Database.get_card(&"double_tap")]
+	cmdt.play_card(cmdt.hand[0])
+	_check("double_tap deals 3 twice = 6", cmdt.enemies[0].hp, 22)
+
+	# smoulder: aura_engine power ticks +1/turn
+	var cmsm := CombatManager.new()
+	var psmo := Combatant.new()
+	psmo.max_hp = 72
+	psmo.hp = 72
+	var decksm: Array[CardData] = []
+	for n in 6:
+		decksm.append(Database.get_card(&"ember"))
+	cmsm.start_combat(psmo, [Database.get_enemy(&"alley_cat")], decksm, 0, true)
+	cmsm.hand = [Database.get_card(&"smoulder")]
+	cmsm.play_card(cmsm.hand[0])
+	var sw0: int = cmsm.swag
+	cmsm.end_turn()
+	_check("smoulder aura engine ticks +1", cmsm.swag >= sw0 + 1, true)
+
+	# unlock gate respects the new cards
+	var saved_ce2: int = GameState.clout_earned
+	GameState.clout_earned = 0
+	_check("double_tap locked at 0 clout", GameState.card_unlocked(&"double_tap"), false)
+	GameState.clout_earned = 30
+	_check("double_tap unlocks by 30 clout", GameState.card_unlocked(&"double_tap"), true)
+	GameState.clout_earned = saved_ce2
+
+	# --- archetypes slice 3: vanilla starters + draft bias ---
+	print("--- starters + draft bias ---")
+	for wid in [&"fire", &"necro", &"rizz"]:
+		var ww := Database.get_wizard(wid)
+		_check("%s starter is 10 cards" % [wid], ww.starter_deck.size(), 10)
+		_check("%s starter has a guaranteed Pose" % [wid], &"strike_a_pose" in ww.starter_deck, true)
+	# USP visible from fight 1: fire starter lights threshold 1 with no crit luck
+	var cmst := CombatManager.new()
+	var pst := Combatant.new()
+	pst.max_hp = 72
+	pst.hp = 72
+	var fdeck: Array[CardData] = []
+	for id in Database.get_wizard(&"fire").starter_deck:
+		fdeck.append(Database.get_card(id))
+	cmst.start_combat(pst, [Database.get_enemy(&"alley_cat")], fdeck, 2, true)
+	cmst.energy = 9
+	cmst.hand = [Database.get_card(&"strike_a_pose"), Database.get_card(&"ignite")]
+	cmst.play_card(cmst.hand[0])
+	cmst.play_card(cmst.hand[0])
+	_check("fire starter lights threshold 1 by fight 1", cmst.swag >= CombatManager.THRESHOLD_DAMAGE, true)
+	# draft bias
+	var saved_wiz: StringName = GameState.wizard_id
+	var saved_deck: Array = GameState.deck.duplicate()
+	var saved_ce3: int = GameState.clout_earned
+	GameState.clout_earned = 99999
+	GameState.wizard_id = &"fire"
+	GameState.deck = [&"ember", &"kindle"]
+	_check("fresh/neutral deck has no dominant archetype", GameState.deck_archetype(), &"")
+	GameState.deck = [&"inferno", &"combust"]
+	_check("2 roast cards → roast dominant", GameState.deck_archetype(), &"roast")
+	var offer: Array = GameState.reward_offer(3)
+	var roast_n := 0
+	for id in offer:
+		var oc := Database.get_card(id)
+		if oc != null and oc.archetype == &"roast":
+			roast_n += 1
+	_check("roast-dominant deck → 2 roast in the offer", roast_n, 2)
+	GameState.wizard_id = saved_wiz
+	GameState.deck = saved_deck
+	GameState.clout_earned = saved_ce3
+
+	# --- archetypes slice 4: Legendary chase cards ---
+	print("--- legendaries ---")
+	# main_character (Rizz): deal 8 + 3 Rizz
+	var cmmc := CombatManager.new()
+	var pmc := Combatant.new()
+	pmc.max_hp = 72
+	pmc.hp = 72
+	cmmc.start_combat(pmc, [Database.get_enemy(&"the_critic")], [Database.get_card(&"main_character")], 0, true)
+	cmmc.energy = 9
+	cmmc.hand = [Database.get_card(&"main_character")]
+	var mc_hp0: int = cmmc.enemies[0].hp
+	cmmc.play_card(cmmc.hand[0])
+	_check("main_character deals 8", mc_hp0 - cmmc.enemies[0].hp, 8)
+	_check("main_character gives 3 Rizz", cmmc.player.status(&"strength"), 3)
+	# mass_sacrifice (Necro): 3 goons -> deal 16 + 6 aura
+	var cmms := CombatManager.new()
+	var pms := Combatant.new()
+	pms.max_hp = 68
+	pms.hp = 68
+	cmms.start_combat(pms, [Database.get_enemy(&"the_critic")], [Database.get_card(&"mass_sacrifice")], 0, true)
+	cmms.player.add_status(&"undead", 3)
+	cmms.energy = 9
+	var ms_hp0: int = cmms.enemies[0].hp
+	cmms.hand = [Database.get_card(&"mass_sacrifice")]
+	cmms.play_card(cmms.hand[0])
+	_check("mass_sacrifice ate 3 goons", cmms.player.status(&"undead"), 0)
+	_check("mass_sacrifice deals 16", ms_hp0 - cmms.enemies[0].hp, 16)
+	_check("mass_sacrifice gives 6 aura", cmms.swag, 6)
+	# mass_sacrifice with <3 goons = no-op
+	var cmms2 := CombatManager.new()
+	var pms2 := Combatant.new()
+	pms2.max_hp = 68
+	pms2.hp = 68
+	cmms2.start_combat(pms2, [Database.get_enemy(&"the_critic")], [Database.get_card(&"mass_sacrifice")], 0, true)
+	cmms2.player.add_status(&"undead", 2)
+	cmms2.energy = 9
+	cmms2.hand = [Database.get_card(&"mass_sacrifice")]
+	cmms2.play_card(cmms2.hand[0])
+	_check("mass_sacrifice no-ops under 3 goons", cmms2.player.status(&"undead"), 2)
+	# flashpoint (Fire): 3x Roast then +3 Roast
+	var cmfp := CombatManager.new()
+	var pfp := Combatant.new()
+	pfp.max_hp = 72
+	pfp.hp = 72
+	cmfp.start_combat(pfp, [Database.get_enemy(&"the_critic")], [Database.get_card(&"flashpoint")], 0, true)
+	cmfp.enemies[0].add_status(&"burn", 4)
+	cmfp.energy = 9
+	var fp_hp0: int = cmfp.enemies[0].hp
+	cmfp.hand = [Database.get_card(&"flashpoint")]
+	cmfp.play_card(cmfp.hand[0])
+	_check("flashpoint deals 3x Roast (12)", fp_hp0 - cmfp.enemies[0].hp, 12)
+	_check("flashpoint then applies 3 Roast (4->7)", cmfp.enemies[0].status(&"burn"), 7)
+	# Legendary rarity + 150 unlock gate
+	_check("flashpoint is Legendary", Database.get_card(&"flashpoint").rarity, "Legendary")
+	var saved_ce4: int = GameState.clout_earned
+	GameState.clout_earned = 100
+	_check("Legendary locked at 100 clout", GameState.card_unlocked(&"flashpoint"), false)
+	GameState.clout_earned = 150
+	_check("Legendary unlocks at 150 clout", GameState.card_unlocked(&"flashpoint"), true)
+	GameState.clout_earned = saved_ce4
+
+	# --- archetypes slice 5: wide-S path + Necro swarm fingerprint ---
+	print("--- wide-S + swarm fingerprint ---")
+	var cmep := CombatManager.new()
+	var pep := Combatant.new()
+	pep.max_hp = 72
+	pep.hp = 72
+	cmep.start_combat(pep, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
+	cmep.peak_swag = 18
+	cmep.finisher_clean = true
+	cmep.aoe_plays = 2
+	_check("wide (>=2 AoE) clean finish -> S", cmep.compute_show_rating()["rating"], "S")
+	cmep.aoe_plays = 0
+	cmep.pose_swag = 12
+	_check("active-aura clean finish -> S", cmep.compute_show_rating()["rating"], "S")
+	cmep.pose_swag = 0
+	_check("coasted single-target clean finish still caps at A", cmep.compute_show_rating()["rating"], "A")
+	# swarm fingerprint from a big Goon board
+	cmep.finisher_clean = false
+	cmep.player.add_status(&"undead", 4)
+	cmep._emit()
+	_check("peak_undead tracks the board", cmep.peak_undead, 4)
+	_check("big goon board -> swarm signature", cmep.style_signature(), &"swarm")
+
+	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
+	print("--- rarity ladder ---")
+	var ladder := ["Common", "Rare", "Epic", "Legendary"]
+	var bad_rarity: Array = []
+	for cid in Database.cards:
+		var c: CardData = Database.cards[cid]
+		if c.rarity not in ladder or not CardView.RARITY_COLOR.has(c.rarity):
+			bad_rarity.append("%s=%s" % [cid, c.rarity])
+	_check("all cards have a valid rarity+colour", bad_rarity, [])
 
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

@@ -34,10 +34,7 @@ func _ready() -> void:
 			(%Banner as Label).text = "🎒  you looted:  %s %s — %s" % [a.emoji, a.title, a.description]
 			(%Banner as Label).add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
 
-	var w := Database.get_wizard(GameState.wizard_id)
-	var pool := GameState.unlocked_cards(w.reward_pool)
-	pool.shuffle()
-	for id in pool.slice(0, min(3, pool.size())):
+	for id in GameState.reward_offer(3):
 		var card := Database.get_card(id)
 		if card != null:
 			_options.add_child(_big_card(card, id))

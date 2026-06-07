@@ -218,6 +218,56 @@ func unlocked_cards(ids: Array) -> Array:
 			out.append(id)
 	return out
 
+## The archetype the player is leaning into this run (>=2 drafted cards of one tag), else &"".
+## Starters/finishers/neutrals are untagged, so a fresh deck reads as &"" (offers are free).
+func deck_archetype() -> StringName:
+	var counts := {}
+	for id in deck:
+		var c := Database.get_card(id)
+		if c != null and c.archetype != &"":
+			counts[c.archetype] = int(counts.get(c.archetype, 0)) + 1
+	var best: StringName = &""
+	var bn := 0
+	for k in counts:
+		if int(counts[k]) > bn:
+			bn = int(counts[k])
+			best = k
+	return best if bn >= 2 else &""
+
+## Up to n reward options, biased toward the deck's emerging archetype: once you've drafted
+## >=2 of one tag, at least 2 of the offers share it (so a build comes together), otherwise
+## a flat-random draw. Respects the unlock gate. This is what makes "two builds" real.
+func reward_offer(n: int) -> Array:
+	var w := Database.get_wizard(wizard_id)
+	var pool: Array = unlocked_cards(w.reward_pool)
+	pool.shuffle()
+	var dom := deck_archetype()
+	if dom == &"":
+		return pool.slice(0, min(n, pool.size()))
+	var on: Array = []
+	var off: Array = []
+	for id in pool:
+		var c := Database.get_card(id)
+		if c != null and c.archetype == dom:
+			on.append(id)
+		else:
+			off.append(id)
+	var offer: Array = []
+	for id in on:                       # up to 2 on-archetype, so the build coheres
+		if offer.size() >= 2:
+			break
+		offer.append(id)
+	for id in off:                      # fill the rest with variety
+		if offer.size() >= n:
+			break
+		offer.append(id)
+	for id in on:                       # top up if the off-pool was thin
+		if offer.size() >= n:
+			break
+		if id not in offer:
+			offer.append(id)
+	return offer.slice(0, n)
+
 func _validate_equip_for(element: String) -> void:
 	for slot in SLOTS:
 		var id: StringName = equipped.get(slot, &"")

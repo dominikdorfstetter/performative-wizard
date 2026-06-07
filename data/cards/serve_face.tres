@@ -4,13 +4,14 @@
 
 [resource]
 script = ExtResource("1")
-id = &"cinder_spray"
-title = "Subtweet"
-description = "Deal 4 to ALL opps."
-cost = 1
-type = "Attack"
+id = &"serve_face"
+title = "Serve Face"
+description = "Pose: gain 2 Aura."
+cost = 0
+type = "Skill"
 rarity = "Common"
+unlock_clout = 0
 archetype = &"viral"
-swag_gain = 0
+swag_gain = 2
 swag_cost = 0
-effects = [{ "op": "damage_all", "amount": 4 }]
+effects = []

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"main_character"
+title = "Main Character Energy"
+description = "Deal 8 and gain 3 Rizz."
+cost = 2
+type = "Attack"
+rarity = "Legendary"
+unlock_clout = 150
+archetype = &"ramp"
+swag_gain = 0
+swag_cost = 0
+effects = [{ "op": "damage", "amount": 8, "target": "enemy" }, { "op": "self_status", "status": "strength", "amount": 3 }]

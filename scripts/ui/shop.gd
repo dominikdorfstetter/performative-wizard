@@ -13,7 +13,7 @@ func _ready() -> void:
 	pool.shuffle()
 	for id in pool.slice(0, min(3, pool.size())):
 		var c := Database.get_card(id)
-		_card_stock.append({"id": id, "price": (70 if c.rarity == "Rare" else 40), "sold": false})
+		_card_stock.append({"id": id, "price": {"Common": 40, "Rare": 60, "Epic": 90, "Legendary": 140}.get(c.rarity, 40), "sold": false})
 	var aid := _unowned()
 	if aid != &"":
 		_art_stock = {"id": aid, "price": 75, "sold": false}

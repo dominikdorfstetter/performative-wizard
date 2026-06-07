@@ -19,13 +19,15 @@ const ICON_BY_ID := {
 }
 
 const RARITY_COLOR := {
-	"Common": Color(0.60, 0.60, 0.66), "Uncommon": Color(0.40, 0.80, 0.50),
-	"Rare": Color(1.0, 0.82, 0.29),
+	"Common": Color(0.60, 0.60, 0.66),
+	"Rare": Color(0.40, 0.80, 0.50),
+	"Epic": Color(1.0, 0.82, 0.29),
+	"Legendary": Color(0.78, 0.45, 0.95),
 }
 
 static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	var accent := type_color(card.type)
-	var rare := card.rarity == "Rare"
+	var rare := card.rarity == "Epic" or card.rarity == "Legendary"
 	var bw := 3 if rare else 2
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(150, 200)
