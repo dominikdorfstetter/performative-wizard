@@ -7,9 +7,14 @@ const TYPE_ICON := {
 	"Rest": "🛋", "Chest": "📦", "Boss": "👑",
 }
 const TYPE_PIX := {
-	"Combat": "fist", "Elite": "skull", "Event": "swirl", "Shop": "coin",
+	"Combat": "fist", "Elite": "skull", "Event": "quest", "Shop": "coin",
 	"Rest": "zzz", "Chest": "chest", "Boss": "crown",
 }
+const TYPE_WORD := {
+	"Combat": "fight", "Elite": "elite", "Event": "event", "Shop": "shop",
+	"Rest": "rest", "Chest": "chest", "Boss": "boss",
+}
+const TipIcon = preload("res://scripts/ui/tip_icon.gd")
 const TYPE_COLOR := {
 	"Combat": Color(0.86, 0.30, 0.27), "Elite": Color(0.85, 0.4, 0.95),
 	"Event": Color(0.4, 0.7, 0.9), "Shop": Color(0.95, 0.8, 0.3),
@@ -135,39 +140,70 @@ func _build_info() -> void:
 	_info.size = Vector2(1112, 80)
 	_info.add_theme_font_size_override("font_size", 18)
 	var w := Database.get_wizard(GameState.wizard_id)
-	var asc := "  🔥asc%d" % GameState.asc_level if GameState.asc_level > 0 else ""
-	_info.text = "%s %s    Act %d/%d%s    ❤ %d/%d    💰 %d    ✦ Clout %d    %s" % [
-		w.emoji, w.title, GameState.act, GameState.MAX_ACTS, asc,
+	var asc := "  Asc %d" % GameState.asc_level if GameState.asc_level > 0 else ""
+	_info.text = "%s    Act %d/%d%s    HP %d/%d    Gold %d    Clout %d" % [
+		w.title, GameState.act, GameState.MAX_ACTS, asc,
 		GameState.player_hp, GameState.player_max_hp,
-		GameState.gold, GameState.clout, _artifact_text()]
+		GameState.gold, GameState.clout]
 	var trend := GameState.trend_label()
 	if trend != "":
-		_info.text += "\n%s    👀 Critic ✦%d" % [trend, GameState.critic_score]
+		_info.text += "\n%s    Critic %d" % [trend, GameState.critic_score]
 	add_child(_info)
+	_build_artifact_row()
 	var deck_btn := Button.new()
-	deck_btn.text = "🃏 deck (%d)" % GameState.deck.size()
+	deck_btn.text = "deck (%d)" % GameState.deck.size()
 	deck_btn.add_theme_font_size_override("font_size", 16)
 	deck_btn.position = Vector2(968, 12)
 	deck_btn.size = Vector2(164, 34)
 	deck_btn.pressed.connect(_show_deck)
 	add_child(deck_btn)
-	var hint := Label.new()
-	hint.position = Vector2(20, 612)
-	hint.size = Vector2(700, 24)
-	hint.add_theme_font_size_override("font_size", 14)
-	hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.66))
-	hint.text = "tap a glowing node to advance.  👊 fight  💀 elite  ❓ event  🛒 shop  🛋 rest  📦 chest  👑 boss"
-	add_child(hint)
+	# Pixel-icon legend (matches the node buttons), replacing the emoji hint line.
+	var legend := HBoxContainer.new()
+	legend.position = Vector2(20, 610)
+	legend.add_theme_constant_override("separation", 12)
+	add_child(legend)
+	var intro := Label.new()
+	intro.text = Loc.t("tap a glowing node:")
+	intro.add_theme_font_size_override("font_size", 14)
+	intro.add_theme_color_override("font_color", Color(0.6, 0.6, 0.66))
+	legend.add_child(intro)
+	for t in ["Combat", "Elite", "Event", "Shop", "Rest", "Chest", "Boss"]:
+		var pair := HBoxContainer.new()
+		pair.add_theme_constant_override("separation", 3)
+		var ic := TextureRect.new()
+		ic.texture = SpriteBank.icon_texture(StringName(TYPE_PIX[t]))
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ic.custom_minimum_size = Vector2(18, 18)
+		pair.add_child(ic)
+		var l := Label.new()
+		l.text = Loc.t(TYPE_WORD[t])
+		l.add_theme_font_size_override("font_size", 14)
+		l.add_theme_color_override("font_color", TYPE_COLOR[t].lightened(0.2))
+		pair.add_child(l)
+		legend.add_child(pair)
 
-func _artifact_text() -> String:
-	if GameState.run_artifacts.is_empty():
-		return ""
-	var parts: Array[String] = []
+# Relics as pixel charms with hover tooltips (was an emoji list in the header label).
+func _build_artifact_row() -> void:
+	var x := 700.0
 	for aid in GameState.run_artifacts:
 		var a := Database.get_artifact(aid)
-		if a != null:
-			parts.append(a.emoji)
-	return "🎒 " + " ".join(parts)
+		if a == null:
+			continue
+		var tex := SpriteBank.artifact_texture(aid)
+		if tex == null:
+			continue
+		var tr := TipIcon.new()
+		tr.texture = tex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.custom_minimum_size = Vector2(22, 22)
+		tr.size = Vector2(22, 22)
+		tr.position = Vector2(x, 16)
+		tr.mouse_filter = Control.MOUSE_FILTER_STOP
+		tr.set_tip(Loc.t(a.title), Loc.t(a.description))
+		add_child(tr)
+		x += 25
 
 func _show_deck() -> void:
 	var overlay := Control.new()

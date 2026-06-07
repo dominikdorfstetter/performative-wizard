@@ -92,6 +92,7 @@ func _ready() -> void:
 	_critic.add_theme_font_size_override("font_size", 18)
 	_energy.add_theme_color_override("font_color", C_GOLD)
 	_gold.add_theme_color_override("font_color", C_GOLD)
+	_setup_hud_icons()
 	_end_turn.pressed.connect(_on_end_turn)
 	_end_turn.text = Loc.t("Bye ✌")
 	_end_turn.add_theme_stylebox_override("normal", _panel_box(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
@@ -240,6 +241,40 @@ func _build_player_widget(w: WizardData) -> void:
 	_player_status_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_player_status_box)
 
+# Pixel resource icons replacing inline HUD emoji (energy bolt / aura star / gold coin),
+# with hover help on the Aura meter. Left-aligned readouts shift right to make room.
+func _setup_hud_icons() -> void:
+	_energy.position.x += 26
+	var e := _hud_icon(&"bolt", Vector2(_energy.position.x - 26, _energy.position.y + 2), 22)
+	e.set_tip(Loc.t("Energy"), Loc.t("Spent to play cards; refills to max at the start of each turn."))
+	_swag_value.position.x += 26
+	var a := _hud_icon(&"star", Vector2(_swag_value.position.x - 26, _swag_value.position.y + 2), 22)
+	a.set_tip(Loc.t("Aura"), Loc.t("Banked style — it persists the whole fight. ≥6 +2 dmg, ≥12 +draw, ≥18 pierce; crest 24 for the Encore spotlight. Finishers spend it all."))
+	# gold (coin): keep top-right, anchor a coin just left of the now left-aligned number
+	_gold.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var c := TipIcon.new()
+	c.texture = SpriteBank.icon_texture(&"coin")
+	c.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	c.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	c.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	c.offset_left = -246
+	c.offset_top = 8
+	c.size = Vector2(22, 22)
+	c.mouse_filter = Control.MOUSE_FILTER_STOP
+	c.set_tip(Loc.t("Gold"), Loc.t("Run currency — spend it in shops on cards, removals, and relics."))
+	add_child(c)
+
+func _hud_icon(icon: StringName, pos: Vector2, sz: int) -> TipIcon:
+	var t := TipIcon.new()
+	t.texture = SpriteBank.icon_texture(icon)
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	t.position = pos
+	t.size = Vector2(sz, sz)
+	t.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(t)
+	return t
+
 func _build_fit_strip() -> void:
 	# Equipped outfit pieces (top-left), each with a hover tooltip = name + passive.
 	var x := 16.0
@@ -352,7 +387,7 @@ func _refresh() -> void:
 		return
 	var over := cm.state == CombatManager.State.WIN or cm.state == CombatManager.State.LOSE
 	_turn_banner.text = Loc.t("THEIR TURN") if cm.state == CombatManager.State.ENEMY_TURN else Loc.t("TURN %d") % cm.turn
-	_gold.text = "💰 %d" % GameState.gold
+	_gold.text = "%d" % GameState.gold
 	_log_line.text = cm.log_lines[-1] if not cm.log_lines.is_empty() else ""
 
 	if _player_hp_bar != null:
@@ -360,8 +395,8 @@ func _refresh() -> void:
 		_player_hp_text.text = "%d / %d" % [cm.player.hp, cm.player.max_hp]
 		_fill_status(_player_status_box, cm.player)
 
-	_energy.text = Loc.t("⚡ Energy  %d / %d") % [cm.energy, cm.max_energy]
-	_swag_value.text = Loc.t("✦ AURA  %d   (+%d/turn)") % [cm.swag, cm.drip]
+	_energy.text = "%d / %d" % [cm.energy, cm.max_energy]
+	_swag_value.text = Loc.t("AURA  %d   (+%d/turn)") % [cm.swag, cm.drip]
 	_update_swag_meter()
 	_update_critic_rating()
 	_end_turn.disabled = over or cm.state != CombatManager.State.PLAYER_TURN
@@ -461,12 +496,13 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 	sprite.position = Vector2(33, 100)
 	sprite.size = Vector2(84, 90)
 	if dead:
-		var skull := Label.new()
-		skull.text = "☠"
+		var skull := TextureRect.new()
+		skull.texture = SpriteBank.icon_texture(&"skull")
 		skull.set_anchors_preset(Control.PRESET_FULL_RECT)
-		skull.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		skull.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		skull.add_theme_font_size_override("font_size", 40)
+		skull.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		skull.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		skull.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		skull.modulate = Color(1, 1, 1, 0.7)
 		sprite.add_child(skull)
 	w.add_child(sprite)
 	if not dead:
@@ -1049,7 +1085,7 @@ func _update_critic_rating() -> void:
 	if _critic == null:
 		return
 	var letter := cm.live_rating()
-	_critic.text = Loc.t("👀 THE CRITIC:  %s") % letter
+	_critic.text = Loc.t("THE CRITIC  %s") % letter
 	_critic.add_theme_color_override("font_color", _rating_color(letter))
 	if _prev_rating != "" and letter != _prev_rating:
 		_pulse(_critic)

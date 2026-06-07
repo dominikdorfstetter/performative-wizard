@@ -259,6 +259,7 @@ const TABLE := {
 	"PIERCE": "DURCHBRUCH",
 	"✦ FINALE ✦": "✦ FINALE ✦",
 	"👀 THE CRITIC:  %s": "👀 DIE KRITIKERIN:  %s",
+	"THE CRITIC  %s": "DIE KRITIKERIN  %s",
 	"👀 THE CRITIC:  ": "👀 DIE KRITIKERIN:  ",
 	"The Critic": "Die Kritikerin",
 	"Heckler": "Zwischenrufer",

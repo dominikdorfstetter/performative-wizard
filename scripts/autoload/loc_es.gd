@@ -256,6 +256,7 @@ const TABLE := {
 	"PIERCE": "PERFORA",
 	"✦ FINALE ✦": "✦ GRAN FINAL ✦",
 	"👀 THE CRITIC:  %s": "👀 LA CRÍTICA:  %s",
+	"THE CRITIC  %s": "LA CRÍTICA  %s",
 	"👀 THE CRITIC:  ": "👀 LA CRÍTICA:  ",
 	"The Critic": "La Crítica",
 	"Heckler": "Abucheador",
