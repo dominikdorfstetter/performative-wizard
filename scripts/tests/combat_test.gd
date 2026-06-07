@@ -411,6 +411,22 @@ func _ready() -> void:
 	cmco.play_card(cmco.hand[0])
 	_check("coasted clean finisher caps at A (no bold tell)", cmco.compute_show_rating()["rating"], "A")
 
+	# context-aware C (pass #2): a LONG fight coasted flat (lit-1 only, no pose, no
+	# finisher, low peak) earns a C even on a win; a quick win or any engagement stays B.
+	var cmfl := CombatManager.new()
+	var pfl := Combatant.new()
+	pfl.max_hp = 72
+	pfl.hp = 72
+	cmfl.start_combat(pfl, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
+	cmfl.gain_swag(8)                          # peak 8 → lit 1, but NOT from a Pose
+	cmfl.turn = 6
+	_check("long flat fight (no pose/finisher) → C", cmfl.compute_show_rating()["rating"], "C")
+	cmfl.pose_swag = 1
+	_check("same long fight but actively posed → B", cmfl.compute_show_rating()["rating"], "B")
+	cmfl.pose_swag = 0
+	cmfl.turn = 2
+	_check("quick win is not punished → B", cmfl.compute_show_rating()["rating"], "B")
+
 	# --- The Critic: score + map mutation + persistence (P1c) ----------------
 	print("--- critic: score + map mutation ---")
 	var saved_cs: int = GameState.critic_score
@@ -471,20 +487,35 @@ func _ready() -> void:
 	_check("take a bow is a clean finish", cmen.enemies[0].is_dead(), true)
 	_check("take a bow signature = encore", cmen.finisher_kind, &"encore")
 
-	# booed: knocked out of the spotlight applies a soft loss, not a cascade
+	# booed: losing a REAL built-up Encore (>=2) applies a soft loss, not a cascade
 	var cmbo := CombatManager.new()
 	var pbo := Combatant.new()
 	pbo.max_hp = 72
 	pbo.hp = 72
 	cmbo.start_combat(pbo, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
 	cmbo.swag = 26
-	cmbo.end_turn()
-	_check("in the spotlight", cmbo.encore, 1)
+	cmbo.end_turn()                            # encore 1
+	cmbo.end_turn()                            # encore 2 (still in the spotlight)
+	_check("encore built to 2", cmbo.encore, 2)
 	cmbo.swag = 10                             # knocked below the line
 	cmbo.end_turn()
 	_check("booed cleared the encore", cmbo.encore, 0)
 	_check("booed flag set", cmbo.booed, true)
 	_check("booed soft loss (−4)", cmbo.swag, 6)
+
+	# a brief 1-turn spotlight touch (encore 1) that drops does NOT boo (pass #2 gate)
+	var cmbt := CombatManager.new()
+	var pbt := Combatant.new()
+	pbt.max_hp = 72
+	pbt.hp = 72
+	cmbt.start_combat(pbt, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
+	cmbt.swag = 26
+	cmbt.end_turn()                            # encore 1
+	cmbt.swag = 10
+	cmbt.end_turn()                            # encore was only 1 → reset, no boo
+	_check("brief spotlight touch doesn't boo", cmbt.booed, false)
+	_check("encore reset after a touch", cmbt.encore, 0)
+	_check("no aura lost on a touch", cmbt.swag, 10)
 
 	# tax: punishes hoarding only while you're sitting on a pile
 	var cmtx := CombatManager.new()
