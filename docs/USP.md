@@ -92,7 +92,7 @@ highest-scoring style fingerprint the Critic rewards.
 > finisher cash-out; live in-combat S/A/B/C grade; post-fight room mutation (VIP gold /
 > heckler); the **drifting-taste anti-solve** (P2); **Commit-to-the-Bit** encore + booed +
 > a `tax` enemy verb (P3); four finishers, flash/slow-burn outfit personas, and **The
-> Feed** per-act Trend (P4). EN/DE/ES throughout. **152 headless tests green.** See the
+> Feed** per-act Trend (P4). EN/DE/ES throughout. **191 headless tests green.** See the
 > Build log at the bottom of this doc.
 
 Each phase has a **gate**: a "is it fun, do we continue?" check. Do not pass a gate on
@@ -234,7 +234,7 @@ reward-screen verdict quips, EN/DE/ES.
   vs **slow-burn** (high drip) outfit personas; **The Feed** — a per-act Trend that
   re-prices Aura income (never below 0); expanded Critic mood lines.
 - Content added: 3 finisher cards, 2 outfits, 1 heckler enemy; `tax` on 2 enemies.
-  **143/152 headless tests** (`godot --headless scenes/test_combat.tscn`).
+  **143/191 headless tests** (`godot --headless scenes/test_combat.tscn`).
 
 ### Still open / honest gaps
 - The fingerprint is solid but finite; a determined optimiser could still cycle a handful of
@@ -316,4 +316,4 @@ mirrors `GameState.active_passives()`.
 with crit correctly simmed, Rizz is the **strongest class** — act3 boss **100%**, asc8 boss
 **59%** vs fire **0%** / necro **2%**. Two threads: Rizz single-target/boss dominance, and
 fire/necro asc8 bosses reading as near-impossible (may be intended top-of-ladder brutality;
-needs a real-player/relic check). **152/152 headless tests.**
+needs a real-player/relic check). **152/191 headless tests.**

@@ -24,10 +24,14 @@ Open** (or System Settings → Privacy & Security → *Open Anyway*).
 **Feature-complete roguelite.** Full run: main menu → class-select → dressing room →
 **3-act branching map** (combat / elite / event / shop / rest / chest / boss) → ascension.
 
-- **Content:** 41 cards, 24 enemy types (incl. **The Critic** & **The Algorithm** bosses),
+- **Content:** 49 cards, 24 enemy types (incl. **The Critic** & **The Algorithm** bosses),
   3 wizards, 19 outfits, 14 artifacts.
 - **Wizards:** Vesper Vermillion (Hot Girl / fire), Morticia Graves (Goth Bestie / necro,
   summon-and-sacrifice), Chadwick Suave (the Rizzard / crit-on-Rizz).
+- **Builds:** vanilla StS-style starters + **two distinct archetypes per wizard** (Fire:
+  Slow Roast / Go Viral · Necro: Sacrifice / Swarm · Rizz: Crit Storm / Rizz Ramp), with a
+  **Common / Rare / Epic / Legendary** ladder and **per-wizard progressive unlocks**; reward
+  offers bias toward your emerging build. See [`docs/ARCHETYPES.md`](docs/ARCHETYPES.md).
 - **The Critic (USP):** a named rival grades every fight S/A/B/C — computed primarily from
   your Aura play (peak reached, thresholds lit, a clean finisher cash-out) — shown **live**
   in combat and rewriting the next room (S → bonus gold; C → a heckler). Her **taste
@@ -48,21 +52,21 @@ Open** (or System Settings → Privacy & Security → *Open Anyway*).
   drum-backed music tracks (per-encounter) + SFX.
 - **Localization:** English / Deutsch / Español (switch in Options) — keeps the
   international Gen-Z slang, translates the rest.
-- **Build:** universal macOS `.app` export. Combat engine covered by **152 headless tests**.
+- **Build:** universal macOS `.app` export. Combat engine covered by **191 headless tests**.
 
 ## Running
 
 1. Install **Godot 4.4+** (developed on 4.6.3, GDScript): https://godotengine.org/download
 2. Open this folder in Godot (import `project.godot`).
 3. Press **Play** (F5). The console should print
-   `[Database] loaded 41 cards, 19 outfits, 24 enemies, 3 wizards, 14 artifacts`.
-4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `152 passed`).
+   `[Database] loaded 49 cards, 19 outfits, 24 enemies, 3 wizards, 14 artifacts`.
+4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `191 passed`).
 
 ## Layout
 
 ```
 DESIGN.md            design vision (some sections predate the current build — see docs/)
-docs/                living review + roadmap (USP, DESIGN_REVIEW, REVIEW_2, ROADMAP, ENEMY_REDESIGN)
+docs/                living review + roadmap (USP, ARCHETYPES, DESIGN_REVIEW, REVIEW_2, ROADMAP, ENEMY_REDESIGN)
 project.godot        Godot config + autoloads (Loc, Database, SpriteBank, Audio, GameState)
 scenes/              hub/ combat/ map/ nodes/ + tools/ (dev preview scenes) + test_combat
 scripts/
