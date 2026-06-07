@@ -6,13 +6,13 @@
 script = ExtResource("1")
 id = &"inferno"
 title = "Absolutely Cooked"
-description = "Roast for 5. Aura +2."
+description = "Roast for 7. Aura +2."
 cost = 2
 type = "Attack"
 rarity = "Epic"
 archetype = &"roast"
 swag_gain = 2
 swag_cost = 0
-effects = [{ "op": "apply_status", "status": "burn", "amount": 5, "target": "enemy" }]
+effects = [{ "op": "apply_status", "status": "burn", "amount": 7, "target": "enemy" }]
 
 unlock_clout = 40

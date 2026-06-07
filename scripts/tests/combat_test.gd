@@ -366,22 +366,36 @@ func _ready() -> void:
 
 	# --- The Critic: show rating (P1a) ---------------------------------------
 	print("--- critic: show rating ---")
-	# S: hoard past the pierce threshold, then close on a clean Aura cash-out.
+	# S: peak into the spotlight (>=24), then close on a clean Aura cash-out with a bold tell.
+	# Pass #3: S also requires peak>=THRESHOLD_ENCORE (24) — simmering to 18 and dumping caps at A.
 	var cmcr := CombatManager.new()
 	var pcr := Combatant.new()
 	pcr.max_hp = 72
 	pcr.hp = 72
 	cmcr.start_combat(pcr, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"grand_finale")], 0, true)
-	cmcr.gain_swag(18)
+	cmcr.gain_swag(24)
 	cmcr.flexed = true                                # the bold tell S now requires
-	_check("peak tracks gains", cmcr.peak_swag, 18)
+	_check("peak tracks gains", cmcr.peak_swag, 24)
 	cmcr.energy = 9
 	cmcr.hand = [Database.get_card(&"grand_finale")]
 	cmcr.play_card(cmcr.hand[0])
 	_check("finisher cleaned the fight", cmcr.finisher_clean, true)
-	_check("peak survives the cash-out drain", cmcr.peak_swag, 18)
-	_check("S rank: bold + clean finisher", cmcr.compute_show_rating()["rating"], "S")
+	_check("peak survives the cash-out drain", cmcr.peak_swag, 24)
+	_check("S rank: bold + clean finisher + spotlight peak", cmcr.compute_show_rating()["rating"], "S")
 	_check("S rank thresholds lit", cmcr.compute_show_rating()["thresholds_lit"], 3)
+	# A (not S): same bold flex + clean finisher but the show only SIMMERED to lit-3 (18),
+	# never cresting the spotlight (24) — the pass #3 peak gate caps this at A.
+	var cmsim := CombatManager.new()
+	var psim := Combatant.new()
+	psim.max_hp = 72
+	psim.hp = 72
+	cmsim.start_combat(psim, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"grand_finale")], 0, true)
+	cmsim.gain_swag(18)
+	cmsim.flexed = true
+	cmsim.energy = 9
+	cmsim.hand = [Database.get_card(&"grand_finale")]
+	cmsim.play_card(cmsim.hand[0])
+	_check("simmered to 18 (no spotlight peak) caps at A", cmsim.compute_show_rating()["rating"], "A")
 
 	# C: win scrappy, never crossing a threshold, no finisher.
 	var cmc2 := CombatManager.new()
@@ -868,7 +882,7 @@ func _ready() -> void:
 	pep.max_hp = 72
 	pep.hp = 72
 	cmep.start_combat(pep, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true)
-	cmep.peak_swag = 18
+	cmep.peak_swag = 24                              # crested the spotlight (pass #3 S peak gate)
 	cmep.finisher_clean = true
 	cmep.aoe_plays = 2
 	_check("wide (>=2 AoE) clean finish -> S", cmep.compute_show_rating()["rating"], "S")
@@ -877,6 +891,12 @@ func _ready() -> void:
 	_check("active-aura clean finish -> S", cmep.compute_show_rating()["rating"], "S")
 	cmep.pose_swag = 0
 	_check("coasted single-target clean finish still caps at A", cmep.compute_show_rating()["rating"], "A")
+	# pass #3: even a wide clean finish that only simmered to 18 (no spotlight peak) caps at A
+	cmep.peak_swag = 18
+	cmep.aoe_plays = 2
+	_check("wide finish that never crested 24 caps at A", cmep.compute_show_rating()["rating"], "A")
+	cmep.aoe_plays = 0
+	cmep.peak_swag = 24
 	# swarm fingerprint from a big Goon board
 	cmep.finisher_clean = false
 	cmep.player.add_status(&"undead", 4)
