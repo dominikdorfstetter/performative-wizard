@@ -189,9 +189,14 @@ func _sim_combat(wid: StringName, enc_ids: Array, deck_ids: Array, drip: int, pa
 		var c := Database.get_card(id)
 		if c != null:
 			deck.append(c)
+	# Mirror GameState.active_passives(): the wizard's innate passives (e.g. rizz_crit,
+	# swag_on_crit) are ALWAYS on — without this the sim's Rizz has no crit kit.
 	var pp: Array[StringName] = []
+	for ip in w.innate_passives:
+		pp.append(ip)
 	for x in passives:
-		pp.append(x)
+		if x not in pp:
+			pp.append(x)
 	var cm := CombatManager.new()
 	cm.start_combat(p, enc, deck, drip, false, pp, hp_scale, dmg_scale)
 	var encore_max := 0

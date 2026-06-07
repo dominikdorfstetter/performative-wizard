@@ -48,7 +48,7 @@ Open** (or System Settings → Privacy & Security → *Open Anyway*).
   drum-backed music tracks (per-encounter) + SFX.
 - **Localization:** English / Deutsch / Español (switch in Options) — keeps the
   international Gen-Z slang, translates the rest.
-- **Build:** universal macOS `.app` export. Combat engine covered by **149 headless tests**.
+- **Build:** universal macOS `.app` export. Combat engine covered by **152 headless tests**.
 
 ## Running
 
@@ -56,7 +56,7 @@ Open** (or System Settings → Privacy & Security → *Open Anyway*).
 2. Open this folder in Godot (import `project.godot`).
 3. Press **Play** (F5). The console should print
    `[Database] loaded 41 cards, 19 outfits, 24 enemies, 3 wizards, 14 artifacts`.
-4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `149 passed`).
+4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `152 passed`).
 
 ## Layout
 

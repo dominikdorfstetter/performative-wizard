@@ -306,6 +306,11 @@ func play_card(card: CardData) -> bool:
 	var tburn1 := tgt.status(&"burn") if tgt != null else 0
 	if last_crit:
 		_say(Loc.t("✦ CRIT! that's lethal rizz ✦"))
+		# The Rizzard's crit IS its flex: a clean crit serves Aura (active, not drip),
+		# welding the crit kit to the Critic's grade so Rizz engages the USP. (Pass #2.5)
+		if has_passive(&"swag_on_crit"):
+			gain_swag(1)
+			pose_swag += 1
 	_log_card(card, hp0 - _total_enemy_hp(), player.block - pblk0, tburn1 - tburn0, swag - swag0, pierced)
 	if all_dead():
 		_finish(true)

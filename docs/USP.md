@@ -92,7 +92,7 @@ highest-scoring style fingerprint the Critic rewards.
 > finisher cash-out; live in-combat S/A/B/C grade; post-fight room mutation (VIP gold /
 > heckler); the **drifting-taste anti-solve** (P2); **Commit-to-the-Bit** encore + booed +
 > a `tax` enemy verb (P3); four finishers, flash/slow-burn outfit personas, and **The
-> Feed** per-act Trend (P4). EN/DE/ES throughout. **149 headless tests green.** See the
+> Feed** per-act Trend (P4). EN/DE/ES throughout. **152 headless tests green.** See the
 > Build log at the bottom of this doc.
 
 Each phase has a **gate**: a "is it fun, do we continue?" check. Do not pass a gate on
@@ -234,7 +234,7 @@ reward-screen verdict quips, EN/DE/ES.
   vs **slow-burn** (high drip) outfit personas; **The Feed** — a per-act Trend that
   re-prices Aura income (never below 0); expanded Critic mood lines.
 - Content added: 3 finisher cards, 2 outfits, 1 heckler enemy; `tax` on 2 enemies.
-  **143/149 headless tests** (`godot --headless scenes/test_combat.tscn`).
+  **143/152 headless tests** (`godot --headless scenes/test_combat.tscn`).
 
 ### Still open / honest gaps
 - The fingerprint is solid but finite; a determined optimiser could still cycle a handful of
@@ -301,7 +301,19 @@ fairly. Outcomes (each adversarially re-verified; the verifiers re-ran the sim t
   as a **deliberate glass-cannon identity** (it mulches single targets, struggles vs groups);
   the only real lever (a crit-variance cap) conflicts with the deterministic crit tests.
 
-**Still open:** the **Rizz × Critic** tension — Rizz is `base_drip=0` with **zero swag-gain
-cards in its entire pool**, so it structurally hits the C gate more (now intentional + code-
-commented). A future pass could give Rizz a Pose card / small base drip, or lean into it as
-"the class that must hunt build variety." **149/149 headless tests.**
+**Rizz × Critic — fixed (pass #2.5).** Rather than bolt generic Pose cards onto Rizz, its
+crit fantasy is welded to the Aura economy: a new innate **`swag_on_crit`** grants +1 *active*
+Aura per crit (counts as engaged, not drip), so Rizz feeds the Critic *through its own kit* and
+ramps with its Rizz-stacking identity. Isolation sim (with vs without): C-rate collapses
+(act2 22→1, act1-elite 19→1) and ratings rise, with **negligible win-rate impact (+0–6%)** —
+an engagement fix at ~zero power cost.
+
+**Harness bug fixed along the way:** `balance_sim._sim_combat()` never applied the wizard's
+`innate_passives`, so every prior Rizz number was a *crit-less* Rizz. Corrected — the sim now
+mirrors `GameState.active_passives()`.
+
+**Newly revealed → deferred to pass #3** (pre-existing, the crit kit, NOT `swag_on_crit`):
+with crit correctly simmed, Rizz is the **strongest class** — act3 boss **100%**, asc8 boss
+**59%** vs fire **0%** / necro **2%**. Two threads: Rizz single-target/boss dominance, and
+fire/necro asc8 bosses reading as near-impossible (may be intended top-of-ladder brutality;
+needs a real-player/relic check). **152/152 headless tests.**

@@ -158,6 +158,18 @@ func _ready() -> void:
 	_check("ember crit deals double", cmc.enemies[0].hp, 16)
 	_check("last_crit flag set", cmc.last_crit, true)
 
+	# swag_on_crit (Rizz × Critic, pass #2.5): a crit serves +1 active Aura
+	var cmsc := CombatManager.new()
+	var psc := Combatant.new()
+	psc.max_hp = 72
+	psc.hp = 72
+	cmsc.start_combat(psc, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"ember")], 0, true, [&"crit_100", &"swag_on_crit"])
+	_check("swag_on_crit starts at 0 aura", cmsc.swag, 0)
+	cmsc.hand = [Database.get_card(&"ember")]
+	cmsc.play_card(cmsc.hand[0])
+	_check("crit served +1 aura", cmsc.swag, 1)
+	_check("crit aura is active (pose_swag)", cmsc.pose_swag, 1)
+
 	var cmr := CombatManager.new()
 	var pr := Combatant.new()
 	pr.max_hp = 72
