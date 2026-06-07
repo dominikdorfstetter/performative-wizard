@@ -106,6 +106,7 @@ func _choose_card(cm: CombatManager, policy: String, fight_idx: int) -> CardData
 			"spammer": dump = cm.swag >= 18
 			"hoarder": dump = fd >= cm._total_enemy_hp() or cm.swag >= 40
 			"varied": dump = fd >= focus.hp or cm.swag >= 26
+			"flash": dump = fd >= focus.hp or cm.swag >= 30   # hoard hard for the boosted burst
 			_: dump = fd >= focus.hp or cm.swag >= 28
 		if dump:
 			return fin
@@ -113,6 +114,19 @@ func _choose_card(cm: CombatManager, policy: String, fight_idx: int) -> CardData
 		for c in playable:
 			if _is_block(c):
 				return c
+	# Flash playstyle: hoard the spotlight — prefer building Aura (Pose) over chipping,
+	# so the big boosted finisher is realized AND a bold tell (encore/flex) accrues.
+	if policy == "flash" and cm.swag < 30:
+		var bp: CardData = null
+		var bg := 0
+		for c in playable:
+			if _is_finisher(c):
+				continue
+			if c.swag_gain > bg:
+				bg = c.swag_gain
+				bp = c
+		if bp != null and bg > 0:
+			return bp
 	var best: CardData = null
 	var bestd := 0
 	for c in playable:
@@ -175,9 +189,14 @@ func _sim_combat(wid: StringName, enc_ids: Array, deck_ids: Array, drip: int, pa
 		var c := Database.get_card(id)
 		if c != null:
 			deck.append(c)
+	# Mirror GameState.active_passives(): the wizard's innate passives (e.g. rizz_crit,
+	# swag_on_crit) are ALWAYS on — without this the sim's Rizz has no crit kit.
 	var pp: Array[StringName] = []
+	for ip in w.innate_passives:
+		pp.append(ip)
 	for x in passives:
-		pp.append(x)
+		if x not in pp:
+			pp.append(x)
 	var cm := CombatManager.new()
 	cm.start_combat(p, enc, deck, drip, false, pp, hp_scale, dmg_scale)
 	var encore_max := 0
@@ -348,20 +367,21 @@ func _ready() -> void:
 	for l in vary.log:
 		print("      " + l)
 
-	print("\n## Flash vs slow-burn persona (act2 normal, balanced bot)")
-	_persona("flash (finisher_boost, drip 2)", &"fire", 2, ["finisher_boost"], 2)
-	_persona("slow-burn (drip 6)            ", &"fire", 2, [], 6)
+	print("\n## Flash vs slow-burn persona (act2 normal, fair drip + hoard policy)")
+	_persona("flash  drip5 +boost  HOARD ", &"fire", 2, ["finisher_boost"], 5, "flash")
+	_persona("flash  drip5 +boost  balncd", &"fire", 2, ["finisher_boost"], 5, "balanced")
+	_persona("slowbn drip7         balncd", &"fire", 2, [], 7, "balanced")
 
 	print("\n=== done ===")
 	get_tree().quit(0)
 
-func _persona(label: String, wid: StringName, act: int, passives: Array, drip: int) -> void:
+func _persona(label: String, wid: StringName, act: int, passives: Array, drip: int, policy: String) -> void:
 	var deck := _build_deck(wid, act)
 	var results: Array = []
 	for i in K:
 		var enc_ids := Encounters.normal(0.5, _rng)
 		var sc := _scales(act, 0, "Combat", 4)
-		results.append(_sim_combat(wid, enc_ids, deck, drip, passives, sc[0], sc[1], "balanced", i, 0))
+		results.append(_sim_combat(wid, enc_ids, deck, drip, passives, sc[0], sc[1], policy, i, 0))
 	var a := _agg(results)
 	print("  %s  win %3d%%  turns %4.1f  hp-lost %3d%%  S/A/B/C %d/%d/%d/%d" % [
 		label, a.win_pct, a.avg_turns, a.avg_hp_lost_pct, a.ratings.S, a.ratings.A, a.ratings.B, a.ratings.C])

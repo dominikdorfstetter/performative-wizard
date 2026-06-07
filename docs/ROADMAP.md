@@ -59,7 +59,7 @@ The missing roguelite hook.
 **The Critic** (P0–P4, see [`USP.md`](USP.md)) — the loud Aura meter, the live scored rival,
 the drifting-taste anti-solve, Commit-to-the-Bit, four finishers, outfit personas, and the
 Feed. Roster now: **41 cards, 24 enemy types + 2 bosses, 3 wizards, 19 outfits, 14
-artifacts. 143/143 tests.** Future ideas live in `DESIGN_REVIEW.md` / `REVIEW_2.md` / `USP.md`.
+artifacts. 152/152 tests.** Future ideas live in `DESIGN_REVIEW.md` / `REVIEW_2.md` / `USP.md`.
 
 **Post-roadmap (user requests, also shipped):** German + Spanish localization
 (`Loc` autoload + `loc_de.gd`/`loc_es.gd`, language picker in Options) covering UI,

@@ -92,7 +92,7 @@ highest-scoring style fingerprint the Critic rewards.
 > finisher cash-out; live in-combat S/A/B/C grade; post-fight room mutation (VIP gold /
 > heckler); the **drifting-taste anti-solve** (P2); **Commit-to-the-Bit** encore + booed +
 > a `tax` enemy verb (P3); four finishers, flash/slow-burn outfit personas, and **The
-> Feed** per-act Trend (P4). EN/DE/ES throughout. **143 headless tests green.** See the
+> Feed** per-act Trend (P4). EN/DE/ES throughout. **152 headless tests green.** See the
 > Build log at the bottom of this doc.
 
 Each phase has a **gate**: a "is it fun, do we continue?" check. Do not pass a gate on
@@ -234,7 +234,7 @@ reward-screen verdict quips, EN/DE/ES.
   vs **slow-burn** (high drip) outfit personas; **The Feed** — a per-act Trend that
   re-prices Aura income (never below 0); expanded Critic mood lines.
 - Content added: 3 finisher cards, 2 outfits, 1 heckler enemy; `tax` on 2 enemies.
-  **143/143 headless tests** (`godot --headless scenes/test_combat.tscn`).
+  **143/152 headless tests** (`godot --headless scenes/test_combat.tscn`).
 
 ### Still open / honest gaps
 - The fingerprint is solid but finite; a determined optimiser could still cycle a handful of
@@ -279,3 +279,41 @@ the flash persona's in-sim S gap (the greedy bot never flexes — fix the bot's 
 before touching outfit numbers); a context-aware C-rank trigger (the naive `lit>=2` version
 floods Act 1 with hecklers); and per-fight `Booed` frequency in long boss fights (a
 telegraph-reading human cashes out a turn early — no human-play evidence it's a problem).
+
+### Pass #2 (2026-06-07) — the deferred knobs
+
+The sim bot was taught a **hoard-then-burst flash policy** so the personas could be measured
+fairly. Outcomes (each adversarially re-verified; the verifiers re-ran the sim themselves):
+- **C-rank — context-aware trigger shipped.** C now fires when a fight ran long (turn≥4) and
+  you stayed *flat* — lit-1 only, no Pose, no finisher, peak < 12 — else B; quick wins (turn<4)
+  and any engagement stay B; lit-0 is still C. Sim: **fire/necro 0% C everywhere, Rizz ~3–6%
+  in early acts** (no flood — the naive `lit>=2` version gave 60–75%). Reachable + meaningful.
+- **Booed — gated to a real Encore shipped.** Only losing a *built-up* Encore (≥2) boos you;
+  a 1-turn spotlight touch you immediately cash out no longer does. Boss boos ~halved
+  (fire 108→71, necro 117→55; asc8 87→48).
+- **Flash persona — no change needed.** The "strictly worse" result was a drip-2 *measurement*
+  artifact. Fair re-measure (drip 5 + boost + hoard vs slow-burn drip 7): **flash 94% win /
+  ~30 S vs slow-burn 96% / ~50 S** — competitive (win-rate a dead heat; slow-burn trades for
+  more consistent S). The fix was the bot, not the outfit.
+- **Rizz-boss trim — reverted as ineffective.** `rizz_crit` 0.06→0.05 did **nothing** to boss
+  win (98%→98%): crit chance *saturates* (≥1.0) at boss-level Rizz, so the trim only bit at
+  low strength — nerfing Rizz where it's already weak. Reverted. Rizz-boss dominance is left
+  as a **deliberate glass-cannon identity** (it mulches single targets, struggles vs groups);
+  the only real lever (a crit-variance cap) conflicts with the deterministic crit tests.
+
+**Rizz × Critic — fixed (pass #2.5).** Rather than bolt generic Pose cards onto Rizz, its
+crit fantasy is welded to the Aura economy: a new innate **`swag_on_crit`** grants +1 *active*
+Aura per crit (counts as engaged, not drip), so Rizz feeds the Critic *through its own kit* and
+ramps with its Rizz-stacking identity. Isolation sim (with vs without): C-rate collapses
+(act2 22→1, act1-elite 19→1) and ratings rise, with **negligible win-rate impact (+0–6%)** —
+an engagement fix at ~zero power cost.
+
+**Harness bug fixed along the way:** `balance_sim._sim_combat()` never applied the wizard's
+`innate_passives`, so every prior Rizz number was a *crit-less* Rizz. Corrected — the sim now
+mirrors `GameState.active_passives()`.
+
+**Newly revealed → deferred to pass #3** (pre-existing, the crit kit, NOT `swag_on_crit`):
+with crit correctly simmed, Rizz is the **strongest class** — act3 boss **100%**, asc8 boss
+**59%** vs fire **0%** / necro **2%**. Two threads: Rizz single-target/boss dominance, and
+fire/necro asc8 bosses reading as near-impossible (may be intended top-of-ladder brutality;
+needs a real-player/relic check). **152/152 headless tests.**
