@@ -92,7 +92,7 @@ highest-scoring style fingerprint the Critic rewards.
 > finisher cash-out; live in-combat S/A/B/C grade; post-fight room mutation (VIP gold /
 > heckler); the **drifting-taste anti-solve** (P2); **Commit-to-the-Bit** encore + booed +
 > a `tax` enemy verb (P3); four finishers, flash/slow-burn outfit personas, and **The
-> Feed** per-act Trend (P4). EN/DE/ES throughout. **139 headless tests green.** See the
+> Feed** per-act Trend (P4). EN/DE/ES throughout. **143 headless tests green.** See the
 > Build log at the bottom of this doc.
 
 Each phase has a **gate**: a "is it fun, do we continue?" check. Do not pass a gate on
@@ -234,7 +234,7 @@ reward-screen verdict quips, EN/DE/ES.
   vs **slow-burn** (high drip) outfit personas; **The Feed** — a per-act Trend that
   re-prices Aura income (never below 0); expanded Critic mood lines.
 - Content added: 3 finisher cards, 2 outfits, 1 heckler enemy; `tax` on 2 enemies.
-  **139/139 headless tests** (`godot --headless scenes/test_combat.tscn`).
+  **143/143 headless tests** (`godot --headless scenes/test_combat.tscn`).
 
 ### Still open / honest gaps
 - The fingerprint is solid but finite; a determined optimiser could still cycle a handful of
@@ -244,3 +244,38 @@ reward-screen verdict quips, EN/DE/ES.
   a headline. Revisit only if runs feel same-y once outfits diverge more.
 - Cold-streak balance (heckler frequency, `tax`/`drain` density) wants a real playtest pass;
   penalties are deliberately room-only so an A/B run stays winnable.
+
+---
+
+## Balance pass (2026-06-07)
+
+Data-driven, not vibes. A headless sim harness (`scripts/tests/balance_sim.gd`, run via
+`scenes/balance_sim.tscn`) plays a heuristic bot through ~200 real combats per config across
+all 3 wizards × acts 1–3 × normal/elite/boss × ascension 0/4/8, plus an attrition chain, a
+drift-economy experiment, and a persona test. A four-lens analysis (difficulty curve / USP
+economy / engine correctness / a bot-bias skeptic) + adversarial verification picked the
+changes; each was confirmed by re-running the sim **and** the test suite, then before/after
+re-measured.
+
+**What the playtest found:** a real, damage-driven **Act 2→3 difficulty cliff** (normal win
+~75% → ~27%; attrition flips to 100% death at Act 2), and an **S-grade inversion** — fat
+passive drip auto-reached lit-3, so the highest-income outfit *farmed* the most S (slow-burn
+133 vs flash 6) — the opposite of "S rewards bold play."
+
+**Changes shipped (all test-green, drift economy untouched):**
+1. `node_scales()` softened — per-act dmg 0.22→0.17, per-row dmg 0.07→0.05, per-act HP
+   0.35→0.30, per-row HP 0.09→0.07, asc-dmg 0.06→0.05 (**asc-HP kept 0.08** — endgame stays
+   a wall). Mirror in `balance_sim.gd:_scales()` kept in lockstep.
+2. `compute_show_rating()` — **S now requires a bold tell** (`flexed` *or* `encore≥1`).
+   Coasting clean finishers cap at A.
+
+**Before → after (normal win %, balanced bot):** act3 floor roughly doubled
+(fire 25→42, necro 21→36, rizz 35→54); act1 unchanged at 100%; asc8 boss still ~1–8%.
+Slow-burn S-farm collapsed 133→32. Drift VIP gold spammer 26 vs varied 160 — **unchanged**.
+
+**Deliberately deferred** (need their own validated passes; flagged by the skeptic as bot
+artifacts or out-of-scope): rizz-boss dominance (a `rizz_crit` kit trim, measured solo);
+the flash persona's in-sim S gap (the greedy bot never flexes — fix the bot's hoard policy
+before touching outfit numbers); a context-aware C-rank trigger (the naive `lit>=2` version
+floods Act 1 with hecklers); and per-fight `Booed` frequency in long boss fights (a
+telegraph-reading human cashes out a turn early — no human-play evidence it's a problem).

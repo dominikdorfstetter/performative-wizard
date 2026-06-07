@@ -394,8 +394,12 @@ func thresholds_lit() -> int:
 ## (reads the current peak), so the rating can tick up live as the show builds.
 func compute_show_rating() -> Dictionary:
 	var lit := thresholds_lit()
+	# S demands a BOLD tell — not just fat passive income coasting to lit-3 and
+	# dumping. You either flexed (took a hit while hoarding past pierce) or held the
+	# 24 spotlight (Encore). Coasting clean finishers cap at A. (Balance pass 2026-06-07.)
+	var bold := flexed or encore >= 1
 	var rating := "C"
-	if lit >= 3 and finisher_clean:
+	if lit >= 3 and finisher_clean and bold:
 		rating = "S"
 	elif lit >= 3 or (lit >= 2 and finisher_clean):
 		rating = "A"
