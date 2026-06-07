@@ -3,6 +3,8 @@ extends Control
 ## pixel backdrop. Attacks lunge, blocks flash, hits recoil. Reads the encounter from
 ## the current map node; on victory awards gold and routes to the reward screen.
 
+const TipIcon = preload("res://scripts/ui/tip_icon.gd")
+
 const C_PANEL_BORDER := Color(0.28, 0.24, 0.36)
 const C_HP := Color(0.85, 0.27, 0.24)
 const C_HP_TRACK := Color(0.22, 0.12, 0.13)
@@ -21,6 +23,22 @@ const GOON_SIZE := 50.0
 
 const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed", &"poison": "Toxic", &"ritual": "Locked In", &"aura_engine": "Aura Farm", &"hive_mind": "Hive", &"barrier": "Barrier"}
 const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl", &"frail": "crack", &"poison": "drop", &"ritual": "crown", &"aura_engine": "star", &"hive_mind": "bones", &"barrier": "shield"}
+# One-line help shown in the hover tooltip so players know what's affecting them.
+const STATUS_DESC := {
+	&"block": "Absorbs incoming damage; resets at the start of your next turn.",
+	&"strength": "Rizz — adds its value to the damage of every attack.",
+	&"vulnerable": "Cooked — takes +50% damage while it lasts.",
+	&"weak": "Mid — deals 25% less damage while it lasts.",
+	&"burn": "Roasted — takes this much at the start of its turn, then ramps down 1. Ignores Block.",
+	&"poison": "Toxic — takes this much at turn start (ignores Block), then ramps down 1.",
+	&"undead": "Goons — at end of turn each hits a random enemy for 2, and they soak hits against you.",
+	&"jinx": "Jinxed — −10% crit chance per stack.",
+	&"frail": "Exposed — you gain 25% less Block while it lasts.",
+	&"ritual": "Locked In — gain this much Rizz at the start of each of your turns.",
+	&"aura_engine": "Aura Farm — gain this much Aura at the start of each turn.",
+	&"hive_mind": "Hive — summon this many Goons each turn.",
+	&"barrier": "Barrier — gain this much Block each turn.",
+}
 const PLAYER_LINES := ["aura farming fr 🧿", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy ✨", "locked TF in", "we mogging rn 😤"]
 const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you? 💀", "stay mad bestie"]
 
@@ -159,6 +177,7 @@ func _start_fight() -> void:
 	cm.start_combat(player, encounter, deck, GameState.effective_drip(), false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
 	_build_player_widget(w)
 	_build_fit_strip()
+	_build_artifact_strip()
 	_prev_enemy_hp = []
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
@@ -222,20 +241,47 @@ func _build_player_widget(w: WizardData) -> void:
 	add_child(_player_status_box)
 
 func _build_fit_strip() -> void:
+	# Equipped outfit pieces (top-left), each with a hover tooltip = name + passive.
 	var x := 16.0
 	for p in GameState.equipped_pieces():
 		var tex := SpriteBank.item_texture(p.id)
 		if tex == null:
 			continue
-		var tr := TextureRect.new()
+		var tr := TipIcon.new()
 		tr.texture = tex
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.mouse_filter = Control.MOUSE_FILTER_STOP
 		tr.position = Vector2(x, 64)
 		tr.size = Vector2(24, 24)
+		var body := Loc.t(p.passive_text) if p.passive_text != "" else Loc.t("No passive.")
+		if p.drip > 0:
+			body += "\n" + Loc.t("Drip +%d Aura/turn.") % p.drip
+		tr.set_tip("%s  (%s)" % [Loc.t(p.title), p.slot], body)
 		add_child(tr)
 		x += 27
+
+# The relics you're holding this run — finally visible IN combat, each charm's tooltip
+# spells out what it's doing to you. (Art pass: "you don't know what's affecting you".)
+func _build_artifact_strip() -> void:
+	var x := 16.0
+	for aid in GameState.run_artifacts:
+		var a := Database.get_artifact(aid)
+		if a == null:
+			continue
+		var tex := SpriteBank.artifact_texture(aid)
+		if tex == null:
+			continue
+		var tr := TipIcon.new()
+		tr.texture = tex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_STOP
+		tr.position = Vector2(x, 94)
+		tr.size = Vector2(22, 22)
+		tr.set_tip(Loc.t(a.title), Loc.t(a.description))
+		add_child(tr)
+		x += 25
 
 # --- summoned goons ------------------------------------------------------
 
@@ -848,12 +894,15 @@ func _status_chip(id: StringName, value: int) -> Control:
 	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var icon_name: String = STATUS_ICON.get(id, "")
 	if icon_name != "":
-		var tr := TextureRect.new()
+		var tr := TipIcon.new()
 		tr.texture = SpriteBank.icon_texture(icon_name)
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# PASS (not STOP): show the tooltip but let clicks fall through to click-to-target.
+		tr.mouse_filter = Control.MOUSE_FILTER_PASS
 		tr.custom_minimum_size = Vector2(18, 18)
+		var nm: String = STATUS_NAME.get(id, String(id).capitalize())
+		tr.set_tip("%s %d" % [nm, value], Loc.t(STATUS_DESC.get(id, "")))
 		h.add_child(tr)
 	var lbl := Label.new()
 	lbl.text = str(value)
@@ -918,12 +967,13 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 		_:
 			text = "?"
 	if icon != "":
-		var tr := TextureRect.new()
+		var tr := TipIcon.new()
 		tr.texture = SpriteBank.icon_texture(icon)
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.mouse_filter = Control.MOUSE_FILTER_PASS
 		tr.custom_minimum_size = Vector2(20, 20)
+		tr.set_tip(Loc.t("Their next move"), _intent_desc(it))
 		box.add_child(tr)
 	var lbl := Label.new()
 	lbl.text = text
@@ -932,6 +982,36 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 	lbl.add_theme_font_size_override("font_size", 17)
 	lbl.add_theme_color_override("font_color", col)
 	box.add_child(lbl)
+
+# Human-readable description of an enemy's telegraphed intent, for the hover tooltip.
+func _intent_desc(it: Dictionary) -> String:
+	var amt := int(it.get("amount", 0))
+	match String(it.get("op", "")):
+		"attack":
+			var hits: int = max(1, int(it.get("hits", 1)))
+			var dmg := int(round(amt * cm.enemy_dmg_scale))
+			if hits > 1:
+				return Loc.t("Attacks %d times for %d each (%d total).") % [hits, dmg, dmg * hits]
+			return Loc.t("Attacks for %d.") % dmg
+		"block":
+			return Loc.t("Braces for %d Block.") % amt
+		"heal":
+			return Loc.t("Heals %d HP.") % amt
+		"apply_status":
+			var s := StringName(it.get("status", &""))
+			var nm: String = STATUS_NAME.get(s, String(s).capitalize())
+			return Loc.t("Hits you with %s %d. ") % [nm, amt] + Loc.t(STATUS_DESC.get(s, ""))
+		"buff":
+			var s2 := StringName(it.get("status", &""))
+			var nm2: String = STATUS_NAME.get(s2, String(s2).capitalize())
+			return Loc.t("Buffs itself: %s +%d.") % [nm2, amt]
+		"drain_swag":
+			return Loc.t("Drains %d of your Aura.") % amt
+		"tax":
+			return Loc.t("Taxes %d Aura if you're hoarding above a threshold.") % amt
+		"summon_ally":
+			return Loc.t("Summons backup into the fight.")
+	return Loc.t("Bides its time.")
 
 # The Aura meter: three tiers that light/unlight live so a glance reads which
 # passive buffs are on right now. Fill goes gold when all three are lit.
