@@ -10,6 +10,7 @@ description = "Summon 2 Goons. Aura +1."
 cost = 2
 type = "Skill"
 rarity = "Epic"
+archetype = &"swarm"
 swag_gain = 1
 swag_cost = 0
 effects = [{ "op": "summon", "amount": 2 }]

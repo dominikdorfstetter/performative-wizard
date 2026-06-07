@@ -10,6 +10,7 @@ description = "Deal 2× their Roasted stacks."
 cost = 1
 type = "Attack"
 rarity = "Epic"
+archetype = &"roast"
 swag_gain = 1
 swag_cost = 0
 effects = [{ "op": "damage_x_burn", "mult": 2, "target": "enemy" }]

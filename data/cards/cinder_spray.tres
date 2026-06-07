@@ -10,6 +10,7 @@ description = "Deal 4 to ALL opps."
 cost = 1
 type = "Attack"
 rarity = "Common"
+archetype = &"viral"
 swag_gain = 0
 swag_cost = 0
 effects = [{ "op": "damage_all", "amount": 4 }]

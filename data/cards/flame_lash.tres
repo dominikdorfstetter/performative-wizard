@@ -10,6 +10,7 @@ description = "Deal 4. If they're Roasted, deal 4 more."
 cost = 1
 type = "Attack"
 rarity = "Common"
+archetype = &"roast"
 swag_gain = 0
 swag_cost = 0
 effects = [{ "op": "damage_if_status", "amount": 4, "status": "burn", "bonus": 4, "target": "enemy" }]

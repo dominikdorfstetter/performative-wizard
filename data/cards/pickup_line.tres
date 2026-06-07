@@ -10,6 +10,7 @@ description = "Power: gain 1 Rizz at the start of every turn. it just works."
 cost = 1
 type = "Power"
 rarity = "Rare"
+archetype = &"ramp"
 swag_gain = 0
 swag_cost = 0
 effects = [{ "op": "self_status", "status": "ritual", "amount": 1 }]

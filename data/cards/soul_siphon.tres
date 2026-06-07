@@ -10,6 +10,7 @@ description = "Deal 7. Heal 4."
 cost = 2
 type = "Attack"
 rarity = "Common"
+archetype = &"sac"
 swag_gain = 0
 swag_cost = 0
 effects = [{ "op": "damage", "amount": 7, "target": "enemy" }, { "op": "heal", "amount": 4 }]

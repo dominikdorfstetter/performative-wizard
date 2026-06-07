@@ -10,6 +10,7 @@ description = "Deal 6. Gain 2 Rizz. feeling lucky?"
 cost = 1
 type = "Attack"
 rarity = "Epic"
+archetype = &"ramp"
 swag_gain = 0
 swag_cost = 0
 effects = [{ "op": "damage", "amount": 6, "target": "enemy" }, { "op": "self_status", "status": "strength", "amount": 2 }]

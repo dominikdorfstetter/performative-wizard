@@ -759,6 +759,47 @@ func _ready() -> void:
 	_check("double_tap unlocks by 30 clout", GameState.card_unlocked(&"double_tap"), true)
 	GameState.clout_earned = saved_ce2
 
+	# --- archetypes slice 3: vanilla starters + draft bias ---
+	print("--- starters + draft bias ---")
+	for wid in [&"fire", &"necro", &"rizz"]:
+		var ww := Database.get_wizard(wid)
+		_check("%s starter is 10 cards" % [wid], ww.starter_deck.size(), 10)
+		_check("%s starter has a guaranteed Pose" % [wid], &"strike_a_pose" in ww.starter_deck, true)
+	# USP visible from fight 1: fire starter lights threshold 1 with no crit luck
+	var cmst := CombatManager.new()
+	var pst := Combatant.new()
+	pst.max_hp = 72
+	pst.hp = 72
+	var fdeck: Array[CardData] = []
+	for id in Database.get_wizard(&"fire").starter_deck:
+		fdeck.append(Database.get_card(id))
+	cmst.start_combat(pst, [Database.get_enemy(&"alley_cat")], fdeck, 2, true)
+	cmst.energy = 9
+	cmst.hand = [Database.get_card(&"strike_a_pose"), Database.get_card(&"ignite")]
+	cmst.play_card(cmst.hand[0])
+	cmst.play_card(cmst.hand[0])
+	_check("fire starter lights threshold 1 by fight 1", cmst.swag >= CombatManager.THRESHOLD_DAMAGE, true)
+	# draft bias
+	var saved_wiz: StringName = GameState.wizard_id
+	var saved_deck: Array = GameState.deck.duplicate()
+	var saved_ce3: int = GameState.clout_earned
+	GameState.clout_earned = 99999
+	GameState.wizard_id = &"fire"
+	GameState.deck = [&"ember", &"kindle"]
+	_check("fresh/neutral deck has no dominant archetype", GameState.deck_archetype(), &"")
+	GameState.deck = [&"inferno", &"combust"]
+	_check("2 roast cards → roast dominant", GameState.deck_archetype(), &"roast")
+	var offer: Array = GameState.reward_offer(3)
+	var roast_n := 0
+	for id in offer:
+		var oc := Database.get_card(id)
+		if oc != null and oc.archetype == &"roast":
+			roast_n += 1
+	_check("roast-dominant deck → 2 roast in the offer", roast_n, 2)
+	GameState.wizard_id = saved_wiz
+	GameState.deck = saved_deck
+	GameState.clout_earned = saved_ce3
+
 	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
 	print("--- rarity ladder ---")
 	var ladder := ["Common", "Rare", "Epic", "Legendary"]

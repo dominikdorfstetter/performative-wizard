@@ -10,6 +10,7 @@ description = "Deal 8 to ALL opps. Aura +2."
 cost = 2
 type = "Attack"
 rarity = "Common"
+archetype = &"viral"
 swag_gain = 2
 swag_cost = 0
 effects = [{ "op": "damage_all", "amount": 8 }]

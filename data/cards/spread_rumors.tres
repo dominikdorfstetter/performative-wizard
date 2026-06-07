@@ -10,6 +10,7 @@ description = "Apply 4 Toxic. it ramps down each turn but it hurts."
 cost = 1
 type = "Skill"
 rarity = "Rare"
+archetype = &"swarm"
 swag_gain = 0
 swag_cost = 0
 unlock_clout = 50
