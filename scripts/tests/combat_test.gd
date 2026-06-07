@@ -674,6 +674,15 @@ func _ready() -> void:
 	cmbk2.player.block = 7
 	cmbk2.end_turn()
 	_check("7 block vs 10 incoming -> take 3", cmbk2.player.hp, 69)
+	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
+	print("--- rarity ladder ---")
+	var ladder := ["Common", "Rare", "Epic", "Legendary"]
+	var bad_rarity: Array = []
+	for cid in Database.cards:
+		var c: CardData = Database.cards[cid]
+		if c.rarity not in ladder or not CardView.RARITY_COLOR.has(c.rarity):
+			bad_rarity.append("%s=%s" % [cid, c.rarity])
+	_check("all cards have a valid rarity+colour", bad_rarity, [])
 
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)
