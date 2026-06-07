@@ -117,7 +117,7 @@ func _compute_crit() -> void:
 func live_crit_chance() -> float:
 	var cc := crit_chance
 	if has_passive(&"rizz_crit"):
-		cc += player.status(&"strength") * 0.06
+		cc += player.status(&"strength") * 0.05
 	cc -= player.status(&"jinx") * 0.10
 	return max(0.0, cc)
 
@@ -417,6 +417,10 @@ func compute_show_rating() -> Dictionary:
 	# wide (>=2 AoE plays) or a lot of self-generated Aura (pose_swag, not passive drip).
 	# This can't be farmed by coasting on drip (pose_swag from drip is 0, AoE must be played).
 	var bold := flexed or encore >= 1 or (finisher_clean and (aoe_plays >= 2 or pose_swag >= 12))
+	# Pass #3 (re-earn S now that block works): S also demands the show actually
+	# PEAKED into the spotlight (24), not merely simmered to lit-3 (18) and dumped.
+	# Wide/flex/active builds still reach S — they just have to crest 24 first.
+	var peaked := peak_swag >= THRESHOLD_ENCORE
 	# "Engaged" = you actually played the Aura game (posed, finished, or hoarded to the
 	# draw line) — as opposed to coasting on passive drip. A long fight (turn>=4) where
 	# you never engaged is a flat performance → C, even if you won. Quick wins (turn<4)
@@ -426,7 +430,7 @@ func compute_show_rating() -> Dictionary:
 	# finish, or hoard to avoid the flat-fight C — nudging it to engage the Aura economy.
 	var engaged := pose_swag > 0 or finisher_clean or peak_swag >= THRESHOLD_DRAW
 	var rating := "C"
-	if lit >= 3 and finisher_clean and bold:
+	if lit >= 3 and finisher_clean and bold and peaked:
 		rating = "S"
 	elif lit >= 3 or (lit >= 2 and finisher_clean):
 		rating = "A"
