@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"mass_sacrifice"
+title = "Mass Sacrifice"
+description = "Sacrifice 3 Goons: deal 16 and gain 6 Aura."
+cost = 2
+type = "Skill"
+rarity = "Legendary"
+unlock_clout = 150
+archetype = &"sac"
+swag_gain = 0
+swag_cost = 0
+effects = [{ "op": "sacrifice_strike", "sac": 3, "damage": 16, "swag": 6, "target": "enemy" }]

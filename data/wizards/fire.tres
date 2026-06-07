@@ -14,4 +14,4 @@ max_hp = 72
 base_drip = 2
 accent = Color(0.86, 0.3, 0.27, 1)
 starter_deck = [&"ember", &"ember", &"ember", &"ember", &"kindle", &"kindle", &"kindle", &"ignite", &"ignite", &"strike_a_pose"]
-reward_pool = [&"flame_lash", &"inferno", &"flashfire", &"ignite", &"grand_finale", &"cinder_spray", &"combust", &"hot_streak", &"strike_a_pose", &"flourish", &"quick_read", &"second_wind", &"touch_grass", &"slow_burn", &"grindset", &"take_a_bow", &"encore_for_fans", &"soak_it_in", &"smoulder", &"serve_face"]
+reward_pool = [&"flame_lash", &"inferno", &"flashfire", &"ignite", &"grand_finale", &"cinder_spray", &"combust", &"hot_streak", &"strike_a_pose", &"flourish", &"quick_read", &"second_wind", &"touch_grass", &"slow_burn", &"grindset", &"take_a_bow", &"encore_for_fans", &"soak_it_in", &"smoulder", &"serve_face", &"flashpoint"]

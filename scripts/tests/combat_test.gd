@@ -800,6 +800,67 @@ func _ready() -> void:
 	GameState.deck = saved_deck
 	GameState.clout_earned = saved_ce3
 
+	# --- archetypes slice 4: Legendary chase cards ---
+	print("--- legendaries ---")
+	# main_character (Rizz): deal 8 + 3 Rizz
+	var cmmc := CombatManager.new()
+	var pmc := Combatant.new()
+	pmc.max_hp = 72
+	pmc.hp = 72
+	cmmc.start_combat(pmc, [Database.get_enemy(&"the_critic")], [Database.get_card(&"main_character")], 0, true)
+	cmmc.energy = 9
+	cmmc.hand = [Database.get_card(&"main_character")]
+	var mc_hp0: int = cmmc.enemies[0].hp
+	cmmc.play_card(cmmc.hand[0])
+	_check("main_character deals 8", mc_hp0 - cmmc.enemies[0].hp, 8)
+	_check("main_character gives 3 Rizz", cmmc.player.status(&"strength"), 3)
+	# mass_sacrifice (Necro): 3 goons -> deal 16 + 6 aura
+	var cmms := CombatManager.new()
+	var pms := Combatant.new()
+	pms.max_hp = 68
+	pms.hp = 68
+	cmms.start_combat(pms, [Database.get_enemy(&"the_critic")], [Database.get_card(&"mass_sacrifice")], 0, true)
+	cmms.player.add_status(&"undead", 3)
+	cmms.energy = 9
+	var ms_hp0: int = cmms.enemies[0].hp
+	cmms.hand = [Database.get_card(&"mass_sacrifice")]
+	cmms.play_card(cmms.hand[0])
+	_check("mass_sacrifice ate 3 goons", cmms.player.status(&"undead"), 0)
+	_check("mass_sacrifice deals 16", ms_hp0 - cmms.enemies[0].hp, 16)
+	_check("mass_sacrifice gives 6 aura", cmms.swag, 6)
+	# mass_sacrifice with <3 goons = no-op
+	var cmms2 := CombatManager.new()
+	var pms2 := Combatant.new()
+	pms2.max_hp = 68
+	pms2.hp = 68
+	cmms2.start_combat(pms2, [Database.get_enemy(&"the_critic")], [Database.get_card(&"mass_sacrifice")], 0, true)
+	cmms2.player.add_status(&"undead", 2)
+	cmms2.energy = 9
+	cmms2.hand = [Database.get_card(&"mass_sacrifice")]
+	cmms2.play_card(cmms2.hand[0])
+	_check("mass_sacrifice no-ops under 3 goons", cmms2.player.status(&"undead"), 2)
+	# flashpoint (Fire): 3x Roast then +3 Roast
+	var cmfp := CombatManager.new()
+	var pfp := Combatant.new()
+	pfp.max_hp = 72
+	pfp.hp = 72
+	cmfp.start_combat(pfp, [Database.get_enemy(&"the_critic")], [Database.get_card(&"flashpoint")], 0, true)
+	cmfp.enemies[0].add_status(&"burn", 4)
+	cmfp.energy = 9
+	var fp_hp0: int = cmfp.enemies[0].hp
+	cmfp.hand = [Database.get_card(&"flashpoint")]
+	cmfp.play_card(cmfp.hand[0])
+	_check("flashpoint deals 3x Roast (12)", fp_hp0 - cmfp.enemies[0].hp, 12)
+	_check("flashpoint then applies 3 Roast (4->7)", cmfp.enemies[0].status(&"burn"), 7)
+	# Legendary rarity + 150 unlock gate
+	_check("flashpoint is Legendary", Database.get_card(&"flashpoint").rarity, "Legendary")
+	var saved_ce4: int = GameState.clout_earned
+	GameState.clout_earned = 100
+	_check("Legendary locked at 100 clout", GameState.card_unlocked(&"flashpoint"), false)
+	GameState.clout_earned = 150
+	_check("Legendary unlocks at 150 clout", GameState.card_unlocked(&"flashpoint"), true)
+	GameState.clout_earned = saved_ce4
+
 	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
 	print("--- rarity ladder ---")
 	var ladder := ["Common", "Rare", "Epic", "Legendary"]

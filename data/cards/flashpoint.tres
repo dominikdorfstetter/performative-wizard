@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"flashpoint"
+title = "Flashpoint"
+description = "Deal 3× their Roast. Then apply 3 Roast."
+cost = 2
+type = "Attack"
+rarity = "Legendary"
+unlock_clout = 150
+archetype = &"roast"
+swag_gain = 0
+swag_cost = 0
+effects = [{ "op": "damage_x_burn", "mult": 3, "target": "enemy" }, { "op": "apply_status", "status": "burn", "amount": 3, "target": "enemy" }]
