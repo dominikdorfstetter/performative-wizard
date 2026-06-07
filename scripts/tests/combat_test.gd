@@ -655,5 +655,25 @@ func _ready() -> void:
 	_check("en is passthrough", Loc.t("Deal 5."), "Deal 5.")
 	_check("en critic passthrough", Loc.t("The Critic"), "The Critic")
 
+	# --- regression: Block absorbs ENEMY attacks (was cleared before the enemy turn) ---
+	print("--- block vs enemy attacks ---")
+	var cmbk := CombatManager.new()
+	var pbk := Combatant.new()
+	pbk.max_hp = 72
+	pbk.hp = 72
+	cmbk.start_combat(pbk, [Database.get_enemy(&"sock_puppet"), Database.get_enemy(&"sock_puppet")], [Database.get_card(&"ember")], 0, true)
+	cmbk.player.block = 10                       # you blocked for 10
+	cmbk.end_turn()                              # two Sock Puppets attack 5 each
+	_check("10 block fully absorbs 5+5 (no HP lost)", cmbk.player.hp, 72)
+	_check("block was consumed by the hits", cmbk.player.block, 0)
+	var cmbk2 := CombatManager.new()
+	var pbk2 := Combatant.new()
+	pbk2.max_hp = 72
+	pbk2.hp = 72
+	cmbk2.start_combat(pbk2, [Database.get_enemy(&"sock_puppet"), Database.get_enemy(&"sock_puppet")], [Database.get_card(&"ember")], 0, true)
+	cmbk2.player.block = 7
+	cmbk2.end_turn()
+	_check("7 block vs 10 incoming -> take 3", cmbk2.player.hp, 69)
+
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)
