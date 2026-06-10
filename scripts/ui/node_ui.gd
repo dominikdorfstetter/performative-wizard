@@ -7,6 +7,18 @@ const BG := Color(0.08, 0.06, 0.11)
 const PINK := Color(1.0, 0.31, 0.70)
 const GOLD := Color(1.0, 0.82, 0.29)
 
+# The 4-step type scale every screen should draw from (one font, four sizes —
+# replaces the ~20 ad-hoc font_size overrides the art audit flagged).
+const FS_TITLE := 36
+const FS_HEADING := 22
+const FS_BODY := 16
+const FS_CAPTION := 13
+
+# Two-font system: Jersey 20 (project default, gui/theme/custom_font) carries all
+# body/UI text — its digits are unmistakable, which a deckbuilder lives on.
+# Pixelify Sans is DISPLAY ONLY (screen titles, no digits): its '5' reads as 'S'.
+const DISPLAY_FONT: FontFile = preload("res://assets/fonts/pixelify_sans.ttf")
+
 static func background(parent: Control) -> void:
 	gradient_bg(parent)
 
@@ -32,7 +44,8 @@ static func gradient_bg(parent: Control, top := Color(0.12, 0.09, 0.17), bottom 
 static func title(parent: Control, text: String, color: Color = PINK) -> Label:
 	var l := Label.new()
 	l.text = Loc.t(text)
-	l.add_theme_font_size_override("font_size", 36)
+	l.add_theme_font_override("font", DISPLAY_FONT)
+	l.add_theme_font_size_override("font_size", FS_TITLE)
 	l.add_theme_color_override("font_color", color)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.position = Vector2(0, 48)
@@ -84,8 +97,8 @@ static func choice(text: String, desc: String, accent: Color, cb: Callable, enab
 		vb.add_child(ir)
 	elif icon != "":
 		vb.add_child(_vlabel(icon, 42, Color.WHITE))
-	vb.add_child(_vlabel(Loc.t(text), 22, accent.lightened(0.35)))
-	vb.add_child(_vlabel(Loc.t(desc), 16, Color(0.82, 0.82, 0.88)))
+	vb.add_child(_vlabel(Loc.t(text), FS_HEADING, accent.lightened(0.35)))
+	vb.add_child(_vlabel(Loc.t(desc), FS_BODY, Color(0.82, 0.82, 0.88)))
 	return b
 
 static func _vlabel(text: String, fs: int, color: Color) -> Label:
@@ -102,7 +115,7 @@ static func _vlabel(text: String, fs: int, color: Color) -> Label:
 static func menu_button(text: String, cb: Callable, accent := Color(0.5, 0.55, 0.7), w := 340.0) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(w, 52)
-	b.add_theme_font_size_override("font_size", 22)
+	b.add_theme_font_size_override("font_size", FS_HEADING)
 	b.add_theme_stylebox_override("normal", box(Color(0.15, 0.13, 0.2), accent))
 	b.add_theme_stylebox_override("hover", box(Color(0.22, 0.19, 0.3), accent.lightened(0.3)))
 	b.add_theme_stylebox_override("pressed", box(Color(0.2, 0.17, 0.27), accent))

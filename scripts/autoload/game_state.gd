@@ -710,6 +710,8 @@ func load_meta() -> void:
 	_run_snapshot = run if typeof(run) == TYPE_DICTIONARY else {}
 
 func save_meta() -> void:
+	if OS.has_environment("PW_NO_SAVE"):
+		return   # dev tools / CI runs must never touch the real save file
 	var owned: Array[String] = []
 	for id in unlocked_outfits:
 		owned.append(String(id))

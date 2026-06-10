@@ -22,6 +22,10 @@ SpriteBank="*res://scripts/autoload/sprite_bank.gd"
 Audio="*res://scripts/autoload/audio.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 
+[gui]
+
+theme/custom_font="res://assets/fonts/jersey20.ttf"
+
 [display]
 
 window/size/viewport_width=1152
