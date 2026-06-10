@@ -904,6 +904,28 @@ func _ready() -> void:
 	_check("peak_undead tracks the board", cmep.peak_undead, 4)
 	_check("big goon board -> swarm signature", cmep.style_signature(), &"swarm")
 
+	# --- sequenced enemy turn (step_delay > 0): suspends at the first beat, then
+	# completes asynchronously; enemy_acting fires once per living attacker. The
+	# default step_delay == 0 path is what every other test in this file exercises.
+	print("--- sequenced enemy turn ---")
+	var cmsq := CombatManager.new()
+	var psq := Combatant.new()
+	psq.max_hp = 80
+	psq.hp = 80
+	var seq_acts: Array = []
+	cmsq.enemy_acting.connect(func(i: int, _intent: Dictionary): seq_acts.append(i))
+	var sqdeck: Array[CardData] = [Database.get_card(&"ember")]
+	cmsq.start_combat(psq, [Database.get_enemy(&"alley_cat"), Database.get_enemy(&"alley_cat")], sqdeck, 0, true)
+	cmsq.step_delay = 0.02
+	var hp_before_seq := cmsq.player.hp
+	cmsq.end_turn()
+	_check("sequenced turn suspends mid-enemy-turn", cmsq.state, CombatManager.State.ENEMY_TURN)
+	await get_tree().create_timer(0.6).timeout
+	_check("sequenced turn completes to player turn", cmsq.state, CombatManager.State.PLAYER_TURN)
+	_check("sequenced turn advanced the turn counter", cmsq.turn, 2)
+	_check("enemy_acting fired once per living attacker", seq_acts, [0, 1])
+	_check("both sequenced attackers landed their hits", cmsq.player.hp < hp_before_seq, true)
+
 	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
 	print("--- rarity ladder ---")
 	var ladder := ["Common", "Rare", "Epic", "Legendary"]

@@ -210,6 +210,7 @@ const TABLE := {
 	"yeet a card (%dg)": "yeet eine Karte (%dg)",
 	"%d gold": "%d Gold",
 	"SOLD": "VERKAUFT",
+	"BLOCKED %d": "GEBLOCKT %d",
 	# --- combat log lines (slang/keywords kept; connective text translated) ---
 	"the opps pulled up: %s": "die Opps sind aufgetaucht: %s",
 	"you're Toxic'd for %d": "du bist Toxic'd für %d",

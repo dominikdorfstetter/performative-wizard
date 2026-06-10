@@ -54,6 +54,7 @@ var _enemy_widgets: Array = []
 var _enemy_sprites: Array = []
 var _prev_enemy_hp: Array = []
 var _prev_player_hp := -1
+var _prev_player_block := 0
 var _prev_player_str := 0
 var _prev_pstatus: Dictionary = {}
 var _prev_swag := 0
@@ -173,7 +174,9 @@ func _start_fight() -> void:
 
 	var scales: Array = GameState.node_scales(node)
 	cm = CombatManager.new()
+	cm.step_delay = 0.45   # sequence the enemy turn: each attacker gets its own beat
 	cm.changed.connect(_refresh)
+	cm.enemy_acting.connect(_on_enemy_acting)
 	cm.combat_ended.connect(_on_combat_ended)
 	cm.start_combat(player, encounter, deck, GameState.effective_drip(), false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
 	_build_player_widget(w)
@@ -183,6 +186,7 @@ func _start_fight() -> void:
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
 	_prev_player_hp = cm.player.hp
+	_prev_player_block = cm.player.block
 	_prev_swag = cm.swag
 	_prev_state = cm.state
 	_prev_lit = 0
@@ -737,6 +741,20 @@ func _lunge(node: Control) -> void:
 	tw.tween_property(node, "position:x", home.x + 34, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(node, "position:x", home.x, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
+## The acting enemy winds up toward the wizard just before its intent resolves, so
+## each attacker in the sequenced enemy turn reads as its own beat.
+func _on_enemy_acting(index: int, _intent: Dictionary) -> void:
+	if index < 0 or index >= _enemy_sprites.size():
+		return
+	var s: Control = _enemy_sprites[index]
+	if s == null or not is_instance_valid(s):
+		return
+	var home_x: float = s.position.x
+	# bind to the sprite: it's freed on the next _rebuild_enemies
+	var tw := s.create_tween()
+	tw.tween_property(s, "position:x", home_x - 30.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(s, "position:x", home_x, 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
 func _punch(node: Control) -> void:
 	if node == null or not is_instance_valid(node):
 		return
@@ -795,6 +813,13 @@ func _emit_popups() -> void:
 	elif _prev_player_hp >= 0 and cm.player.hp > _prev_player_hp:
 		_float_text(Vector2(150, 250), "+%d" % (cm.player.hp - _prev_player_hp), Color(0.5, 0.95, 0.6))
 		Audio.play("heal", -4.0)
+	elif cm.state == CombatManager.State.ENEMY_TURN and cm.player.block < _prev_player_block:
+		# A fully-absorbed enemy hit (HP untouched, Block consumed) is the fight's most
+		# satisfying defensive moment — give it a tell instead of silence.
+		_float_text(Vector2(150, 250), Loc.t("BLOCKED %d") % (_prev_player_block - cm.player.block), Color(0.45, 0.7, 1.0))
+		_block_flash()
+		Audio.play("block")
+	_prev_player_block = cm.player.block
 	if max_dmg >= 14:
 		_shake(7.0)
 	var str_now: int = cm.player.status(&"strength")

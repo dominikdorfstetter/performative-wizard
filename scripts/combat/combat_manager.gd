@@ -6,6 +6,9 @@ extends RefCounted
 
 signal changed
 signal combat_ended(victory: bool)
+## Fired just before an enemy resolves its intent (only when step_delay > 0), so the
+## view can wind up / lunge the acting enemy before its hit lands.
+signal enemy_acting(index: int, intent: Dictionary)
 
 enum State { PLAYER_TURN, ENEMY_TURN, WIN, LOSE }
 
@@ -28,6 +31,13 @@ var player: Combatant
 var enemies: Array[Combatant] = []
 var target_index := 0
 var turn := 0
+
+## Seconds between enemy actions during the enemy turn. 0 (default) resolves the whole
+## turn synchronously in one call — headless tests and the balance sim rely on that.
+## The view sets ~0.45 so each enemy telegraphs, lunges, and lands its hit as its own
+## visible beat. Guarded awaits: with step_delay == 0 no await ever executes, so the
+## synchronous contract is untouched.
+var step_delay := 0.0
 
 var energy := 0
 var max_energy := MAX_ENERGY
@@ -499,25 +509,40 @@ func _enemy_turn() -> void:
 		if poisoned > 0:
 			_say(Loc.t("%s is Toxic'd for %d") % [Loc.t(e.display_name), poisoned])
 		if e.is_dead():
+			_emit()   # a DoT death gets its own beat before the next enemy moves
 			continue
 		if e.data == null or e.data.intents.is_empty():
 			continue
+		if step_delay > 0.0:
+			await _beat(step_delay)
+			enemy_acting.emit(enemies.find(e), peek_intent(e))
+			await _beat(step_delay * 0.4)   # windup: the lunge reads before the hit lands
 		var intent: Dictionary = e.data.intents[e.intent_index % e.data.intents.size()]
 		_resolve_intent(e, intent)
 		e.intent_index += 1
 		_decay(e)
 		e.block = 0
+		# Per-enemy emit: damage numbers, hurt flash, and bar updates land per attacker
+		# instead of one aggregated delta at the end of the whole turn.
+		_emit()
 		if player.is_dead():
 			_finish(false)
 			return
 	if all_dead():
 		_finish(true)
 		return
+	if step_delay > 0.0:
+		await _beat(step_delay * 0.8)
 	# Block held through the enemy turn (so it absorbed their attacks); clear it now,
 	# right before your next turn — StS-correct. (Was wrongly cleared in end_turn, so
 	# block never protected against enemies.)
 	player.block = 0
 	_start_player_turn()
+
+func _beat(seconds: float) -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null:
+		await tree.create_timer(seconds).timeout
 
 func _make_enemy(edata: EnemyData) -> Combatant:
 	var e := Combatant.new()
