@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"thrift_flip"
+title = "Thrift Flip"
+description = "Shuffle your discard into your draw pile. Draw 1. +2 Aura — vintage is IN."
+cost = 1
+type = "Skill"
+rarity = "Common"
+swag_gain = 2
+swag_cost = 0
+effects = [{ "op": "shuffle_discard" }, { "op": "draw", "amount": 1 }]

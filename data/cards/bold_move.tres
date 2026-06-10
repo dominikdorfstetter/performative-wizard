@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bold_move"
+title = "Bold Move"
+description = "Deal 4. Deal 8 instead if they're Mid. shooters shoot."
+cost = 1
+type = "Attack"
+rarity = "Rare"
+archetype = &"storm"
+swag_gain = 0
+swag_cost = 0
+unlock_clout = 60
+effects = [{ "op": "damage_if_status", "amount": 4, "status": "weak", "bonus": 4, "target": "enemy" }]

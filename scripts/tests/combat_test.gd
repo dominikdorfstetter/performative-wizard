@@ -963,6 +963,88 @@ func _ready() -> void:
 	var bad_snap := {"wizard_id": "nope", "map": [], "deck": []}
 	_check("invalid snapshot rejected", GameState._run_from_dict(bad_snap), false)
 
+	# --- pile manipulation: peek / shuffle_discard / retain + the hand cap ---
+	print("--- pile manipulation ---")
+	var cmpile := CombatManager.new()
+	var ppile := Combatant.new()
+	ppile.max_hp = 60
+	ppile.hp = 60
+	var pile_deck: Array[CardData] = []
+	for i in 8:
+		pile_deck.append(Database.get_card(&"ember"))
+	cmpile.start_combat(ppile, [Database.get_enemy(&"alley_cat")], pile_deck, 0, true)
+	_check("draw pile holds the undrawn 3", cmpile.draw_pile.size(), 3)
+	var peeked_titles: Array = []
+	cmpile.peeked.connect(func(t): peeked_titles.append_array(t))
+	cmpile.peek_draw(2)
+	_check("peek reveals 2", peeked_titles.size(), 2)
+	_check("peek 1st matches the next draw", peeked_titles[0], cmpile.draw_pile[cmpile.draw_pile.size() - 1].title)
+	_check("peek does not consume cards", cmpile.draw_pile.size(), 3)
+	# peek on a dry draw pile reshuffles the discard in first (same as _draw would)
+	cmpile.discard_pile.append_array(cmpile.draw_pile)
+	cmpile.draw_pile.clear()
+	cmpile.peek_draw(1)
+	_check("dry peek reshuffles the discard in", cmpile.draw_pile.size(), 3)
+	_check("dry peek leaves no discard behind", cmpile.discard_pile.size(), 0)
+	# thrift_flip: its own discard joins the recycle, then draw 1
+	var cmflip := CombatManager.new()
+	var pflip := Combatant.new()
+	pflip.max_hp = 60
+	pflip.hp = 60
+	cmflip.start_combat(pflip, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"thrift_flip")], 0, true)
+	cmflip.discard_pile.append(Database.get_card(&"ember"))
+	cmflip.discard_pile.append(Database.get_card(&"ember"))
+	var flip_swag0 := cmflip.swag
+	_check("thrift flip is in hand", cmflip.hand.size(), 1)
+	_check("thrift flip plays", cmflip.play_card(cmflip.hand[0]), true)
+	_check("thrift flip recycles + draws 1", cmflip.hand.size(), 1)
+	_check("thrift flip leaves no discard", cmflip.discard_pile.size(), 0)
+	_check("thrift flip banks aura", cmflip.swag > flip_swag0, true)
+	# saved_drafts: the unplayed hand survives end_turn, then next turn tops it up
+	var cmret := CombatManager.new()
+	var pret := Combatant.new()
+	pret.max_hp = 60
+	pret.hp = 60
+	var ret_deck: Array[CardData] = [Database.get_card(&"saved_drafts"), Database.get_card(&"ember"), Database.get_card(&"ember")]
+	cmret.start_combat(pret, [Database.get_enemy(&"alley_cat")], ret_deck, 0, true)
+	_check("retain test hand", cmret.hand.size(), 3)
+	for c in cmret.hand:
+		if c.id == &"saved_drafts":
+			cmret.play_card(c)
+			break
+	_check("retain flag set", cmret.retain_hand, true)
+	cmret.end_turn()
+	_check("retain consumed", cmret.retain_hand, false)
+	var kept_embers := 0
+	for c in cmret.hand:
+		if c.id == &"ember":
+			kept_embers += 1
+	_check("both embers survived end_turn", kept_embers, 2)
+	_check("next turn topped the hand up", cmret.hand.size(), 3)
+	# the hand cap stops pathological retain+draw loops
+	var cmcap := CombatManager.new()
+	var pcap := Combatant.new()
+	pcap.max_hp = 60
+	pcap.hp = 60
+	var cap_deck: Array[CardData] = []
+	for i in 14:
+		cap_deck.append(Database.get_card(&"ember"))
+	cmcap.start_combat(pcap, [Database.get_enemy(&"alley_cat")], cap_deck, 0, true)
+	cmcap.draw_cards(20)
+	_check("hand caps at 10", cmcap.hand.size(), CombatManager.HAND_CAP)
+	# the nine new cards exist and sit in the right pools
+	var new_ids: Array = [&"vision_board", &"thrift_flip", &"saved_drafts", &"side_eye", &"love_bomb", &"glow_check", &"bold_move", &"future_spouse", &"crowd_work"]
+	var missing_cards: Array = []
+	for nid in new_ids:
+		if Database.get_card(nid) == null:
+			missing_cards.append(nid)
+	_check("all nine new cards load", missing_cards, [])
+	var rizz_pool: Array = Database.get_wizard(&"rizz").reward_pool
+	_check("rizz pool grew to 23", rizz_pool.size(), 23)
+	_check("rizz pool has the new commons", &"side_eye" in rizz_pool and &"love_bomb" in rizz_pool and &"glow_check" in rizz_pool, true)
+	var fire_pool: Array = Database.get_wizard(&"fire").reward_pool
+	_check("neutral utilities reach fire too", &"vision_board" in fire_pool and &"saved_drafts" in fire_pool, true)
+
 	# --- loc coverage: the teaching layer + key chrome exists in BOTH tables, so a
 	# string change can never silently regress DE/ES back to English again ---
 	print("--- loc coverage ---")
@@ -988,7 +1070,17 @@ func _ready() -> void:
 		"Locked — unlock at %d Clout  (you have %d earned)",
 		"Resume Run   (Act %d)", "Continue   (%d Clout)", "%d gold", "SOLD",
 		"No passive.", "Drip +%d Aura/turn.",
+		"Draw %d", "Discard %d", "Draw pile", "Discard pile",
+		"%d cards. When it runs dry, your discard shuffles back in.",
+		"%d cards. Played and discarded cards land here.", "up next", "up next: %s",
+		"fresh rotation — the discard shuffles back in",
+		"you keep the hand — it's all part of the plan",
+		"nothing left to peek — your piles are empty",
 	])
+	# blanket rule: EVERY card description ships in both languages — 10 archetype-PR
+	# cards had silently slipped the triple-edit rule before this assert existed
+	for cid in Database.cards:
+		must.append(Database.cards[cid].description)
 	for t in GameState.TREND_LABEL.values():
 		must.append(String(t))
 	for arr in GameState.CRITIC_LINES.values():

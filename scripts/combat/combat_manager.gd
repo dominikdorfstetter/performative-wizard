@@ -9,10 +9,14 @@ signal combat_ended(victory: bool)
 ## Fired just before an enemy resolves its intent (only when step_delay > 0), so the
 ## view can wind up / lunge the acting enemy before its hit lands.
 signal enemy_acting(index: int, intent: Dictionary)
+## Fired by the "peek" op with the titles (top-of-pile first) so the view can
+## flash them; the same info also lands in the log for headless runs.
+signal peeked(titles: Array)
 
 enum State { PLAYER_TURN, ENEMY_TURN, WIN, LOSE }
 
 const HAND_SIZE := 5
+const HAND_CAP := 10            # retained cards + draws never exceed this
 const MAX_ENERGY := 3
 const LOG_KEEP := 6
 
@@ -62,6 +66,7 @@ var booed := false          # fell out of the spotlight last turn-start
 var draw_pile: Array[CardData] = []
 var hand: Array[CardData] = []
 var discard_pile: Array[CardData] = []
+var retain_hand := false        # set by the "retain" op; consumed at end_turn
 
 var passives: Array[StringName] = []
 var enemy_dmg_scale := 1.0
@@ -481,8 +486,12 @@ func live_rating() -> String:
 func end_turn() -> void:
 	if state != State.PLAYER_TURN:
 		return
-	discard_pile.append_array(hand)
-	hand.clear()
+	if retain_hand:
+		retain_hand = false
+		_say(Loc.t("you keep the hand — it's all part of the plan"))
+	else:
+		discard_pile.append_array(hand)
+		hand.clear()
 	var undead := player.status(&"undead")
 	if undead > 0:
 		var tgt := target()
@@ -659,6 +668,8 @@ func draw_cards(n: int) -> void:
 
 func _draw(n: int) -> void:
 	for i in n:
+		if hand.size() >= HAND_CAP:
+			return
 		if draw_pile.is_empty():
 			if discard_pile.is_empty():
 				return
@@ -666,6 +677,32 @@ func _draw(n: int) -> void:
 			discard_pile.clear()
 			draw_pile.shuffle()
 		hand.append(draw_pile.pop_back())
+
+## "peek" op: reveal the next n draws. If the draw pile is dry it reshuffles the
+## discard in first — exactly what _draw would do — so the peek never lies.
+func peek_draw(n: int) -> void:
+	if draw_pile.is_empty() and not discard_pile.is_empty():
+		recycle_discard()
+	var titles: Array = []
+	for i in range(mini(n, draw_pile.size())):
+		titles.append(draw_pile[draw_pile.size() - 1 - i].title)
+	if titles.is_empty():
+		_say(Loc.t("nothing left to peek — your piles are empty"))
+	else:
+		var disp: Array[String] = []
+		for t in titles:
+			disp.append(Loc.t(t))
+		_say(Loc.t("up next: %s") % " · ".join(disp))
+	peeked.emit(titles)
+
+## "shuffle_discard" op: the whole discard pile shuffles back into the draw pile.
+func recycle_discard() -> void:
+	if discard_pile.is_empty():
+		return
+	draw_pile.append_array(discard_pile)
+	discard_pile.clear()
+	draw_pile.shuffle()
+	_say(Loc.t("fresh rotation — the discard shuffles back in"))
 
 func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: int, pierced: bool) -> void:
 	var parts: Array[String] = []

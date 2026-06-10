@@ -44,6 +44,10 @@ const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't
 
 var cm: CombatManager
 var _popups: Control
+var _draw_counter: Label     # bottom-left pile readout (count + contents tooltip)
+var _disc_counter: Label     # bottom-right pile readout
+var _draw_tip: TipIcon
+var _disc_tip: TipIcon
 var _player_sprite: TextureRect
 var _player_hp_bar: ProgressBar
 var _player_hp_text: Label
@@ -178,6 +182,8 @@ func _start_fight() -> void:
 	cm.changed.connect(_refresh)
 	cm.enemy_acting.connect(_on_enemy_acting)
 	cm.combat_ended.connect(_on_combat_ended)
+	cm.peeked.connect(_on_peeked)
+	_build_pile_counters()
 	cm.start_combat(player, encounter, deck, GameState.effective_drip(), false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
 	_build_player_widget(w)
 	_build_fit_strip()
@@ -343,6 +349,77 @@ func _setup_hud_icons() -> void:
 	c.set_tip(Loc.t("Gold"), Loc.t("Run currency — spend it in shops on cards, removals, and relics."))
 	add_child(c)
 
+## Draw/discard pile counters in the bottom corners — the deck finally has visible
+## state, and each tooltip lists the pile's contents (alphabetised so the draw
+## order isn't leaked). (Critic review item 1: pile visibility.)
+func _build_pile_counters() -> void:
+	_draw_counter = _pile_label(Vector2(16, 600), HORIZONTAL_ALIGNMENT_LEFT)
+	_disc_counter = _pile_label(Vector2(1016, 600), HORIZONTAL_ALIGNMENT_RIGHT)
+	_draw_tip = _pile_tip(_draw_counter)
+	_disc_tip = _pile_tip(_disc_counter)
+
+func _pile_label(pos: Vector2, align: int) -> Label:
+	var l := Label.new()
+	l.position = pos
+	l.size = Vector2(120, 24)
+	l.horizontal_alignment = align
+	l.add_theme_font_size_override("font_size", 14)
+	l.add_theme_color_override("font_color", Color(0.62, 0.58, 0.72))
+	add_child(l)
+	return l
+
+func _pile_tip(host: Label) -> TipIcon:
+	var tip := TipIcon.new()
+	tip.texture = null
+	tip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tip.mouse_filter = Control.MOUSE_FILTER_STOP
+	host.add_child(tip)
+	return tip
+
+func _refresh_pile_counters() -> void:
+	if _draw_counter == null:
+		return
+	_draw_counter.text = Loc.t("Draw %d") % cm.draw_pile.size()
+	_disc_counter.text = Loc.t("Discard %d") % cm.discard_pile.size()
+	_draw_tip.set_tip(Loc.t("Draw pile"),
+		Loc.t("%d cards. When it runs dry, your discard shuffles back in.") % cm.draw_pile.size()
+		+ _pile_contents(cm.draw_pile))
+	_disc_tip.set_tip(Loc.t("Discard pile"),
+		Loc.t("%d cards. Played and discarded cards land here.") % cm.discard_pile.size()
+		+ _pile_contents(cm.discard_pile))
+
+func _pile_contents(pile: Array) -> String:
+	if pile.is_empty():
+		return ""
+	var counts := {}
+	for c in pile:
+		var t: String = Loc.t(c.title)
+		counts[t] = int(counts.get(t, 0)) + 1
+	var names := counts.keys()
+	names.sort()
+	var lines: Array[String] = []
+	for n in names:
+		lines.append(("%d× %s" % [counts[n], n]) if counts[n] > 1 else String(n))
+	return "\n\n" + "\n".join(lines)
+
+## "peek" toast: the revealed cards flash above the draw counter (they're also in
+## the log, but the toast is the legible version).
+func _on_peeked(titles: Array) -> void:
+	if titles.is_empty() or not is_inside_tree():
+		return
+	var disp: Array[String] = []
+	for t in titles:
+		disp.append(Loc.t(t))
+	var p := TipIcon.panel(Loc.t("up next"), " · ".join(disp))
+	p.position = Vector2(16, 540)
+	p.modulate.a = 0.0
+	_popups.add_child(p)
+	var tw := p.create_tween()
+	tw.tween_property(p, "modulate:a", 1.0, 0.15)
+	tw.tween_interval(2.2)
+	tw.tween_property(p, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(p.queue_free)
+
 func _hud_icon(icon: StringName, pos: Vector2, sz: int) -> TipIcon:
 	var t := TipIcon.new()
 	t.texture = SpriteBank.icon_texture(icon)
@@ -482,6 +559,7 @@ func _refresh() -> void:
 	_update_critic_rating()
 	_end_turn.disabled = over or cm.state != CombatManager.State.PLAYER_TURN
 
+	_refresh_pile_counters()
 	_rebuild_enemies(over)
 	_rebuild_hand(over)
 	_sync_goons()
