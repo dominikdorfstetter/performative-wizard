@@ -52,7 +52,7 @@ static func sub(parent: Control, text: String, y: float = 108.0) -> Label:
 	return l
 
 ## A large choice card-button with a title and description.
-static func choice(text: String, desc: String, accent: Color, cb: Callable, enabled := true, icon := "") -> Button:
+static func choice(text: String, desc: String, accent: Color, cb: Callable, enabled := true, icon := "", icon_tex: Texture2D = null) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(300, 178)
 	b.disabled = not enabled
@@ -74,7 +74,15 @@ static func choice(text: String, desc: String, accent: Color, cb: Callable, enab
 	vb.add_theme_constant_override("separation", 10)
 	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(vb)
-	if icon != "":
+	if icon_tex != null:
+		var ir := TextureRect.new()
+		ir.texture = icon_tex
+		ir.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ir.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ir.custom_minimum_size = Vector2(44, 44)
+		ir.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vb.add_child(ir)
+	elif icon != "":
 		vb.add_child(_vlabel(icon, 42, Color.WHITE))
 	vb.add_child(_vlabel(Loc.t(text), 22, accent.lightened(0.35)))
 	vb.add_child(_vlabel(Loc.t(desc), 16, Color(0.82, 0.82, 0.88)))

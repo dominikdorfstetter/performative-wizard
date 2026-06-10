@@ -58,7 +58,7 @@ func _reveal_artifact(aid: StringName) -> void:
 	tr.position = Vector2(126, 18)
 	tr.size = Vector2(88, 88)
 	panel.add_child(tr)
-	_plabel(panel, "%s  %s" % [a.emoji, a.title], 116, 22, Color(1.0, 0.82, 0.29))
+	_plabel(panel, a.title, 116, 22, Color(1.0, 0.82, 0.29))
 	_plabel(panel, a.description, 152, 17, Color(0.86, 0.86, 0.9))
 	_pop(panel)
 

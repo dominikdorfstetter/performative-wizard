@@ -37,13 +37,13 @@ func _build() -> void:
 	if not _art_stock.is_empty():
 		var a := Database.get_artifact(_art_stock.id)
 		var afford: bool = not _art_stock.sold and GameState.gold >= _art_stock.price
-		var label := "SOLD" if _art_stock.sold else "%s\n\n💰 %d" % [a.description, _art_stock.price]
-		var ab := NodeUI.choice(a.title, label, Color(0.85, 0.4, 0.95), _buy_artifact, afford, a.emoji)
+		var label := Loc.t("SOLD") if _art_stock.sold else "%s\n\n%s" % [Loc.t(a.description), Loc.t("%d gold") % _art_stock.price]
+		var ab := NodeUI.choice(a.title, label, Color(0.85, 0.4, 0.95), _buy_artifact, afford, "", SpriteBank.artifact_texture(_art_stock.id))
 		ab.position = Vector2(800, 150)
 		add_child(ab)
 
 	# services
-	var remove := NodeUI.small_button("yeet a card (%dg)" % REMOVE_COST, _remove_menu, Color(0.4, 0.7, 0.9))
+	var remove := NodeUI.small_button(Loc.t("yeet a card (%dg)") % REMOVE_COST, _remove_menu, Color(0.4, 0.7, 0.9))
 	remove.custom_minimum_size = Vector2(240, 44)
 	remove.position = Vector2(830, 350)
 	remove.disabled = GameState.gold < REMOVE_COST or GameState.deck.size() <= 1
