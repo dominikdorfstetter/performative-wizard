@@ -60,3 +60,21 @@ you played.
 ## Launch-day toggles
 - `GameState.LINK_ITCH` ✓ and `LINK_DISCORD` ✓ are already wired.
 - Run the RELEASE.md smoke list on the itch DRAFT page before going public.
+
+## Theme settings (itch dashboard → Edit theme)
+Pulled straight from the game's palette so the page reads as one product:
+
+| Setting | Value | Why |
+|---|---|---|
+| Background (page) | `#0E0A14` | the game's splash/void colour |
+| Background 2 (content box) | `#181024` | the game's panel base — subtle lift |
+| Text | `#D8D2E0` | the in-game body text lavender-grey |
+| Link | `#FF4FB3` | brand pink (the wordmark/Critic colour) |
+| Button | `#FF4FB3`, white label | one loud CTA colour, used nowhere else |
+| Banner | `dist/itch-banner.png` | 960×300, has the wordmark + FREE chip |
+| Font | leave default (sans) | itch has no pixel font; faking it with monospace hurts readability — the cover/banner/screenshots carry the pixel identity |
+| Screenshots | sidebar ON | keeps the embed + buy box above the fold |
+| Embed bg | `#0E0A14`, no border | the canvas melts into the page |
+
+Custom CSS (if the account tier allows): none needed — resist the urge;
+the assets do the theming.
