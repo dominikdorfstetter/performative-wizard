@@ -9,13 +9,16 @@ Possessed Router, The Algorithm) and win by serving looks.
 *how boldly you played your Aura* — then rewrites the road ahead (fight clean → VIP
 rooms; flop → hecklers). Don't just win. **Win the room.** (See [`docs/USP.md`](docs/USP.md).)
 
-## ⬇️ Download
+## ⬇️ Play the demo
 
-**[Download for macOS (v1.0.0)](https://github.com/dominikdorfstetter/performative-wizard/releases/latest/download/PerformativeWizard.zip)** ·
-[all releases](https://github.com/dominikdorfstetter/performative-wizard/releases)
+**Web (itch.io):** plays in the browser — link goes live with the demo release.
+**macOS:** **[latest release](https://github.com/dominikdorfstetter/performative-wizard/releases)**
+(universal arm64 + Intel zip).
 
-Universal macOS app (arm64 + Intel). It's unsigned, so on first launch **right-click →
-Open** (or System Settings → Privacy & Security → *Open Anyway*).
+The macOS app is **ad-hoc signed**: on first launch macOS says it "could not
+verify" the app — open **System Settings → Privacy & Security** and click
+**Open Anyway** (macOS 15+; on 14 and older, right-click → Open also works).
+A README.txt with these steps ships inside the zip.
 
 📄 **Design:** [`DESIGN.md`](DESIGN.md) (vision) · **Reviews & roadmap:** [`docs/`](docs/)
 
@@ -50,9 +53,16 @@ Open** (or System Settings → Privacy & Security → *Open Anyway*).
 - **Presentation:** pixel battle scene with idle animation, projectiles, hit sparks,
   crits, screen shake, summoned-goon minions; 5 procedural biome backdrops; 5 synthesized
   drum-backed music tracks (per-encounter) + SFX.
-- **Localization:** English / Deutsch / Español (switch in Options) — keeps the
-  international Gen-Z slang, translates the rest.
-- **Build:** universal macOS `.app` export. Combat engine covered by **191 headless tests**.
+- **Player-friendly demo build:** quit-safe **run saves** (checkpoint at every map
+  entry, "Resume Run" on the menu), a one-time **first-fight tutorial**, Esc pause
+  overlay with abandon-run, sequenced enemy turns with per-attacker telegraphs,
+  run-end screens that pay out Clout/unlock progress, scene fades + music crossfades,
+  volume sliders and a screen-shake/flash accessibility toggle.
+- **Localization:** English / Deutsch / Español (auto-detected on first boot,
+  switchable in Options) — keeps the international Gen-Z slang, translates the rest.
+- **Build:** macOS `.app` (ad-hoc signed) + itch-ready web export, both branded
+  (custom icon/boot splash) and versioned. Combat engine covered by **217 headless
+  tests** (run on every push via GitHub Actions).
 
 ## Running
 
@@ -60,25 +70,33 @@ Open** (or System Settings → Privacy & Security → *Open Anyway*).
 2. Open this folder in Godot (import `project.godot`).
 3. Press **Play** (F5). The console should print
    `[Database] loaded 49 cards, 19 outfits, 24 enemies, 3 wizards, 14 artifacts`.
-4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `191 passed`).
+4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `217 passed, 0 failed`).
+   Set `PW_NO_SAVE=1` when running tools/tests so they never touch your real save.
 
 ## Layout
 
 ```
 DESIGN.md            design vision (some sections predate the current build — see docs/)
 docs/                living review + roadmap (USP, ARCHETYPES, DESIGN_REVIEW, REVIEW_2, ROADMAP, ENEMY_REDESIGN)
-project.godot        Godot config + autoloads (Loc, Database, SpriteBank, Audio, GameState)
+project.godot        Godot config + autoloads (Loc, Database, SpriteBank, Audio, GameState, Fader)
 scenes/              hub/ combat/ map/ nodes/ + tools/ (dev preview scenes) + test_combat
 scripts/
   autoload/          Loc (i18n) · Database · SpriteBank (procedural art) · Audio (synth) · GameState
   combat/            Combatant · EffectResolver · CombatManager (pure logic) · combat_ui
   data/              CardData / OutfitData / EnemyData / WizardData / ArtifactData resources
   map/ run/ ui/      map generation, encounters, and all screen scripts
-  tests/             combat_test.gd (81 checks)
+  tests/             combat_test.gd (217 checks) · balance_sim.gd (headless balance bot)
 data/
   cards/ enemies/ outfits/ wizards/ artifacts/   authored .tres content
 builds/              exported macOS .app (gitignored)
 ```
+
+## Releasing
+
+See [`RELEASE.md`](RELEASE.md) for the cut-a-build checklist (version bumps, ad-hoc
+signing verification, smoke test, itch upload) and [`docs/DEMO_RELEASE.md`](docs/DEMO_RELEASE.md)
+for the demo plan this build implements. `LICENSE` (all rights reserved) and
+`THIRDPARTY.txt` (Godot + font notices) must ship with every build.
 
 ## Roadmap
 
