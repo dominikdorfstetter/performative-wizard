@@ -765,6 +765,11 @@ func load_meta() -> void:
 	var data: Variant = JSON.parse_string(f.get_as_text())
 	if typeof(data) != TYPE_DICTIONARY:
 		return
+	_meta_from_dict(data)
+
+## Payload half of load_meta — kept separate so tests can round-trip the save
+## format in memory without touching the real user://save.json.
+func _meta_from_dict(data: Dictionary) -> void:
 	unlocked_outfits.clear()
 	for o in data.get("unlocked_outfits", []):
 		unlocked_outfits.append(StringName(o))
@@ -789,17 +794,20 @@ func load_meta() -> void:
 func save_meta() -> void:
 	if OS.has_environment("PW_NO_SAVE"):
 		return   # dev tools / CI runs must never touch the real save file
+	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if f == null:
+		push_warning("[GameState] could not open save file for writing")
+		return
+	f.store_string(JSON.stringify(_meta_to_dict(), "\t"))
+
+func _meta_to_dict() -> Dictionary:
 	var owned: Array[String] = []
 	for id in unlocked_outfits:
 		owned.append(String(id))
 	var eq := {}
 	for slot in equipped:
 		eq[slot] = String(equipped[slot])
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if f == null:
-		push_warning("[GameState] could not open save file for writing")
-		return
 	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale, "seen_tutorial": seen_tutorial, "fullscreen_on": fullscreen_on, "effects_on": effects_on, "music_vol": music_vol, "sfx_vol": sfx_vol}
 	if not _run_snapshot.is_empty():
 		payload["run"] = _run_snapshot
-	f.store_string(JSON.stringify(payload, "\t"))
+	return payload

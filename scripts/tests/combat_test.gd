@@ -481,15 +481,15 @@ func _ready() -> void:
 	var rnode := {"row": 3, "col": 0, "type": "Rest", "enemies": [], "links": [], "visited": false}
 	GameState.apply_critic_mutation(rnode)
 	_check("rest room untouched", rnode.get("enemies", []).size(), 0)
-	# critic_score round-trips through the save file
+	# critic_score round-trips through the save format — in memory only, so the
+	# suite never touches user://save.json and passes under PW_NO_SAVE=1 (CI)
 	GameState.critic_score = 7
-	GameState.save_meta()
+	var meta_json: Dictionary = JSON.parse_string(JSON.stringify(GameState._meta_to_dict()))
 	GameState.critic_score = 999
-	GameState.load_meta()
+	GameState._meta_from_dict(meta_json)
 	_check("critic_score persists via save", GameState.critic_score, 7)
 	GameState.critic_score = saved_cs
 	GameState.pending_critic = saved_pending
-	GameState.save_meta()
 	_check("clean finisher names its style", cmcr.style_signature(), &"swag_x3")
 
 	# --- Commit to the Bit: encore / booed / tax (P3) ------------------------
