@@ -161,6 +161,57 @@ static func hbox(parent: Control, y: float, sep := 30) -> HBoxContainer:
 	parent.add_child(h)
 	return h
 
+## The canonical "you got an item" reveal: pixel icon, gold title, effect text.
+## Every acquisition moment (chest, events, elite loot) uses this SAME panel so
+## a new item always teaches what it does. Returns the panel (pre-popped).
+static func item_reveal(parent: Control, icon_tex: Texture2D, item_title: String, lines: Array, pos := Vector2(406, 236)) -> Panel:
+	var panel := Panel.new()
+	panel.position = pos
+	panel.size = Vector2(340, 200 + 20 * max(0, lines.size() - 1))
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.13, 0.11, 0.17)
+	sb.set_border_width_all(2)
+	sb.border_color = GOLD
+	sb.set_corner_radius_all(14)
+	panel.add_theme_stylebox_override("panel", sb)
+	parent.add_child(panel)
+	if icon_tex != null:
+		var tr := TextureRect.new()
+		tr.texture = icon_tex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.position = Vector2(126, 14)
+		tr.size = Vector2(88, 88)
+		panel.add_child(tr)
+	var t := Label.new()
+	t.text = Loc.t(item_title)
+	t.position = Vector2(12, 108)
+	t.size = Vector2(316, 30)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.add_theme_font_size_override("font_size", FS_HEADING)
+	t.add_theme_color_override("font_color", GOLD)
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(t)
+	var y := 142.0
+	for line in lines:
+		var l := Label.new()
+		l.text = Loc.t(String(line))
+		l.position = Vector2(12, y)
+		l.size = Vector2(316, 40)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD
+		l.add_theme_font_size_override("font_size", FS_BODY)
+		l.add_theme_color_override("font_color", Color(0.86, 0.86, 0.9))
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(l)
+		y += 22.0
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2(0.5, 0.5)
+	var tw := panel.create_tween()
+	tw.tween_property(panel, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	return panel
+
 ## The Esc pause overlay (map + combat): resume, quick audio/fullscreen toggles,
 ## and a confirmed abandon-run path — force-quitting used to be the only exit.
 static func pause_overlay(parent: Control, on_abandon: Callable) -> Control:

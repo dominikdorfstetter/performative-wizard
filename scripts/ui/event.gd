@@ -28,8 +28,8 @@ func _mannequin_try() -> void:
 		var aid := _unowned()
 		if aid != &"":
 			GameState.add_artifact(aid)
-			var a := Database.get_artifact(aid)
-			_outcome("It fits like a dream! Gained %s." % (a.title if a != null else "an artefact"))
+			Audio.play("buff", -4.0)
+			_outcome_item("It fits like a dream!", aid)
 		else:
 			GameState.gold += 30
 			_outcome("Nothing new to wear — you pocket 30 gold instead.")
@@ -105,8 +105,8 @@ func _bargain_take() -> void:
 		GameState.player_max_hp -= 6
 		GameState.player_hp = min(GameState.player_hp, GameState.player_max_hp)
 		GameState.add_artifact(aid)
-		var a := Database.get_artifact(aid)
-		_outcome("You trade 6 MAX HP for %s. worth it?" % (a.title if a != null else "a relic"))
+		Audio.play("buff", -4.0)
+		_outcome_item("You trade 6 MAX HP. worth it?", aid)
 	else:
 		GameState.gold += 40
 		_outcome("Nothing answers the call — you find 40 gold instead.")
@@ -128,8 +128,8 @@ func _fountain_toss() -> void:
 	var aid := _unowned()
 	if aid != &"":
 		GameState.add_artifact(aid)
-		var a := Database.get_artifact(aid)
-		_outcome("The fountain grants you %s!" % (a.title if a != null else "a relic"))
+		Audio.play("buff", -4.0)
+		_outcome_item("The fountain grants your wish!", aid)
 	else:
 		GameState.player_hp = min(GameState.player_max_hp, GameState.player_hp + 10)
 		_outcome("No artefacts left — the water heals you 10 instead.")
@@ -153,6 +153,13 @@ func _wardrobe_rummage() -> void:
 
 func _leave() -> void:
 	_outcome("You move on, none the worse.")
+
+## Outcome + the canonical item panel, so a new relic always teaches its effect.
+func _outcome_item(text: String, aid: StringName) -> void:
+	_outcome(text)
+	var a := Database.get_artifact(aid)
+	if a != null:
+		NodeUI.item_reveal(self, SpriteBank.artifact_texture(aid), a.title, [a.description], Vector2(406, 280))
 
 func _outcome(text: String) -> void:
 	for c in get_children():

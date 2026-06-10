@@ -3,6 +3,8 @@ extends Control
 ## class rack — then enter the gauntlet. Equipped pieces inject cards, add Swag income,
 ## and grant passives (baked in by GameState.finalize_loadout).
 
+const TipIcon = preload("res://scripts/ui/tip_icon.gd")
+
 const ELEM_COLOR := {
 	"Fire": Color(0.86, 0.30, 0.27),
 	"Necro": Color(0.55, 0.78, 0.45),
@@ -94,17 +96,33 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tr.position = Vector2(150, 8)
-		tr.size = Vector2(40, 40)
+		tr.position = Vector2(144, 16)
+		tr.size = Vector2(48, 48)
 		b.add_child(tr)
-	var title := Loc.t(piece.title)
-	_lbl(b, title, Vector2(8, 6), Vector2(136, 20), 14, ec.lightened(0.35))
-	var sub := "+%d Aura" % piece.drip
+	_lbl(b, Loc.t(piece.title), Vector2(8, 10), Vector2(132, 36), 14, ec.lightened(0.35))
+	var sub := "+%d Aura/turn" % piece.drip if piece.drip > 0 else ""
 	if not piece.injected_cards.is_empty():
-		sub += "   +%d card" % piece.injected_cards.size()
-	_lbl(b, sub, Vector2(8, 27), Vector2(136, 16), 12, Color(0.8, 0.8, 0.85))
-	var pt := Loc.t(piece.passive_text) if piece.passive_text != "" else "—"
-	_lbl(b, pt, Vector2(8, 45), Vector2(182, 36), 11, Color(0.66, 0.66, 0.72))
+		sub += ("   " if sub != "" else "") + "+%d card" % piece.injected_cards.size()
+	if piece.passive_text != "":
+		sub += ("   " if sub != "" else "") + Loc.t("+passive")
+	_lbl(b, sub, Vector2(8, 52), Vector2(180, 18), 12, Color(0.8, 0.8, 0.85))
+	if equipped:
+		_lbl(b, Loc.t("WORN"), Vector2(140, 60), Vector2(48, 16), 11, Color(1.0, 0.82, 0.29))
+	# the full effect lives in a hover tooltip — the 11px clipped inline text is gone
+	var tip := TipIcon.new()
+	tip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tip.mouse_filter = Control.MOUSE_FILTER_PASS   # tooltip shows, click still equips
+	var body := ""
+	if piece.drip > 0:
+		body += Loc.t("Drip +%d Aura/turn.") % piece.drip
+	if piece.passive_text != "":
+		body += ("\n" if body != "" else "") + Loc.t(piece.passive_text)
+	if not piece.injected_cards.is_empty():
+		body += ("\n" if body != "" else "") + Loc.t("Adds %d cards to your deck.") % piece.injected_cards.size()
+	if body == "":
+		body = Loc.t("No passive.")
+	tip.set_tip("%s  (%s)" % [Loc.t(piece.title), Loc.t(piece.slot)], body)
+	b.add_child(tip)
 	return b
 
 func _update_summary() -> void:

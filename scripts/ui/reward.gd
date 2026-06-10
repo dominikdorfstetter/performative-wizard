@@ -53,8 +53,10 @@ func _ready() -> void:
 		if aid != &"":
 			GameState.add_artifact(aid)
 			var a := Database.get_artifact(aid)
-			(%Banner as Label).text = "you looted:  %s — %s" % [Loc.t(a.title), Loc.t(a.description)]
+			(%Banner as Label).text = Loc.t("elite loot:")
 			(%Banner as Label).add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
+			# the canonical item panel (left, mirroring the grade stamp on the right)
+			NodeUI.item_reveal(self, SpriteBank.artifact_texture(aid), a.title, [a.description], Vector2(28, 120))
 
 	var deal_i := 0
 	for id in GameState.reward_offer(3):

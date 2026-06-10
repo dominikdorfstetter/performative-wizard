@@ -377,4 +377,8 @@ const TABLE := {
 	"SFX volume": "Volumen de efectos",
 	"Music volume": "Volumen de música",
 	"Screen shake & flashes:   %s": "Vibración y destellos:   %s",
+	"elite loot:": "botín de élite:",
+	"+passive": "+pasiva",
+	"WORN": "PUESTO",
+	"Adds %d cards to your deck.": "Añade %d cartas a tu mazo.",
 }
