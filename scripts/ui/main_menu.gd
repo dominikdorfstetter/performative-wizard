@@ -78,8 +78,10 @@ func _build() -> void:
 	vb.add_child(NodeUI.menu_button("▶   New Game", _new_game, Color(0.9, 0.4, 0.55)))
 	vb.add_child(NodeUI.menu_button(_continue_label(), _continue, Color(0.45, 0.82, 0.55)))
 	vb.add_child(NodeUI.menu_button("⚙   Options", _options, Color(0.5, 0.62, 0.85)))
-	vb.add_child(NodeUI.menu_button("✕   Exit Game", _exit, Color(0.55, 0.5, 0.58)))
-	_footer("F11 toggles fullscreen")
+	if not OS.has_feature("web"):   # quitting an itch.io iframe is a dead end
+		vb.add_child(NodeUI.menu_button("✕   Exit Game", _exit, Color(0.55, 0.5, 0.58)))
+	var ver := str(ProjectSettings.get_setting("application/config/version", ""))
+	_footer("v%s   ·   %s" % [ver, Loc.t("F11 toggles fullscreen")])
 
 func _title() -> void:
 	var t := Label.new()
