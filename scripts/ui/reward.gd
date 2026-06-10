@@ -21,17 +21,17 @@ func _ready() -> void:
 	if GameState.critic_last_rating != "":
 		var quip := GameState.critic_quip(GameState.critic_last_rating)
 		if GameState.pending_critic == "S":
-			quip += "   " + Loc.t("→ a VIP room opens ahead. 👑")
+			quip += "   " + Loc.t("— a VIP room opens ahead.")
 		elif GameState.pending_critic == "C":
-			quip += "   " + Loc.t("→ a heckler's waiting in your next fight. 🗣")
-		(%Subtitle as Label).text += "\n" + Loc.t("👀 THE CRITIC:  ") + quip
+			quip += "   " + Loc.t("— a heckler's waiting in your next fight.")
+		(%Subtitle as Label).text += "\n" + Loc.t("THE CRITIC:  ") + quip
 
 	if node.get("type") == "Elite":
 		var aid := _random_unowned_artifact()
 		if aid != &"":
 			GameState.add_artifact(aid)
 			var a := Database.get_artifact(aid)
-			(%Banner as Label).text = "🎒  you looted:  %s %s — %s" % [a.emoji, a.title, a.description]
+			(%Banner as Label).text = "you looted:  %s — %s" % [Loc.t(a.title), Loc.t(a.description)]
 			(%Banner as Label).add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
 
 	for id in GameState.reward_offer(3):

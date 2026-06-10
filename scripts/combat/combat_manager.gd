@@ -205,7 +205,7 @@ func _start_player_turn() -> void:
 	booed = false
 	if swag >= THRESHOLD_ENCORE:
 		encore += 1
-		_say(Loc.t("🎤 ENCORE ×%d — the crowd wants MORE") % encore)
+		_say(Loc.t("ENCORE ×%d — the crowd wants MORE") % encore)
 	elif encore >= 2:
 		# Only a REAL built-up Encore (2+) being lost boos you — a 1-turn spotlight
 		# touch that you immediately cash out is not a flop. (Pass #2.)
@@ -213,7 +213,7 @@ func _start_player_turn() -> void:
 		swag = max(0, swag - lost)
 		encore = 0
 		booed = true
-		_say(Loc.t("📉 BOOED OFF — you fell out of the spotlight (−%d Aura)") % lost)
+		_say(Loc.t("BOOED OFF — you fell out of the spotlight (-%d Aura)") % lost)
 	elif encore > 0:
 		encore = 0   # brief touch, no penalty
 	if has_passive(&"strength_at_10_swag") and swag >= THRESHOLD_DRAW:
@@ -226,7 +226,7 @@ func _start_player_turn() -> void:
 		draw_n += 1
 	_draw(draw_n)
 	if drip > 0:
-		_say(Loc.t("— Your turn %d  (+%d aura → %d) —") % [turn, swag - before, swag])
+		_say(Loc.t("— Your turn %d  (+%d aura, now %d) —") % [turn, swag - before, swag])
 	else:
 		_say(Loc.t("— Your turn %d —") % turn)
 	_emit()
@@ -310,14 +310,14 @@ func play_card(card: CardData) -> bool:
 		var en := enemies[i]
 		if not en.is_dead() and en.data != null and en.data.enrage > 0 and en.hp < int(enemy_hp_before[i]):
 			en.add_status(&"strength", en.data.enrage)
-			_say(Loc.t("%s is ENRAGED → +%d Rizz") % [Loc.t(en.display_name), en.data.enrage])
+			_say(Loc.t("%s is ENRAGED: +%d Rizz") % [Loc.t(en.display_name), en.data.enrage])
 
 	if is_attack:
 		spells_this_turn += 1
 
 	var tburn1 := tgt.status(&"burn") if tgt != null else 0
 	if last_crit:
-		_say(Loc.t("✦ CRIT! that's lethal rizz ✦"))
+		_say(Loc.t("CRIT! that's lethal rizz"))
 		# The Rizzard's crit IS its flex: a clean crit serves Aura (active, not drip),
 		# welding the crit kit to the Critic's grade so Rizz engages the USP. (Pass #2.5)
 		if has_passive(&"swag_on_crit"):
@@ -590,16 +590,16 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 		"drain_swag":
 			var before := swag
 			swag = max(0, swag - amount)
-			_say(Loc.t("%s drained %d of your Aura 😤") % [name, before - swag])
+			_say(Loc.t("%s drained %d of your Aura") % [name, before - swag])
 		"tax":
 			# Counter-play to hoarding: taxes your Aura only while you sit on a pile.
 			var thr := int(intent.get("threshold", THRESHOLD_DRAW))
 			if swag >= thr:
 				var before2 := swag
 				swag = max(0, swag - amount)
-				_say(Loc.t("%s taxed your hoard for %d 💸") % [name, before2 - swag])
+				_say(Loc.t("%s taxed your hoard for %d") % [name, before2 - swag])
 			else:
-				_say(Loc.t("%s wants to tax you but you're broke 💀") % name)
+				_say(Loc.t("%s wants to tax you but you're broke") % name)
 		"summon_ally":
 			var sid := StringName(intent.get("enemy", &""))
 			var ed := Database.get_enemy(sid)
@@ -683,12 +683,12 @@ func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: 
 		parts.append(Loc.t("pierced!"))
 	var msg := Loc.t("You play %s") % Loc.t(card.title)
 	if not parts.is_empty():
-		msg += "  →  " + ", ".join(parts)
+		msg += "  ·  " + ", ".join(parts)
 	_say(msg)
 
 func _finish(victory: bool) -> void:
 	state = State.WIN if victory else State.LOSE
-	_say(Loc.t("✦ BIG W ✦") if victory else Loc.t("you took an L 💀"))
+	_say(Loc.t("BIG W!") if victory else Loc.t("you took an L."))
 	# Emit the final UI update first (death poofs/popups run while the combat scene
 	# is still in the tree), THEN signal the end — which may change scene and detach us.
 	_emit()

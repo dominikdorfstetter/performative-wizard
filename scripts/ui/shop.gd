@@ -21,8 +21,8 @@ func _ready() -> void:
 
 func _build() -> void:
 	_clear()
-	NodeUI.title(self, "🛒  The Plug", NodeUI.GOLD)
-	NodeUI.sub(self, "💰 %d gold  ·  treat yourself" % GameState.gold)
+	NodeUI.title(self, "The Plug", NodeUI.GOLD, SpriteBank.icon_texture(&"coin"))
+	NodeUI.sub(self, Loc.t("%d gold  ·  treat yourself") % GameState.gold)
 
 	# cards for sale
 	var row := HBoxContainer.new()
@@ -49,7 +49,7 @@ func _build() -> void:
 	remove.disabled = GameState.gold < REMOVE_COST or GameState.deck.size() <= 1
 	add_child(remove)
 
-	var leave := NodeUI.small_button("dip ✌", _to_map, Color(0.4, 0.85, 0.55))
+	var leave := NodeUI.small_button("dip", _to_map, Color(0.4, 0.85, 0.55))
 	leave.position = Vector2(486, 600)
 	add_child(leave)
 
@@ -61,7 +61,7 @@ func _card_stall(i: int) -> Control:
 	var afford: bool = not item.sold and GameState.gold >= item.price
 	v.add_child(CardView.build(card, afford, _buy_card.bind(i)))
 	var price := Label.new()
-	price.text = "SOLD" if item.sold else "💰 %d" % item.price
+	price.text = Loc.t("SOLD") if item.sold else Loc.t("%d gold") % item.price
 	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price.add_theme_font_size_override("font_size", 16)
 	price.add_theme_color_override("font_color", NodeUI.GOLD if afford else Color(0.6, 0.6, 0.66))

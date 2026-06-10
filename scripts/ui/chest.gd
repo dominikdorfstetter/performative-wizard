@@ -3,7 +3,7 @@ extends Control
 
 func _ready() -> void:
 	NodeUI.background(self)
-	NodeUI.title(self, "📦  Loot Drop", Color(0.9, 0.7, 0.4))
+	NodeUI.title(self, "Loot Drop", Color(0.9, 0.7, 0.4), SpriteBank.icon_texture(&"chest"))
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	_open(rng)
@@ -20,18 +20,18 @@ func _open(rng: RandomNumberGenerator) -> void:
 			_reveal_artifact(aid)
 			return
 		GameState.gold += 40
-		_reveal_text("every artefact's already yours — have 40 gold 💰")
+		_reveal_text("every artefact's already yours — have 40 gold")
 		return
 	elif roll < 0.85:
 		var g := rng.randi_range(25, 45)
 		GameState.gold += g
-		_reveal_text("💰  +%d gold. secure the bag." % g)
+		_reveal_text("+%d gold. secure the bag." % g)
 		return
 	var w := Database.get_wizard(GameState.wizard_id)
 	var pool := GameState.unlocked_cards(w.reward_pool)   # respect the unlock gate (was leaking locked cards)
 	if pool.is_empty():
 		GameState.gold += 40
-		_reveal_text("nothing new to cop — have 40 gold 💰")
+		_reveal_text("nothing new to cop — have 40 gold")
 		return
 	pool.shuffle()
 	GameState.deck.append(pool[0])
@@ -39,7 +39,7 @@ func _open(rng: RandomNumberGenerator) -> void:
 
 func _reveal_artifact(aid: StringName) -> void:
 	var a := Database.get_artifact(aid)
-	NodeUI.sub(self, "✦  W — you looted an artefact:", 180)
+	NodeUI.sub(self, "W — you looted an artefact:", 180)
 	var panel := Panel.new()
 	panel.position = Vector2(406, 236)
 	panel.size = Vector2(340, 220)
@@ -63,7 +63,7 @@ func _reveal_artifact(aid: StringName) -> void:
 	_pop(panel)
 
 func _reveal_card(cid: StringName) -> void:
-	NodeUI.sub(self, "a spare card fell out 👀", 190)
+	NodeUI.sub(self, "a spare card fell out", 190)
 	var c := CardView.build(Database.get_card(cid), false, Callable())
 	c.position = Vector2(501, 250)
 	add_child(c)

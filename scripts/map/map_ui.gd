@@ -2,10 +2,6 @@ extends Control
 ## The run map. Draws the branching node graph (connections via _draw, nodes as buttons),
 ## shows run status, and routes the chosen node to the right scene.
 
-const TYPE_ICON := {
-	"Combat": "👊", "Elite": "💀", "Event": "❓", "Shop": "🛒",
-	"Rest": "🛋", "Chest": "📦", "Boss": "👑",
-}
 const TYPE_PIX := {
 	"Combat": "fist", "Elite": "skull", "Event": "quest", "Shop": "coin",
 	"Rest": "zzz", "Chest": "chest", "Boss": "crown",
@@ -110,16 +106,6 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 		icon.size = Vector2(28, 28)
 		icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.4)
 		b.add_child(icon)
-	else:
-		var icon := Label.new()
-		icon.text = TYPE_ICON.get(type, "?")
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-		icon.add_theme_font_size_override("font_size", 24)
-		icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.45)
-		b.add_child(icon)
 	# enemy-count badge so you can read the encounter before entering
 	if type == "Combat" or type == "Elite":
 		var cnt: int = node.get("enemies", []).size()
@@ -141,18 +127,23 @@ func _build_info() -> void:
 	_info.size = Vector2(1112, 80)
 	_info.add_theme_font_size_override("font_size", 18)
 	var w := Database.get_wizard(GameState.wizard_id)
-	var asc := "  Asc %d" % GameState.asc_level if GameState.asc_level > 0 else ""
-	_info.text = "%s    Act %d/%d%s    HP %d/%d    Gold %d    Clout %d" % [
-		w.title, GameState.act, GameState.MAX_ACTS, asc,
-		GameState.player_hp, GameState.player_max_hp,
-		GameState.gold, GameState.clout]
+	var parts: Array[String] = [
+		Loc.t(w.title),
+		Loc.t("Act %d/%d") % [GameState.act, GameState.MAX_ACTS],
+	]
+	if GameState.asc_level > 0:
+		parts.append(Loc.t("Asc %d") % GameState.asc_level)
+	parts.append("HP %d/%d" % [GameState.player_hp, GameState.player_max_hp])
+	parts.append(Loc.t("Gold %d") % GameState.gold)
+	parts.append(Loc.t("Clout %d") % GameState.clout)
+	_info.text = "    ".join(parts)
 	var trend := GameState.trend_label()
 	if trend != "":
 		_info.text += "\n%s    Critic %d" % [trend, GameState.critic_score]
 	add_child(_info)
 	_build_artifact_row()
 	var deck_btn := Button.new()
-	deck_btn.text = "deck (%d)" % GameState.deck.size()
+	deck_btn.text = Loc.t("deck (%d)") % GameState.deck.size()
 	deck_btn.add_theme_font_size_override("font_size", 16)
 	deck_btn.position = Vector2(968, 12)
 	deck_btn.size = Vector2(164, 34)
@@ -214,7 +205,7 @@ func _show_deck() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(bg)
 	var title := Label.new()
-	title.text = "your deck  (%d cards)" % GameState.deck.size()
+	title.text = Loc.t("your deck  (%d cards)") % GameState.deck.size()
 	title.position = Vector2(0, 36)
 	title.size = Vector2(1152, 36)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

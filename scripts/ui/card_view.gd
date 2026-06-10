@@ -91,10 +91,25 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	var upgraded := GameState.is_upgraded(card.id)
 	var eff_cost := GameState.card_cost(card)
 	_add_label(b, str(eff_cost), Vector2(7, 7), Vector2(34, 34), 20, Color.BLACK, _circle(C_SWAG if upgraded else C_GOLD))
-	# rarity gem (every card), brighter diamond for higher rarities
-	_add_label(b, "◆", Vector2(119, 8), Vector2(24, 22), 14, rc)
+	# rarity gem (every card): a rotated square diamond, brighter for higher rarities
+	var gem := ColorRect.new()
+	gem.color = rc
+	gem.size = Vector2(10, 10)
+	gem.position = Vector2(126, 12)
+	gem.pivot_offset = Vector2(5, 5)
+	gem.rotation = PI / 4.0
+	gem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(gem)
 	if upgraded:
-		_add_label(b, "✦+", Vector2(96, 6), Vector2(22, 18), 13, C_SWAG)
+		var up := TextureRect.new()
+		up.texture = SpriteBank.icon_texture(&"star")
+		up.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		up.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		up.modulate = C_SWAG
+		up.position = Vector2(98, 7)
+		up.size = Vector2(18, 18)
+		up.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(up)
 
 	# type tag ABOVE the title so 2-line titles never collide with it
 	_add_label(b, Loc.t(card.type).to_upper(), Vector2(6, 52), Vector2(138, 14), 10, C_DIM)
@@ -119,7 +134,7 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	var dsize := 13 if disp_desc.length() <= 58 else 12
 	_add_label(b, disp_desc, Vector2(9, 120), Vector2(132, dh), dsize, Color(0.87, 0.87, 0.92))
 	if has_footer:
-		_add_label(b, "✦ Aura +%d" % card.swag_gain, Vector2(6, 176), Vector2(138, 16), 13, C_SWAG)
+		_add_label(b, "Aura +%d" % card.swag_gain, Vector2(6, 176), Vector2(138, 16), 13, C_SWAG)
 	return b
 
 static func _hover(b: Button, on: bool) -> void:

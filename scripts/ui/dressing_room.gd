@@ -32,7 +32,7 @@ func _ready() -> void:
 		tr.size = Vector2(54, 54)
 		add_child(tr)
 	var enter := %EnterButton as Button
-	enter.text = Loc.t("let's get it →")
+	enter.text = Loc.t("let's get it")
 	enter.pressed.connect(_enter)
 	enter.add_theme_stylebox_override("normal", _panel(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
 	enter.add_theme_stylebox_override("hover", _panel(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
@@ -93,9 +93,9 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 		tr.position = Vector2(150, 8)
 		tr.size = Vector2(40, 40)
 		b.add_child(tr)
-	var title := ("✓ " if equipped else "") + Loc.t(piece.title)
+	var title := Loc.t(piece.title)
 	_lbl(b, title, Vector2(8, 6), Vector2(136, 20), 14, ec.lightened(0.35))
-	var sub := "✦ +%d" % piece.drip
+	var sub := "+%d Aura" % piece.drip
 	if not piece.injected_cards.is_empty():
 		sub += "   +%d card" % piece.injected_cards.size()
 	_lbl(b, sub, Vector2(8, 27), Vector2(136, 16), 12, Color(0.8, 0.8, 0.85))
@@ -107,14 +107,14 @@ func _update_summary() -> void:
 	var lines: Array[String] = []
 	lines.append(Loc.t("THE FIT"))
 	lines.append("")
-	lines.append(Loc.t("✦ Aura income: +%d / turn") % GameState.preview_drip())
+	lines.append(Loc.t("Aura income: +%d / turn") % GameState.preview_drip())
 	var injected := 0
 	var passives: Array[String] = []
 	for p in GameState.equipped_pieces():
 		injected += p.injected_cards.size()
 		if p.passive_text != "":
 			passives.append("• " + Loc.t(p.passive_text))
-	lines.append(Loc.t("🃏 Cards added to deck: %d") % injected)
+	lines.append(Loc.t("Cards added to deck: %d") % injected)
 	lines.append("")
 	lines.append(Loc.t("drip perks:"))
 	if passives.is_empty():

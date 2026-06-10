@@ -4,21 +4,21 @@ extends Control
 
 const BANTER := [
 	"ngl your drip is mid",
-	"bestie you ATE that 💅",
+	"bestie you ATE that",
 	"it's giving necromancer-core",
 	"lowkey bussin no cap",
 	"my rizz? immaculate",
 	"that fit is so slay fr",
 	"skibidi drip incoming",
-	"let me cook 🔥",
+	"let me cook",
 	"delulu is the solulu",
 	"we stan a serve",
 	"touch grass? in THIS economy??",
 	"vibe check: passed bestie",
 	"no thoughts just drip",
-	"sheeeesh that's hard 😤",
-	"main character energy ✨",
-	"you're so fr rn 💀",
+	"sheeeesh that's hard",
+	"main character energy",
+	"you're so fr rn",
 ]
 
 var _fire_tr: TextureRect
@@ -75,11 +75,11 @@ func _build() -> void:
 	vb.position = Vector2(406, 262)
 	vb.add_theme_constant_override("separation", 14)
 	add_child(vb)
-	vb.add_child(NodeUI.menu_button("▶   New Game", _new_game, Color(0.9, 0.4, 0.55)))
+	vb.add_child(NodeUI.menu_button("New Game", _new_game, Color(0.9, 0.4, 0.55)))
 	vb.add_child(NodeUI.menu_button(_continue_label(), _continue, Color(0.45, 0.82, 0.55)))
-	vb.add_child(NodeUI.menu_button("⚙   Options", _options, Color(0.5, 0.62, 0.85)))
+	vb.add_child(NodeUI.menu_button("Options", _options, Color(0.5, 0.62, 0.85)))
 	if not OS.has_feature("web"):   # quitting an itch.io iframe is a dead end
-		vb.add_child(NodeUI.menu_button("✕   Exit Game", _exit, Color(0.55, 0.5, 0.58)))
+		vb.add_child(NodeUI.menu_button("Exit Game", _exit, Color(0.55, 0.5, 0.58)))
 	var ver := str(ProjectSettings.get_setting("application/config/version", ""))
 	_footer("v%s   ·   %s" % [ver, Loc.t("F11 toggles fullscreen")])
 
@@ -227,10 +227,10 @@ func _react(tr: TextureRect) -> void:
 
 func _continue_label() -> String:
 	if GameState.has_run_save():
-		return Loc.t("↻   Resume Run   (Act %d)") % GameState.run_save_act()
+		return Loc.t("Resume Run   (Act %d)") % GameState.run_save_act()
 	if GameState.has_save():
-		return Loc.t("↻   Continue   (✦ %d)") % GameState.clout
-	return Loc.t("↻   Continue")
+		return Loc.t("Continue   (%d Clout)") % GameState.clout
+	return Loc.t("Continue")
 
 # --- actions -------------------------------------------------------------
 
@@ -261,7 +261,7 @@ func _confirm_new_game() -> void:
 	vb.add_theme_constant_override("separation", 14)
 	add_child(vb)
 	vb.add_child(NodeUI.menu_button("Erase & Start Fresh", func(): GameState.new_game(); _to_class_select(), Color(0.9, 0.35, 0.4)))
-	vb.add_child(NodeUI.menu_button("← Cancel", _build, Color(0.5, 0.55, 0.7)))
+	vb.add_child(NodeUI.menu_button("Cancel", _build, Color(0.5, 0.55, 0.7)))
 
 func _continue() -> void:
 	# A saved run resumes straight onto its map; otherwise Continue keeps meta

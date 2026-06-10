@@ -194,7 +194,7 @@ func locked_wizard_hint(id: StringName) -> String:
 	var w := Database.get_wizard(id)
 	if w == null or wizard_unlocked(id):
 		return ""
-	return Loc.t("🔒  Unlock at ✦ %d  (you have ✦ %d earned)") % [w.unlock_clout, clout_earned]
+	return Loc.t("Locked — unlock at %d Clout  (you have %d earned)") % [w.unlock_clout, clout_earned]
 
 func is_upgraded(id: StringName) -> bool:
 	return card_upgrades.get(id, false)
@@ -390,7 +390,7 @@ func combat_reward(node: Dictionary) -> int:
 
 # Several voice lines per grade so back-to-back fights don't repeat verbatim.
 const CRITIC_LINES := {
-	"S": ["S — serve. obsessed. devastating. 💅", "S — the giiirls are SERVING. iconic.", "S — i felt that in my SOUL. headliner."],
+	"S": ["S — serve. obsessed. devastating.", "S — the giiirls are SERVING. iconic.", "S — i felt that in my SOUL. headliner."],
 	"A": ["A — ate. left a crumb on the plate.", "A — a real look. almost made me clap.", "A — so close to perfect it's annoying."],
 	"B": ["B — mid showing, bestie. do better.", "B — it was giving... fine. i guess.", "B — i've seen worse. i've seen way better."],
 	"C": ["C — flop era. who told you that was giving?", "C — boo. i've seen NPCs with more drip.", "C — that wasn't a fit, that was a cry for help."],
@@ -448,7 +448,7 @@ func apply_critic_mutation(n: Dictionary) -> void:
 ## style she gets bored and demands something new — the drift made audible.
 func critic_quip(rating: String) -> String:
 	if (rating == "S" or rating == "A") and critic_last_freshness <= 0.0:
-		return Loc.t("again? 🥱 serve me something NEW.")
+		return Loc.t("again? serve me something NEW.")
 	var arr: Array = CRITIC_LINES.get(rating, CRITIC_LINES["C"])
 	return Loc.t(arr[critic_score % arr.size()])
 
@@ -458,9 +458,9 @@ func critic_quip(rating: String) -> String:
 const TRENDS: Array[StringName] = [&"its_giving", &"flop_era", &"going_viral"]
 const TREND_MOD := {&"its_giving": 1, &"flop_era": -1, &"going_viral": 1}
 const TREND_LABEL := {
-	&"its_giving": "📈 TREND: it's giving abundance  (+1 Aura/turn)",
-	&"flop_era": "📉 TREND: flop era  (−1 Aura/turn)",
-	&"going_viral": "🔥 TREND: going viral  (+1 Aura/turn)",
+	&"its_giving": "TREND: it's giving abundance  (+1 Aura/turn)",
+	&"flop_era": "TREND: flop era  (-1 Aura/turn)",
+	&"going_viral": "TREND: going viral  (+1 Aura/turn)",
 }
 
 func _roll_trend() -> void:
@@ -488,7 +488,7 @@ func finish_run(victory: bool) -> void:
 	message = "Run over. +%d Clout (total %d)." % [earned, clout]
 	var unlocked := _wizards_unlocked_between(before, clout_earned)
 	if not unlocked.is_empty():
-		message += "\n✦ NEW FIT UNLOCKED: %s!" % ", ".join(unlocked)
+		message += "\nNEW FIT UNLOCKED: %s!" % ", ".join(unlocked)
 	_run_snapshot = {}   # the run is over; Resume must not bring it back
 	save_meta()
 
@@ -511,7 +511,7 @@ func advance_act() -> bool:
 	map = MapGenerator.generate(randi())
 	pos_row = -1
 	pos_col = -1
-	message = "✦ ACT %d ✦  the gauntlet escalates." % act
+	message = "— ACT %d —  the gauntlet escalates." % act
 	return true
 
 # --- run snapshot (quit-safe resume) ---------------------------------------

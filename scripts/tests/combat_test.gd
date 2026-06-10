@@ -617,7 +617,7 @@ func _ready() -> void:
 	var dn2 := {"type": "Combat", "enemies": [&"alley_cat"]}
 	GameState.apply_critic_mutation(dn2)
 	_check("stale S → no VIP bonus", int(dn2.get("critic_bonus_gold", 0)), 0)
-	_check("stale verdict nags for novelty", GameState.critic_quip("S"), Loc.t("again? 🥱 serve me something NEW."))
+	_check("stale verdict nags for novelty", GameState.critic_quip("S"), Loc.t("again? serve me something NEW."))
 	GameState.record_show_rating({"rating": "S", "signature": &"spread"})
 	_check("a fresh new style pays out again", GameState.critic_last_freshness, 1.0)
 	GameState.critic_fatigue = saved_fat
@@ -656,13 +656,13 @@ func _ready() -> void:
 	_check("es translates enemy", Loc.t("Angry Toaster"), "Tostadora Furiosa")
 	_check("es translates banter", Loc.t("you fell off"), "te caíste")
 	_check("es translates critic name", Loc.t("The Critic"), "La Crítica")
-	_check("es translates critic verdict", Loc.t("👀 THE CRITIC:  %s"), "👀 LA CRÍTICA:  %s")
+	_check("es translates critic verdict", Loc.t("THE CRITIC:  %s"), "LA CRÍTICA:  %s")
 	Loc.set_locale("de")
 	_check("de translates meter tier", Loc.t("PIERCE"), "DURCHBRUCH")
-	_check("de translates critic quip", Loc.t("S — serve. obsessed. devastating. 💅"), "S — serve. besessen. vernichtend. 💅")
+	_check("de translates critic quip", Loc.t("S — serve. obsessed. devastating."), "S — serve. besessen. vernichtend.")
 	_check("de translates heckler", Loc.t("Heckler"), "Zwischenrufer")
-	_check("de translates encore line", Loc.t("🎤 ENCORE ×%d — the crowd wants MORE"), "🎤 ENCORE ×%d — der Saal will MEHR")
-	_check("de translates trend", Loc.t("📉 TREND: flop era  (−1 Aura/turn)"), "📉 TREND: flop era  (−1 Aura/Zug)")
+	_check("de translates encore line", Loc.t("ENCORE ×%d — the crowd wants MORE"), "ENCORE ×%d — der Saal will MEHR")
+	_check("de translates trend", Loc.t("TREND: flop era  (-1 Aura/turn)"), "TREND: flop era  (-1 Aura/Zug)")
 	Loc.set_locale("es")
 	_check("es translates finisher desc", Loc.t("Finisher. Spend ALL Aura. Deal Aura × 1.5 to ALL enemies."), "Finisher. Gasta TODA la Aura. Inflige Aura × 1,5 a TODOS los enemigos.")
 	Loc.set_locale("en")
@@ -962,6 +962,47 @@ func _ready() -> void:
 	_check("map cols re-typed to int after JSON round-trip", typeof(GameState.map[0][0].col), TYPE_INT)
 	var bad_snap := {"wizard_id": "nope", "map": [], "deck": []}
 	_check("invalid snapshot rejected", GameState._run_from_dict(bad_snap), false)
+
+	# --- loc coverage: the teaching layer + key chrome exists in BOTH tables, so a
+	# string change can never silently regress DE/ES back to English again ---
+	print("--- loc coverage ---")
+	var de_tbl: Dictionary = preload("res://scripts/autoload/loc_de.gd").TABLE
+	var es_tbl: Dictionary = preload("res://scripts/autoload/loc_es.gd").TABLE
+	var cu_script := preload("res://scripts/combat/combat_ui.gd")
+	var must: Array = []
+	for k in cu_script.STATUS_DESC:
+		must.append(cu_script.STATUS_DESC[k])
+	must.append_array([
+		"Their next move", "Attacks for %d.", "Attacks %d times for %d each (%d total).",
+		"Braces for %d Block.", "Heals %d HP.", "Hits you with %s %d. ",
+		"Buffs itself: %s +%d.", "Drains %d of your Aura.",
+		"Taxes %d Aura if you're hoarding above a threshold.",
+		"Summons backup into the fight.", "Bides its time.",
+		"Energy", "Aura", "Gold",
+		"Spent to play cards; refills to max at the start of each turn.",
+		"Banked style — it persists the whole fight. 6+: +2 dmg · 12+: +1 draw · 18+: pierce · 24+: the Encore spotlight. Finishers spend it all.",
+		"Run currency — spend it in shops on cards, removals, and relics.",
+		"End Turn", "BLOCKED %d", "+Block", "+2DMG", "DRAW", "PIERCE",
+		"Act %d/%d", "Gold %d", "Clout %d", "deck (%d)", "your deck  (%d cards)",
+		"THE CRITIC:  ", "— FINALE —", "ENCORE ×%d!", "BOOED!",
+		"Locked — unlock at %d Clout  (you have %d earned)",
+		"Resume Run   (Act %d)", "Continue   (%d Clout)", "%d gold", "SOLD",
+		"No passive.", "Drip +%d Aura/turn.",
+	])
+	for t in GameState.TREND_LABEL.values():
+		must.append(String(t))
+	for arr in GameState.CRITIC_LINES.values():
+		for line in arr:
+			must.append(String(line))
+	var missing_de: Array = []
+	var missing_es: Array = []
+	for k in must:
+		if not de_tbl.has(k):
+			missing_de.append(k)
+		if not es_tbl.has(k):
+			missing_es.append(k)
+	_check("teaching layer + chrome covered in DE", missing_de, [])
+	_check("teaching layer + chrome covered in ES", missing_es, [])
 
 	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
 	print("--- rarity ladder ---")

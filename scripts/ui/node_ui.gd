@@ -41,7 +41,7 @@ static func gradient_bg(parent: Control, top := Color(0.12, 0.09, 0.17), bottom 
 	parent.add_child(tr)
 	parent.move_child(tr, 0)
 
-static func title(parent: Control, text: String, color: Color = PINK) -> Label:
+static func title(parent: Control, text: String, color: Color = PINK, icon_tex: Texture2D = null) -> Label:
 	var l := Label.new()
 	l.text = Loc.t(text)
 	l.add_theme_font_override("font", DISPLAY_FONT)
@@ -51,6 +51,19 @@ static func title(parent: Control, text: String, color: Color = PINK) -> Label:
 	l.position = Vector2(0, 48)
 	l.size = Vector2(1152, 50)
 	parent.add_child(l)
+	if icon_tex != null:
+		# pixel icon sitting just left of the centered title text
+		var ir := TextureRect.new()
+		ir.texture = icon_tex
+		ir.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ir.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ir.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ir.size = Vector2(36, 36)
+		var f := l.get_theme_font("font")
+		var fs := l.get_theme_font_size("font_size")
+		var text_w := f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		ir.position = Vector2(576.0 - text_w * 0.5 - 48.0, 55)
+		parent.add_child(ir)
 	return l
 
 static func sub(parent: Control, text: String, y: float = 108.0) -> Label:

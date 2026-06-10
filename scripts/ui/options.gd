@@ -10,7 +10,7 @@ func _ready() -> void:
 
 func _build() -> void:
 	_clear()
-	NodeUI.title(self, "⚙  Options", Color(0.5, 0.62, 0.85))
+	NodeUI.title(self, "Options", Color(0.5, 0.62, 0.85), SpriteBank.icon_texture(&"gear"))
 	var vb := VBoxContainer.new()
 	vb.position = Vector2(406, 220)
 	vb.add_theme_constant_override("separation", 16)
@@ -21,7 +21,7 @@ func _build() -> void:
 	vb.add_child(NodeUI.menu_button(Loc.t("Sound FX:   %s") % Loc.t("On" if GameState.sfx_on else "Off"), _toggle_sfx))
 	vb.add_child(NodeUI.menu_button(Loc.t("Music:   %s") % Loc.t("On" if GameState.music_on else "Off"), _toggle_music))
 	vb.add_child(NodeUI.menu_button("Confirm Reset?" if _confirm_reset else "Reset All Progress", _reset, Color(0.9, 0.4, 0.42)))
-	vb.add_child(NodeUI.menu_button("← Back to Menu", _back, Color(0.45, 0.82, 0.55)))
+	vb.add_child(NodeUI.menu_button("Back to Menu", _back, Color(0.45, 0.82, 0.55)))
 	if _confirm_reset:
 		NodeUI.sub(self, "This wipes all unlocked clothes and Clout. Click again to confirm.", 430)
 	elif _reset_done:

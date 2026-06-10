@@ -7,13 +7,13 @@ func _ready() -> void:
 
 func _menu() -> void:
 	_clear()
-	NodeUI.title(self, "🛋  Touch Grass", Color(0.4, 0.85, 0.55))
+	NodeUI.title(self, "Touch Grass", Color(0.4, 0.85, 0.55), SpriteBank.icon_texture(&"zzz"))
 	NodeUI.sub(self, "HP %d/%d    ·    deck: %d cards" % [GameState.player_hp, GameState.player_max_hp, GameState.deck.size()])
 	var heal := int(ceil(GameState.player_max_hp * 0.3))
 	var h := NodeUI.hbox(self, 250, 20)
-	h.add_child(NodeUI.choice("Log Off", "Heal %d HP. self-care era." % heal, Color(0.4, 0.85, 0.55), _heal.bind(heal), true, "💤"))
-	h.add_child(NodeUI.choice("Glow Up", "Upgrade a card — it costs 1 less.", Color(1.0, 0.55, 0.85), _upgrade_menu, _has_upgradeable(), "✨"))
-	h.add_child(NodeUI.choice("Get Snatched", "Yeet a card from your deck.", Color(0.4, 0.7, 0.9), _remove_menu, GameState.deck.size() > 1, "✂"))
+	h.add_child(NodeUI.choice("Log Off", "Heal %d HP. self-care era." % heal, Color(0.4, 0.85, 0.55), _heal.bind(heal), true, "", SpriteBank.icon_texture(&"zzz")))
+	h.add_child(NodeUI.choice("Glow Up", "Upgrade a card — it costs 1 less.", Color(1.0, 0.55, 0.85), _upgrade_menu, _has_upgradeable(), "", SpriteBank.icon_texture(&"star")))
+	h.add_child(NodeUI.choice("Get Snatched", "Yeet a card from your deck.", Color(0.4, 0.7, 0.9), _remove_menu, GameState.deck.size() > 1, "", SpriteBank.icon_texture(&"scissors")))
 
 func _heal(n: int) -> void:
 	GameState.player_hp = min(GameState.player_max_hp, GameState.player_hp + n)

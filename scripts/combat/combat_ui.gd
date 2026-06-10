@@ -39,8 +39,8 @@ const STATUS_DESC := {
 	&"hive_mind": "Hive — summon this many Goons each turn.",
 	&"barrier": "Barrier — gain this much Block each turn.",
 }
-const PLAYER_LINES := ["aura farming fr 🧿", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy ✨", "locked TF in", "we mogging rn 😤"]
-const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you? 💀", "stay mad bestie"]
+const PLAYER_LINES := ["aura farming fr", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy", "locked TF in", "we mogging rn"]
+const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you?", "stay mad bestie"]
 
 var cm: CombatManager
 var _popups: Control
@@ -95,7 +95,7 @@ func _ready() -> void:
 	_gold.add_theme_color_override("font_color", C_GOLD)
 	_setup_hud_icons()
 	_end_turn.pressed.connect(_on_end_turn)
-	_end_turn.text = Loc.t("Bye ✌")
+	_end_turn.text = Loc.t("End Turn")
 	_end_turn.add_theme_stylebox_override("normal", _panel_box(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
 	_end_turn.add_theme_stylebox_override("hover", _panel_box(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
 	_result_panel.add_theme_stylebox_override("panel", _panel_box(Color(0.13, 0.11, 0.17), C_PANEL_BORDER))
@@ -253,7 +253,7 @@ func _setup_hud_icons() -> void:
 	e.set_tip(Loc.t("Energy"), Loc.t("Spent to play cards; refills to max at the start of each turn."))
 	_swag_value.position.x += 26
 	var a := _hud_icon(&"star", Vector2(_swag_value.position.x - 26, _swag_value.position.y + 2), 22)
-	a.set_tip(Loc.t("Aura"), Loc.t("Banked style — it persists the whole fight. ≥6 +2 dmg, ≥12 +draw, ≥18 pierce; crest 24 for the Encore spotlight. Finishers spend it all."))
+	a.set_tip(Loc.t("Aura"), Loc.t("Banked style — it persists the whole fight. 6+: +2 dmg · 12+: +1 draw · 18+: pierce · 24+: the Encore spotlight. Finishers spend it all."))
 	# gold (coin): keep top-right, anchor a coin just left of the now left-aligned number
 	_gold.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	var c := TipIcon.new()
@@ -513,13 +513,11 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 		_idle_bob(sprite, index * 0.3, 5.0)
 
 	if targeted:
-		var arrow := Label.new()
-		arrow.text = "▼"
-		arrow.position = Vector2(0, 90)
-		arrow.size = Vector2(150, 18)
-		arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		arrow.add_theme_color_override("font_color", C_TARGET)
+		# gold triangle target marker (a drawn polygon — the font has no ▼ glyph)
+		var arrow := Polygon2D.new()
+		arrow.polygon = PackedVector2Array([Vector2(-8, 0), Vector2(8, 0), Vector2(0, 11)])
+		arrow.color = C_TARGET
+		arrow.position = Vector2(75, 92)
 		w.add_child(arrow)
 	return [w, sprite]
 
@@ -717,7 +715,7 @@ func _finale_banner() -> void:
 	if _popups == null:
 		return
 	var l := Label.new()
-	l.text = Loc.t("✦ FINALE ✦")
+	l.text = Loc.t("— FINALE —")
 	l.add_theme_font_size_override("font_size", 60)
 	l.add_theme_color_override("font_color", C_GOLD)
 	l.size = Vector2(440, 90)
@@ -770,7 +768,7 @@ func _punch(node: Control) -> void:
 	tw.tween_property(node, "modulate", Color.WHITE, 0.24)
 
 func _block_flash() -> void:
-	_float_text(Vector2(150, 250), "🛡", Color(0.45, 0.7, 1.0))
+	_float_text(Vector2(150, 250), Loc.t("+Block"), Color(0.45, 0.7, 1.0))
 	var fl := ColorRect.new()
 	fl.color = Color(0.3, 0.55, 1.0, 0.0)
 	fl.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -849,11 +847,11 @@ func _banter() -> void:
 	_prev_swag = cm.swag
 	# Commit-to-the-Bit tells: the spotlight building, or the boo when it drops.
 	if cm.encore > _prev_encore and cm.encore > 0:
-		_say_bubble(Vector2(150, 130), Loc.t("🎤 ENCORE ×%d!") % cm.encore, C_GOLD)
+		_say_bubble(Vector2(150, 130), Loc.t("ENCORE ×%d!") % cm.encore, C_GOLD)
 		Audio.play("buff", -5.0)
 	_prev_encore = cm.encore
 	if cm.booed and not _prev_booed:
-		_float_text(Vector2(150, 200), Loc.t("BOOED 📉"), Color(0.95, 0.42, 0.45))
+		_float_text(Vector2(150, 200), Loc.t("BOOED!"), Color(0.95, 0.42, 0.45))
 		Audio.play("debuff", -4.0)
 	_prev_booed = cm.booed
 	if cm.state == CombatManager.State.ENEMY_TURN and _prev_state != CombatManager.State.ENEMY_TURN:
@@ -973,15 +971,6 @@ func _status_chip(id: StringName, value: int) -> Control:
 	h.add_child(lbl)
 	return h
 
-func _status_text(c: Combatant) -> String:
-	var parts: Array[String] = []
-	if c.block > 0:
-		parts.append("🛡 %d" % c.block)
-	for k in c.statuses:
-		if c.statuses[k] > 0:
-			parts.append("%s %d" % [STATUS_NAME.get(k, String(k).capitalize()), c.statuses[k]])
-	return "  ".join(parts)
-
 func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 	var it := cm.peek_intent(e)
 	if it.is_empty():
@@ -1019,7 +1008,7 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 			col = Color(0.95, 0.85, 0.45)
 		"tax":
 			icon = "star"
-			text = "💸%d" % int(it.get("amount", 0))
+			text = "-%d" % int(it.get("amount", 0))
 			col = Color(0.95, 0.78, 0.4)
 		"summon_ally":
 			icon = "bones"
@@ -1086,10 +1075,10 @@ func _update_swag_meter() -> void:
 	var lit := 0
 	for t in tiers:
 		if cm.swag >= int(t[0]):
-			parts.append("●" + String(t[1]))
+			parts.append("[" + String(t[1]) + "]")
 			lit += 1
 		else:
-			parts.append("○" + String(t[1]))
+			parts.append(String(t[1]))
 	_thresholds.text = "  ".join(parts)
 	var col := C_SWAG_DIM
 	if lit >= 3:
@@ -1192,7 +1181,7 @@ func _on_combat_ended(victory: bool) -> void:
 			get_tree().change_scene_to_file("res://scenes/reward.tscn")
 		return
 	GameState.finish_run(false)
-	_result_label.text = "BIG L 💀"
+	_result_label.text = Loc.t("BIG L.")
 	_result_label.add_theme_color_override("font_color", C_HP)
 	_result_panel.visible = true
 	_refresh()
