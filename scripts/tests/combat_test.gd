@@ -1120,6 +1120,24 @@ func _ready() -> void:
 	# cards had silently slipped the triple-edit rule before this assert existed
 	for cid in Database.cards:
 		must.append(Database.cards[cid].description)
+	# events finally translate (all 11); spot-check one string per event so a
+	# dropped key can't silently regress a whole encounter back to English
+	must.append_array([
+		"it's serving a look and lowkey staring back. unsettling fr.",
+		"a hooded figure's got mystery cards. trust the process?",
+		"\"let's unpack that deck, bestie.\" cut one card from your deck for good.",
+		"a velvet box hums. \"trade a little vitality for a little power?\"",
+		"suspiciously clean water, absolutely loaded with old coins.",
+		"dusty, ornate, lowkey humming. rummage or nah?",
+		"she's at a corner table, reviewing a matcha. she has DEFINITELY seen you.",
+		"She sips. She nods, slowly. Your next fight is pre-reviewed: VIP room ahead.",
+		"Her pen comes out. It's already writing. A heckler will attend your next fight.",
+		"two clipboard interns from the Critic's office. they're rating fits today.",
+		"a guy with a speaker offers to gas you up. rates negotiable.",
+		"backstage at a venue. finders keepers is the law of the land here.",
+		"the wizard group chat is BEEFING at 3am. someone has to say something.",
+		"You move on, none the worse.",
+	])
 	for t in GameState.TREND_LABEL.values():
 		must.append(String(t))
 	for arr in GameState.CRITIC_LINES.values():
