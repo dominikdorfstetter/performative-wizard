@@ -256,7 +256,7 @@ func _show_deck() -> void:
 
 func _enter(r: int, c: int, type: String) -> void:
 	GameState.enter(r, c)
-	get_tree().change_scene_to_file(SCENE.get(type, "res://scenes/combat/combat.tscn"))
+	Fader.change_scene(SCENE.get(type, "res://scenes/combat/combat.tscn"))
 
 var _pause: Control
 
@@ -267,7 +267,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_pause = NodeUI.pause_overlay(self, func():
 				GameState.abandon_run()
-				get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
+				Fader.change_scene("res://scenes/hub/class_select.tscn"))
 		get_viewport().set_input_as_handled()
 
 func _circle(bg: Color, border: Color, bw: int) -> StyleBoxFlat:

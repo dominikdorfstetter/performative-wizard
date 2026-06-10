@@ -6,7 +6,9 @@ const RATE := 22050
 
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
+const MUSIC_DB := -17.0
 var _music: AudioStreamPlayer
+var _music_tw: Tween
 var _sfx := {}
 var _tracks := {}
 var _current_track := "menu"
@@ -19,7 +21,7 @@ func _ready() -> void:
 		add_child(p)
 		_players.append(p)
 	_music = AudioStreamPlayer.new()
-	_music.volume_db = -17.0
+	_music.volume_db = MUSIC_DB
 	add_child(_music)
 	_build_sfx()
 	_build_tracks()
@@ -50,8 +52,20 @@ func play_music(track := "") -> void:
 	if _current_track == track and _music.playing:
 		return
 	_current_track = track
-	_music.stream = s
-	_music.play()
+	if _music.playing:
+		# crossfade: dip, swap streams, swell back — no more mid-bar hard cuts
+		if _music_tw != null and _music_tw.is_valid():
+			_music_tw.kill()
+		_music_tw = create_tween()
+		_music_tw.tween_property(_music, "volume_db", -50.0, 0.25)
+		_music_tw.tween_callback(func():
+			_music.stream = s
+			_music.play())
+		_music_tw.tween_property(_music, "volume_db", MUSIC_DB, 0.35)
+	else:
+		_music.volume_db = MUSIC_DB
+		_music.stream = s
+		_music.play()
 
 func stop_music() -> void:
 	_music.stop()

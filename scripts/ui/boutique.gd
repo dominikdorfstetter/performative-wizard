@@ -66,4 +66,4 @@ func _buy(entry: Dictionary) -> void:
 		_build()
 
 func _to_menu() -> void:
-	get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn")
+	Fader.change_scene("res://scenes/hub/class_select.tscn")

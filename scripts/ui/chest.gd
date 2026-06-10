@@ -102,4 +102,4 @@ func _unowned(rng: RandomNumberGenerator) -> StringName:
 	return &""
 
 func _to_map() -> void:
-	get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+	Fader.change_scene("res://scenes/map/map.tscn")

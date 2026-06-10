@@ -794,11 +794,11 @@ func _finisher_cashout(swag_before: int) -> void:
 	var tw := create_tween()
 	tw.tween_property(_swag_bar, "value", 0.0, 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 
-func _finale_banner() -> void:
+func _finale_banner(text := "") -> void:
 	if _popups == null:
 		return
 	var l := Label.new()
-	l.text = Loc.t("— FINALE —")
+	l.text = text if text != "" else Loc.t("— FINALE —")
 	l.add_theme_font_size_override("font_size", 60)
 	l.add_theme_color_override("font_color", C_GOLD)
 	l.size = Vector2(440, 90)
@@ -1240,7 +1240,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_pause = NodeUI.pause_overlay(self, func():
 				GameState.abandon_run()
-				get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
+				Fader.change_scene("res://scenes/hub/class_select.tscn"))
 		get_viewport().set_input_as_handled()
 	elif event.keycode == KEY_SPACE or event.keycode == KEY_ENTER:
 		if cm != null and cm.state == CombatManager.State.PLAYER_TURN and not is_instance_valid(_pause):
@@ -1251,12 +1251,27 @@ func _on_end_turn() -> void:
 	cm.end_turn()
 
 func _on_combat_ended(victory: bool) -> void:
-	# A finisher that lands the killing blow gets its trailer shot before we leave.
-	if victory and cm.finisher_clean:
-		Audio.play("crowd", -2.0)
-		_shake(16.0)
-		_finale_banner()
+	# Every kill gets savored: the finisher keeps its trailer shot, any other win
+	# pops a BIG W banner — the killing blow used to hard-cut away on the same frame.
+	if victory:
+		if cm.finisher_clean:
+			Audio.play("crowd", -2.0)
+			_shake(16.0)
+			_finale_banner()
+		else:
+			_finale_banner(Loc.t("BIG W!"))
 		await get_tree().create_timer(0.9).timeout
+		if not is_inside_tree():
+			return
+	else:
+		Audio.stop_music()
+		if _player_sprite != null and is_instance_valid(_player_sprite):
+			_player_sprite.process_mode = Node.PROCESS_MODE_DISABLED   # freezes the idle bob
+			_player_sprite.pivot_offset = _player_sprite.size * 0.5
+			var fall := create_tween()
+			fall.tween_property(_player_sprite, "modulate", Color(0.55, 0.25, 0.3), 0.45)
+			fall.parallel().tween_property(_player_sprite, "rotation", deg_to_rad(82), 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		await get_tree().create_timer(0.6).timeout
 		if not is_inside_tree():
 			return
 	Audio.play("win" if victory else "lose", -2.0)
@@ -1275,7 +1290,7 @@ func _on_combat_ended(victory: bool) -> void:
 				GameState.finish_run(true)
 				_run_end_panel(true, GameState.clout_earned - before, before)
 		else:
-			get_tree().change_scene_to_file("res://scenes/reward.tscn")
+			Fader.change_scene("res://scenes/reward.tscn")
 		return
 	var before_l := GameState.clout_earned
 	GameState.finish_run(false)
@@ -1363,10 +1378,10 @@ func _run_end_panel(victory: bool, earned: int, lifetime_before: int) -> void:
 		bar.size = Vector2(340, 14)
 		_style_bar(bar, C_GOLD, Color(0.2, 0.17, 0.13))
 		panel.add_child(bar)
-	var again := NodeUI.menu_button(Loc.t("Run it back"), func(): get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"), Color(0.45, 0.82, 0.55), 250.0)
+	var again := NodeUI.menu_button(Loc.t("Run it back"), func(): Fader.change_scene("res://scenes/hub/class_select.tscn"), Color(0.45, 0.82, 0.55), 250.0)
 	again.position = Vector2(40, 320)
 	panel.add_child(again)
-	var menu := NodeUI.menu_button(Loc.t("Main Menu"), func(): get_tree().change_scene_to_file("res://scenes/hub/main_menu.tscn"), Color(0.5, 0.55, 0.7), 250.0)
+	var menu := NodeUI.menu_button(Loc.t("Main Menu"), func(): Fader.change_scene("res://scenes/hub/main_menu.tscn"), Color(0.5, 0.55, 0.7), 250.0)
 	menu.position = Vector2(300, 320)
 	panel.add_child(menu)
 	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 388, 14, Color(0.6, 0.6, 0.68))
@@ -1386,7 +1401,7 @@ func _act_clear_panel(cleared_act: int) -> void:
 	if GameState.critic_last_rating != "":
 		_end_label(panel, Loc.t("THE CRITIC:  ") + GameState.critic_quip(GameState.critic_last_rating), 96, 16, Color(0.95, 0.7, 0.85))
 	_end_label(panel, Loc.t("the gauntlet escalates — deck, HP and relics carry over."), 140, 16, Color(0.85, 0.85, 0.9))
-	var cont := NodeUI.menu_button(Loc.t("onward — Act %d") % GameState.act, func(): get_tree().change_scene_to_file("res://scenes/map/map.tscn"), Color(0.45, 0.82, 0.55), 280.0)
+	var cont := NodeUI.menu_button(Loc.t("onward — Act %d") % GameState.act, func(): Fader.change_scene("res://scenes/map/map.tscn"), Color(0.45, 0.82, 0.55), 280.0)
 	cont.position = Vector2(150, 230)
 	panel.add_child(cont)
 	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 330, 14, Color(0.6, 0.6, 0.68))

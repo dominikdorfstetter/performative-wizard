@@ -272,18 +272,18 @@ func _continue() -> void:
 	# A saved run resumes straight onto its map; otherwise Continue keeps meta
 	# progression and heads to the wizard select as before.
 	if GameState.has_run_save() and GameState.resume_run():
-		get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+		Fader.change_scene("res://scenes/map/map.tscn")
 	else:
 		_to_class_select()
 
 func _options() -> void:
-	get_tree().change_scene_to_file("res://scenes/hub/options.tscn")
+	Fader.change_scene("res://scenes/hub/options.tscn")
 
 func _exit() -> void:
 	get_tree().quit()
 
 func _to_class_select() -> void:
-	get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn")
+	Fader.change_scene("res://scenes/hub/class_select.tscn")
 
 # --- helpers -------------------------------------------------------------
 

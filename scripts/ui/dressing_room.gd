@@ -39,7 +39,7 @@ func _ready() -> void:
 	enter.add_theme_stylebox_override("hover", _panel(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
 	enter.add_theme_stylebox_override("pressed", _panel(Color(0.13, 0.30, 0.18), Color(0.36, 0.70, 0.45)))
 	enter.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	(%BackButton as Button).pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
+	(%BackButton as Button).pressed.connect(func(): Fader.change_scene("res://scenes/hub/class_select.tscn"))
 	_rebuild()
 
 func _rebuild() -> void:
@@ -128,7 +128,7 @@ func _update_summary() -> void:
 
 func _enter() -> void:
 	GameState.finalize_loadout()
-	get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+	Fader.change_scene("res://scenes/map/map.tscn")
 
 # --- helpers ---
 func _lbl(parent: Control, text: String, pos: Vector2, sz: Vector2, fs: int, color: Color) -> void:

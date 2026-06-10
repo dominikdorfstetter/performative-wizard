@@ -6,6 +6,7 @@ extends Control
 
 func _ready() -> void:
 	NodeUI.gradient_bg(self)
+	Audio.play_music("menu")
 	(%Title as Label).text = Loc.t("BIG W!   cop a card")
 	(%Title as Label).add_theme_font_override("font", NodeUI.DISPLAY_FONT)
 	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
@@ -119,4 +120,4 @@ func _take(id: StringName) -> void:
 	_to_map()
 
 func _to_map() -> void:
-	get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+	Fader.change_scene("res://scenes/map/map.tscn")

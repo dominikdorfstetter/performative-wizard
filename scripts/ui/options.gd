@@ -56,7 +56,7 @@ func _reset() -> void:
 	_build()
 
 func _back() -> void:
-	get_tree().change_scene_to_file("res://scenes/hub/main_menu.tscn")
+	Fader.change_scene("res://scenes/hub/main_menu.tscn")
 
 func _clear() -> void:
 	for c in get_children():

@@ -7,6 +7,7 @@ extends Control
 
 func _ready() -> void:
 	NodeUI.gradient_bg(self)
+	Audio.play_music("menu")
 	(%Title as Label).add_theme_font_override("font", NodeUI.DISPLAY_FONT)
 	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
 	(%Subtitle as Label).text = Loc.t("pick your fighter — all your power is in the fit.    Clout to spend: %d") % GameState.clout
@@ -21,14 +22,14 @@ func _ready() -> void:
 		if w != null:
 			_choices.add_child(_make_wizard_button(w))
 	(%Boutique as Button).text = Loc.t("Boutique  (spend Clout)")
-	(%Boutique as Button).pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/boutique.tscn"))
+	(%Boutique as Button).pressed.connect(func(): Fader.change_scene("res://scenes/hub/boutique.tscn"))
 	var menu := Button.new()
 	menu.text = Loc.t("Menu")
 	menu.add_theme_font_size_override("font_size", 16)
 	_style_btn(menu)
 	menu.position = Vector2(24, 24)
 	menu.size = Vector2(120, 38)
-	menu.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/main_menu.tscn"))
+	menu.pressed.connect(func(): Fader.change_scene("res://scenes/hub/main_menu.tscn"))
 	add_child(menu)
 
 func _make_wizard_button(w: WizardData) -> Button:
@@ -111,7 +112,7 @@ func _update_asc_label() -> void:
 
 func _choose(id: StringName) -> void:
 	GameState.start_run(id)
-	get_tree().change_scene_to_file("res://scenes/hub/dressing_room.tscn")
+	Fader.change_scene("res://scenes/hub/dressing_room.tscn")
 
 func _label(parent: Control, text: String, pos: Vector2, sz: Vector2, fs: int, color: Color) -> void:
 	var l := Label.new()
