@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"mourning_veil"
+title = "Mourning Veil"
+slot = "Hat"
+element = "Necro"
+drip = 1
+passive_text = "Enemies enter the fight with 2 Toxic."
+passive_id = &"poison_start_2"
+injected_cards = [&"hex"]

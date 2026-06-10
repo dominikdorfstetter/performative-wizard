@@ -4,11 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"diva_heels"
-title = "Diva Heels"
-slot = "Boots"
+id = &"selfie_stick"
+title = "Selfie Stick"
+slot = "Staff"
 element = "Rizz"
-drip = 2
-passive_text = "Draw +1 card each turn."
-passive_id = &"draw_plus_1"
-injected_cards = []
+drip = 1
+passive_text = "Poses serve +1 Aura."
+passive_id = &"pose_plus_1"
+injected_cards = [&"smooth_talk"]

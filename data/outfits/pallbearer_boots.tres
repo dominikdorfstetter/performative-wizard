@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/outfit_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"pallbearer_boots"
+title = "Pallbearer Boots"
+slot = "Boots"
+element = "Necro"
+drip = 1
+passive_text = "Your Goons jump the weakest opp."
+passive_id = &"goons_target_weakest"
+injected_cards = [&"bone_offering"]

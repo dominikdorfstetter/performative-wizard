@@ -16,9 +16,9 @@ const C_INTENT := Color(1.0, 0.62, 0.36)
 const C_TARGET := Color(1.0, 0.82, 0.29)
 
 # Summoned-goon row, between the wizard and the enemies, standing on the floor.
-const GOON_Y := 250.0
-const GOON_X0 := 252.0
-const GOON_STEP := 40.0
+const GOON_Y := 262.0
+const GOON_X0 := 226.0
+const GOON_STEP := 30.0   # tight overlap: a crowd, not a queue
 const GOON_SIZE := 50.0
 
 const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed", &"poison": "Toxic", &"ritual": "Locked In", &"aura_engine": "Aura Farm", &"hive_mind": "Hive", &"barrier": "Barrier"}
@@ -197,6 +197,7 @@ func _start_fight() -> void:
 	cm.combat_ended.connect(_on_combat_ended)
 	cm.peeked.connect(_on_peeked)
 	cm.pick_requested.connect(_on_pick_requested)
+	cm.goons_attacked.connect(_on_goons_attacked)
 	_build_pile_counters()
 	cm.start_combat(player, encounter, deck, GameState.effective_drip(), false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
 	_build_player_widget(w)
@@ -547,8 +548,23 @@ func _build_artifact_strip() -> void:
 
 # --- summoned goons ------------------------------------------------------
 
+## Clustered crowd: two loose ranks with deterministic jitter — never a queue.
+## The squad jumps its victim: surge toward the enemy, then shuffle home.
+func _on_goons_attacked(enemy_index: int, _dmg: int) -> void:
+	if _goons_box == null or not is_inside_tree():
+		return
+	var to := _enemy_center(maxi(enemy_index, 0)) - Vector2(120, 0)
+	var slide := (to - Vector2(GOON_X0 + 60, GOON_Y)) * 0.55
+	var tw := _goons_box.create_tween()
+	tw.tween_property(_goons_box, "position", slide, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(_goons_box, "position", Vector2.ZERO, 0.26).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
 func _goon_pos(i: int) -> Vector2:
-	return Vector2(GOON_X0 + i * GOON_STEP, GOON_Y)
+	var rank := (i / 5)
+	var slot := i % 5
+	var jx := float((i * 37) % 11) - 5.0
+	var jy := float((i * 53) % 9) - 4.0
+	return Vector2(GOON_X0 + slot * GOON_STEP + rank * 14.0 + jx, GOON_Y + rank * 24.0 + jy)
 
 ## Keep the visible goon row in sync with the player's Undead stacks: spawn new
 ## ones with a pop, and send consumed ones (e.g. Sacrifice Strike) lunging at the
@@ -570,7 +586,8 @@ func _sync_goons() -> void:
 
 func _add_goon(i: int) -> void:
 	var g := TextureRect.new()
-	g.texture = SpriteBank.texture(&"goon")
+	g.texture = SpriteBank.ghoul_texture(i)
+	g.flip_h = i % 2 == 1            # half the crowd faces the other way
 	g.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	g.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	g.mouse_filter = Control.MOUSE_FILTER_IGNORE

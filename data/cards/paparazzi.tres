@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"paparazzi"
+title = "Paparazzi"
+description = "Deal 2 to ALL, twice. flash. flash."
+cost = 1
+type = "Attack"
+rarity = "Common"
+archetype = &"storm"
+swag_gain = 0
+swag_cost = 0
+effects = [{ "op": "damage_all", "amount": 2 }, { "op": "damage_all", "amount": 2 }]

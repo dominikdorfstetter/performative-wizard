@@ -4,11 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"diva_heels"
-title = "Diva Heels"
-slot = "Boots"
-element = "Rizz"
-drip = 2
-passive_text = "Draw +1 card each turn."
-passive_id = &"draw_plus_1"
+id = &"shroud_squad"
+title = "Shroud of the Squad"
+slot = "Robe"
+element = "Necro"
+drip = 1
+passive_text = "Start combat with 2 Goons."
+passive_id = &"undead_start_2"
 injected_cards = []

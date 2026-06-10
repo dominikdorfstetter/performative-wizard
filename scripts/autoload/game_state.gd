@@ -38,6 +38,12 @@ const BOUTIQUE: Array[Dictionary] = [
 	{"id": &"diva_heels", "cost": 160},
 	{"id": &"flash_cannon", "cost": 90},
 	{"id": &"slow_burn_robe", "cost": 90},
+	{"id": &"mourning_veil", "cost": 90},
+	{"id": &"shroud_squad", "cost": 110},
+	{"id": &"pallbearer_boots", "cost": 95},
+	{"id": &"mirror_shades", "cost": 85},
+	{"id": &"snakeskin_jacket", "cost": 120},
+	{"id": &"selfie_stick", "cost": 75},
 ]
 
 # --- Meta: persists across runs ---
