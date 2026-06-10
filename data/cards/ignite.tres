@@ -6,10 +6,10 @@
 script = ExtResource("1")
 id = &"ignite"
 title = "Roast 'Em"
-description = "Roast for 3. Aura +1."
+description = "Roast for 4. Aura +1."
 cost = 1
 type = "Attack"
 rarity = "Common"
 swag_gain = 1
 swag_cost = 0
-effects = [{ "op": "apply_status", "status": "burn", "amount": 3, "target": "enemy" }]
+effects = [{ "op": "apply_status", "status": "burn", "amount": 4, "target": "enemy" }]

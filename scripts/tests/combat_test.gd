@@ -33,7 +33,7 @@ func _ready() -> void:
 
 	cm.hand = [Database.get_card(&"ignite")]
 	cm.play_card(cm.hand[0])
-	_check("enemy burn after ignite", cm.enemies[0].status(&"burn"), 3)
+	_check("enemy burn after ignite", cm.enemies[0].status(&"burn"), 4)
 	_check("swag after ignite pose", cm.swag, 3)
 
 	cm.hand = [Database.get_card(&"ember")]
@@ -41,8 +41,8 @@ func _ready() -> void:
 	_check("enemy hp after ember (no bonus)", cm.enemies[0].hp, 22)
 
 	cm.end_turn()
-	_check("enemy hp after burn tick", cm.enemies[0].hp, 19)
-	_check("enemy burn decayed", cm.enemies[0].status(&"burn"), 2)
+	_check("enemy hp after burn tick", cm.enemies[0].hp, 18)
+	_check("enemy burn decayed", cm.enemies[0].status(&"burn"), 3)
 	_check("player hp after cat attack", cm.player.hp, 66)
 
 	_check("t2 swag", cm.swag, 5)
@@ -51,7 +51,7 @@ func _ready() -> void:
 
 	cm.hand = [Database.get_card(&"ember")]
 	cm.play_card(cm.hand[0])
-	_check("enemy hp after boosted ember", cm.enemies[0].hp, 11)
+	_check("enemy hp after boosted ember", cm.enemies[0].hp, 10)
 
 	cm.swag = 6
 	cm.hand = [Database.get_card(&"grand_finale")]
@@ -100,7 +100,7 @@ func _ready() -> void:
 	_check("start_block_5 → 5 block", cm3.player.block, 5)
 	cm3.hand = [Database.get_card(&"ignite")]
 	cm3.play_card(cm3.hand[0])
-	_check("burn_plus_1 → 4 burn", cm3.enemies[0].status(&"burn"), 4)
+	_check("burn_plus_1 → 5 burn", cm3.enemies[0].status(&"burn"), 5)
 	_check("pose_plus_1 → swag 2", cm3.swag, 2)
 
 	var cm4 := CombatManager.new()
@@ -175,10 +175,10 @@ func _ready() -> void:
 	pr.max_hp = 72
 	pr.hp = 72
 	cmr.start_combat(pr, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"finger_guns")], 0, true, [&"rizz_crit"])
-	cmr.player.add_status(&"strength", 20)
+	cmr.player.add_status(&"strength", 25)   # 25 x 0.04 = guaranteed crit (pass #4 shave)
 	cmr.hand = [Database.get_card(&"finger_guns")]
 	cmr.play_card(cmr.hand[0])
-	_check("rizz crit (5+20)x2 kills cat", cmr.enemies[0].is_dead(), true)
+	_check("rizz crit (5+25)x2 kills cat", cmr.enemies[0].is_dead(), true)
 
 	var cmd2 := CombatManager.new()
 	var pd := Combatant.new()

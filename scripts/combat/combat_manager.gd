@@ -132,7 +132,7 @@ func _compute_crit() -> void:
 func live_crit_chance() -> float:
 	var cc := crit_chance
 	if has_passive(&"rizz_crit"):
-		cc += player.status(&"strength") * 0.05
+		cc += player.status(&"strength") * 0.04   # was 0.05 — pass #4 top-end shave
 	cc -= player.status(&"jinx") * 0.10
 	return max(0.0, cc)
 
@@ -515,8 +515,11 @@ func end_turn() -> void:
 	if undead > 0:
 		var tgt := target()
 		if tgt != null:
-			tgt.take_damage(undead * 2)
-			_say(Loc.t("your %d Goons threw hands for %d") % [undead, undead * 2])
+			# critical mass (pass #4): a real mob (4+) hits for 3 each, not 2 —
+			# the Swarm engine now actually scales into long high-asc fights
+			var goon_dmg := undead * (3 if undead >= 4 else 2)
+			tgt.take_damage(goon_dmg)
+			_say(Loc.t("your %d Goons threw hands for %d") % [undead, goon_dmg])
 			if all_dead():
 				_finish(true)
 				return

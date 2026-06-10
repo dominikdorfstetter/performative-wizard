@@ -168,8 +168,10 @@ func _bot_turn(cm: CombatManager, policy: String, fight_idx: int) -> void:
 
 func _scales(act: int, asc: int, type: String, row: int) -> Array:
 	# MUST mirror GameState.node_scales() exactly, or the report silently lies.
-	var hp := 1.0 + 0.30 * (act - 1) + 0.08 * asc
-	var dmg := 1.0 + 0.17 * (act - 1) + 0.05 * asc
+	var asc_hp := 0.08 * mini(asc, 4) + 0.05 * maxi(0, asc - 4)
+	var asc_dmg := 0.05 * mini(asc, 4) + 0.035 * maxi(0, asc - 4)
+	var hp := 1.0 + 0.30 * (act - 1) + asc_hp
+	var dmg := 1.0 + 0.17 * (act - 1) + asc_dmg
 	if type == "Boss":
 		return [hp, dmg]
 	return [hp + 0.07 * row, dmg + 0.05 * row]
