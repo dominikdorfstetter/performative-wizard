@@ -1,4 +1,4 @@
-# Performative Wizard — First Public Demo Release Plan
+# Performative Wizards — First Public Demo Release Plan
 
 > Produced 2026-06-10 from a 10-agent audit (6 dimensions: art consistency, first-session
 > UX, game feel, release ops, product scope, runtime QA with rendered screenshots) plus a

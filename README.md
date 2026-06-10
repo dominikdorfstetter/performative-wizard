@@ -1,4 +1,4 @@
-# Performative Wizard
+# Performative Wizards
 
 A roguelike deckbuilder (à la *Slay the Spire*) where a wizard's power comes from
 **swag** — the outfit you wear and the style ("Aura") you bank up mid-fight. Gen-Z
@@ -100,7 +100,7 @@ for the demo plan this build implements. `LICENSE` (AGPL-3.0) and
 
 ## License & contributing
 
-Performative Wizard is **free software** under the
+Performative Wizards is **free software** under the
 [GNU AGPL-3.0](LICENSE) — you may play, study, modify, and redistribute it,
 provided derivatives (including network-hosted ones) stay AGPL and publish
 their source. Third-party components (Godot Engine, the bundled fonts) keep

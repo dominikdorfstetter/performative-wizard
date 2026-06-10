@@ -1,4 +1,4 @@
-# Performative Wizard — The USP Decision (2026-06-06)
+# Performative Wizards — The USP Decision (2026-06-06)
 
 > Produced by a three-lens design panel — **Product Owner**, **Game Design Director**,
 > **Godot Architect** — plus a competitive-market scan and six creative-lens ideation

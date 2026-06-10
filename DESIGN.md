@@ -1,4 +1,4 @@
-# Performative Wizard — Design Document
+# Performative Wizards — Design Document
 
 > A roguelike deckbuilder in the spirit of *Slay the Spire*, but the wizard's power
 > comes from **swag**: the outfit you wear and the style you build mid-fight. You don't

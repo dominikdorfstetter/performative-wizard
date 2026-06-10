@@ -1,4 +1,4 @@
-# Performative Wizard — Review #2 (2026-06-06)
+# Performative Wizards — Review #2 (2026-06-06)
 
 Second pass after the roadmap build-out. State: **38 cards, 23 enemies + 2 bosses,
 3 wizards, 17 outfits, 14 artifacts, 3 acts, ascension, 81 tests, EN/DE/ES.**

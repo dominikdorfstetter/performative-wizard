@@ -1,4 +1,4 @@
-Performative Wizard — third-party notices
+Performative Wizards — third-party notices
 =========================================
 This file must accompany every distributed build (inside the macOS zip, and
 pasted or linked on the itch.io page for the web build).
@@ -47,7 +47,7 @@ assets/fonts/OFL-jersey20.txt and assets/fonts/OFL-pixelify_sans.txt, and at
 https://openfontlicense.org
 
 All other art and audio is generated procedurally by the game's own code.
-Performative Wizard is © 2026 Dominik Dorfstetter and is free software,
+Performative Wizards is © 2026 Dominik Dorfstetter and is free software,
 licensed under the GNU Affero General Public License v3.0 — see the LICENSE
 file, or https://www.gnu.org/licenses/agpl-3.0.html
 Source code: https://github.com/dominikdorfstetter/performative-wizard

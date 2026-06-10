@@ -1,4 +1,4 @@
-# Performative Wizard — demo review (internal, 2026-06-10)
+# Performative Wizards — demo review (internal, 2026-06-10)
 
 > Written at the owner's request, in the voice of a genre critic, against the bar:
 > *"fun to play, addictive and easy to understand, with depth to master."*

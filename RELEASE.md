@@ -1,4 +1,4 @@
-# Release checklist — Performative Wizard demo
+# Release checklist — Performative Wizards demo
 
 Every public build follows this list top to bottom. The v1.0.0 incident (the
 README's download link served a build with the Block bug for days) happened
@@ -13,7 +13,7 @@ because nothing forced "re-export from clean HEAD".
       the git tag you're about to create.
 
 ## 2. Export (both targets, same commit)
-- [ ] Editor → Export → **macOS** → `builds/PerformativeWizard.zip`
+- [ ] Editor → Export → **macOS** → `builds/PerformativeWizards.zip`
       (preset is ad-hoc signed; never set codesign back to "None" — that
       ships a broken template signature Gatekeeper calls "damaged").
 - [ ] Editor → Export → **Web** → `builds/web/` (threads stay OFF — the
@@ -22,7 +22,7 @@ because nothing forced "re-export from clean HEAD".
       `README.txt`) and `THIRDPARTY.txt` next to the .app.
 
 ## 3. Smoke test (15 minutes, non-negotiable)
-- [ ] macOS: `codesign --verify --deep --strict "Performative Wizard.app"`
+- [ ] macOS: `codesign --verify --deep --strict "Performative Wizards.app"`
       and `spctl -a -t exec` → expect "adhoc"-signed rejection, NOT "damaged".
 - [ ] Fresh profile (move save.json away): boot → first-fight tutorial fires,
       menu shows the right version in the footer.

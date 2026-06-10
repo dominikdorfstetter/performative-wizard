@@ -1,13 +1,13 @@
-PERFORMATIVE WIZARD — macOS demo
+PERFORMATIVE WIZARDS — macOS demo
 ================================
 
 The app is ad-hoc signed (no Apple Developer ID), so the FIRST launch needs
 one extra step on modern macOS:
 
-1. Double-click "Performative Wizard.app".
+1. Double-click "Performative Wizards.app".
    macOS will say it "could not verify" the app. Close that dialog.
 2. Open  System Settings -> Privacy & Security,  scroll down, and click
-   "Open Anyway" next to the Performative Wizard entry.
+   "Open Anyway" next to the Performative Wizards entry.
 3. Confirm once. Every later launch works normally.
 
 (On macOS 14 and older you can instead right-click the app and choose "Open".)

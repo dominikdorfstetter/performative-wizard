@@ -1,4 +1,4 @@
-# Performative Wizard — Roadmap
+# Performative Wizards — Roadmap
 
 Prioritized from `DESIGN_REVIEW.md`. Ordered by **leverage** (impact ÷ effort).
 Checkboxes track delivery; this file is the working plan.

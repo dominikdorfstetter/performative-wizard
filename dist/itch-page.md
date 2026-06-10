@@ -1,4 +1,4 @@
-# itch.io page kit — Performative Wizard (demo)
+# itch.io page kit — Performative Wizards (demo)
 
 ## Headline
 **She's watching. Serve looks or get reviewed.**

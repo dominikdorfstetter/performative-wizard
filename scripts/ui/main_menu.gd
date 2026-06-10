@@ -90,7 +90,7 @@ func _build() -> void:
 
 func _title() -> void:
 	var t := Label.new()
-	t.text = "PERFORMATIVE WIZARD"
+	t.text = "PERFORMATIVE WIZARDS"
 	t.add_theme_font_override("font", NodeUI.DISPLAY_FONT)
 	t.add_theme_font_size_override("font_size", 56)
 	t.add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))

@@ -1,4 +1,4 @@
-# Performative Wizard — Design Review (2026-06-06)
+# Performative Wizards — Design Review (2026-06-06)
 
 A critical pass over the current build from a game-designer's seat. Grounded in
 the actual data: **34 cards, 19 enemies (+goon), 3 wizards, 17 outfits, 12 artifacts,

@@ -336,7 +336,7 @@ func _drift_experiment(sigs: Array) -> Dictionary:
 
 func _ready() -> void:
 	_rng.seed = 1234567
-	print("=== PERFORMATIVE WIZARD — balance playtest (K=%d/config) ===" % K)
+	print("=== PERFORMATIVE WIZARDS — balance playtest (K=%d/config) ===" % K)
 
 	for wid in [&"fire", &"necro", &"rizz"]:
 		print("\n## %s — difficulty sweep (balanced bot, full HP)" % wid)
