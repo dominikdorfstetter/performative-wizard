@@ -7,8 +7,8 @@ const SAVE_VERSION := 1
 
 # The demo's conversion funnel — shown on run-end screens and the act interstitial.
 # An empty string hides its button (set the Discord invite before launch).
-const LINK_ITCH := "https://dominikdorfstetter.itch.io/performative-wizard"
-const LINK_DISCORD := ""
+const LINK_ITCH := "https://dorfid.itch.io/performative-wizards"
+const LINK_DISCORD := "https://discord.gg/bXppC4WdNb"
 const LINK_ISSUES := "https://github.com/dominikdorfstetter/performative-wizard/issues"
 
 const SLOTS: Array[String] = ["Hat", "Robe", "Staff", "Boots", "Trinket"]
