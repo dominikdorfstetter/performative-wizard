@@ -58,8 +58,38 @@ func _compute_positions() -> void:
 			_pos["%d_%d" % [r, c]] = Vector2(x, y)
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.08, 0.06, 0.11))
+	# act-tinted depth gradient: the road darkens and warms as the run deepens
+	var top_c: Color
+	var bot_c: Color
+	match GameState.act:
+		1:
+			top_c = Color(0.06, 0.05, 0.12)
+			bot_c = Color(0.10, 0.08, 0.14)
+		2:
+			top_c = Color(0.09, 0.05, 0.13)
+			bot_c = Color(0.13, 0.07, 0.12)
+		_:
+			top_c = Color(0.10, 0.04, 0.10)
+			bot_c = Color(0.14, 0.05, 0.08)
+	var bands := 24
+	for bi in bands:
+		var t0 := float(bi) / bands
+		draw_rect(Rect2(Vector2(0, size.y * t0), Vector2(size.x, size.y / bands + 1.0)), top_c.lerp(bot_c, t0))
+	# ambient dust — deterministic per act so redraws never flicker
+	var drng := RandomNumberGenerator.new()
+	drng.seed = GameState.act * 7919 + GameState.map.size()
+	for i in 80:
+		var dp := Vector2(drng.randf_range(0, size.x), drng.randf_range(56, size.y - 60))
+		draw_rect(Rect2(dp, Vector2(2, 2)), Color(1.0, 0.9, 0.8, drng.randf_range(0.04, 0.14)))
+
 	var rows := GameState.map
+	# soft ground shadows under every node (drawn before the buttons render)
+	for r in rows.size():
+		for node in rows[r]:
+			var sp: Vector2 = _pos["%d_%d" % [r, node.col]]
+			draw_circle(sp + Vector2(2, 4), 27.0 if node.type != "Boss" else 36.0, Color(0, 0, 0, 0.30))
+	# pixel-dash trails: dark underlay + bead dashes. The road you actually
+	# walked stays lit warm; the next choices burn gold; the rest waits dim.
 	for r in rows.size() - 1:
 		for node in rows[r]:
 			var a: Vector2 = _pos["%d_%d" % [r, node.col]]
@@ -67,7 +97,18 @@ func _draw() -> void:
 			for l in node.links:
 				var b: Vector2 = _pos["%d_%d" % [r + 1, l]]
 				var hot: bool = from_current or GameState.pos_row < 0 and r == 0
-				draw_line(a, b, Color(0.95, 0.78, 0.35) if hot else Color(0.28, 0.26, 0.34), 3.0 if hot else 2.0)
+				var traveled: bool = bool(node.get("visited", false)) and bool(rows[r + 1][l].get("visited", false))
+				draw_line(a, b, Color(0.04, 0.03, 0.07, 0.85), 7.0 if hot else 5.0)
+				var seg := b - a
+				var steps: int = max(2, int(seg.length() / 9.0))
+				for k in range(1, steps):
+					var q: Vector2 = a + seg * (float(k) / steps)
+					if hot:
+						draw_circle(q, 2.4, Color(0.95, 0.78, 0.35))
+					elif traveled:
+						draw_circle(q, 1.9, Color(0.85, 0.62, 0.38, 0.75))
+					else:
+						draw_circle(q, 1.6, Color(0.33, 0.31, 0.40))
 
 func _build_nodes() -> void:
 	var rows := GameState.map
@@ -106,9 +147,14 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 	var current := r == GameState.pos_row and c == GameState.pos_col
 	var col: Color = TYPE_COLOR.get(type, Color.GRAY)
 	var border := Color(0.95, 0.78, 0.35) if avail else (Color(0.5, 0.9, 0.6) if current else col.darkened(0.2))
+	var sz := NODE
+	if type == "Boss":
+		sz = 68.0
+	elif type == "Elite":
+		sz = 56.0
 	var b := Button.new()
-	b.size = Vector2(NODE, NODE)
-	b.position = _pos["%d_%d" % [r, c]] - Vector2(NODE, NODE) * 0.5
+	b.size = Vector2(sz, sz)
+	b.position = _pos["%d_%d" % [r, c]] - Vector2(sz, sz) * 0.5
 	b.disabled = not avail
 	var bg := Color(0.17, 0.15, 0.21) if (avail or current) else Color(0.11, 0.10, 0.13)
 	b.add_theme_stylebox_override("normal", _circle(bg, border, 3 if (avail or current) else 2))
@@ -122,6 +168,10 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 		var glow := b.create_tween().set_loops()
 		glow.tween_property(b, "modulate", Color(1.28, 1.22, 1.0), 0.7).set_trans(Tween.TRANS_SINE)
 		glow.tween_property(b, "modulate", Color.WHITE, 0.7).set_trans(Tween.TRANS_SINE)
+	elif type == "Boss":
+		var brood := b.create_tween().set_loops()
+		brood.tween_property(b, "modulate", Color(1.25, 0.85, 0.85), 1.6).set_trans(Tween.TRANS_SINE)
+		brood.tween_property(b, "modulate", Color.WHITE, 1.6).set_trans(Tween.TRANS_SINE)
 
 	var pix := SpriteBank.icon_texture(StringName(TYPE_PIX.get(type, "swirl")))
 	if pix != null:
@@ -130,8 +180,9 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon.position = Vector2(11, 10)
-		icon.size = Vector2(28, 28)
+		var isz := 28.0 if type != "Boss" else 38.0
+		icon.position = Vector2((sz - isz) / 2.0, (sz - isz) / 2.0 - 1)
+		icon.size = Vector2(isz, isz)
 		icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.4)
 		b.add_child(icon)
 	# enemy-count badge so you can read the encounter before entering
@@ -140,7 +191,7 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 		if cnt > 0:
 			var badge := Label.new()
 			badge.text = str(cnt)
-			badge.position = Vector2(NODE - 16, NODE - 18)
+			badge.position = Vector2(sz - 16, sz - 18)
 			badge.size = Vector2(16, 16)
 			badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -304,5 +355,5 @@ func _circle(bg: Color, border: Color, bw: int) -> StyleBoxFlat:
 	s.bg_color = bg
 	s.set_border_width_all(bw)
 	s.border_color = border
-	s.set_corner_radius_all(25)
+	s.set_corner_radius_all(34)   # stays circular up to the 68px boss node
 	return s
