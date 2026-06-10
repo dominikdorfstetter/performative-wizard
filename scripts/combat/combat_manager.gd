@@ -12,6 +12,10 @@ signal enemy_acting(index: int, intent: Dictionary)
 ## Fired by the "peek" op with the titles (top-of-pile first) so the view can
 ## flash them; the same info also lands in the log for headless runs.
 signal peeked(titles: Array)
+## Fired by the "peek_pick" op (only when a view is attached, step_delay > 0)
+## with the next cards (top-of-pile first); the view shows a modal picker and
+## answers with resolve_pick(index). Headless runs auto-take the top card.
+signal pick_requested(cards: Array)
 
 enum State { PLAYER_TURN, ENEMY_TURN, WIN, LOSE }
 
@@ -67,6 +71,7 @@ var draw_pile: Array[CardData] = []
 var hand: Array[CardData] = []
 var discard_pile: Array[CardData] = []
 var retain_hand := false        # set by the "retain" op; consumed at end_turn
+var pending_pick_n := 0         # how many top-of-pile cards a "peek_pick" laid out
 
 var passives: Array[StringName] = []
 var enemy_dmg_scale := 1.0
@@ -505,6 +510,8 @@ func live_rating() -> String:
 func end_turn() -> void:
 	if state != State.PLAYER_TURN:
 		return
+	if pending_pick_n > 0:
+		resolve_pick(0)   # a turn can't end mid-pick; the top card is the default
 	if retain_hand:
 		retain_hand = false
 		_say(Loc.t("you keep the hand — it's all part of the plan"))
@@ -716,6 +723,45 @@ func peek_draw(n: int) -> void:
 			disp.append(Loc.t(t))
 		_say(Loc.t("up next: %s") % " · ".join(disp))
 	peeked.emit(titles)
+
+## "peek_pick" op: lay out the next n draws and let the player TAKE one. With a
+## view attached (step_delay > 0) this emits pick_requested and waits for
+## resolve_pick(i); headless it takes the top card immediately — exactly what a
+## plain draw would have given, so tests and the balance sim see "draw 1".
+func request_pick(n: int) -> void:
+	if draw_pile.is_empty() and not discard_pile.is_empty():
+		recycle_discard()
+	var k: int = mini(n, draw_pile.size())
+	if k <= 0:
+		_say(Loc.t("nothing left to peek — your piles are empty"))
+		return
+	pending_pick_n = k
+	if step_delay <= 0.0:
+		resolve_pick(0)
+		return
+	var cards: Array = []
+	for i in range(k):
+		cards.append(draw_pile[draw_pile.size() - 1 - i])
+	pick_requested.emit(cards)
+
+## i is the display index (0 = top of pile). Removes that exact position so the
+## remaining peeked cards keep their promised order.
+func resolve_pick(i: int) -> void:
+	if pending_pick_n <= 0:
+		return
+	var idx: int = draw_pile.size() - 1 - clampi(i, 0, pending_pick_n - 1)
+	pending_pick_n = 0
+	if idx < 0 or idx >= draw_pile.size():
+		return
+	if hand.size() >= HAND_CAP:
+		_say(Loc.t("your hands are FULL — it stays in the pile"))
+		_emit()
+		return
+	var card: CardData = draw_pile[idx]
+	draw_pile.remove_at(idx)
+	hand.append(card)
+	_say(Loc.t("you reach for %s") % Loc.t(card.title))
+	_emit()
 
 ## "shuffle_discard" op: the whole discard pile shuffles back into the draw pile.
 func recycle_discard() -> void:

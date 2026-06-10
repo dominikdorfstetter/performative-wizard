@@ -95,8 +95,10 @@ against the same axes:
    real manipulation verbs — peek (Vision Board), recycle (Thrift Flip),
    retain (Saved to Drafts, with a 10-card hand cap). Banking a 5-card
    mega-turn behind a retain is a genuinely new line of play that feeds the
-   Aura-hoarding identity. *Remaining gap:* no click-to-inspect pile overlay,
-   no choose-from-discard tutor — the peek is information, not selection.
+   Aura-hoarding identity. *Post-merge fix:* Vision Board's peek became a real
+   modal pick — the next 3 cards fan out and you TAKE one (headless runs
+   auto-take the top card, keeping the engine synchronous). *Remaining gap:*
+   no click-to-inspect pile overlay, no choose-from-discard tutor.
 2. **Enemy presentation:** three new body grammars (wide / imp / floaty) break
    the round cluster from 11 to 7, and display bulk finally makes bosses
    tower (2x) and goons scuttle (0.8x). The cast reads as a cast now.
