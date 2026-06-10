@@ -1084,6 +1084,14 @@ func _ready() -> void:
 	_check("cost mode survives the snapshot", GameState.upgrade_mode(&"wink"), "cost")
 	GameState.card_upgrades = saved_ups
 
+	# --- per-act music variants build, cache, and leave the menu alone ----------
+	print("--- act music variants ---")
+	_check("act 2 combat gets its own variant", Audio._variant_key("combat", 2), "combat@2")
+	_check("variant is cached as a stream", Audio._tracks.has("combat@2"), true)
+	_check("act 1 stays the base track", Audio._variant_key("combat", 1), "combat")
+	_check("menu never varies", Audio._variant_key("menu", 3), "menu")
+	_check("variant keys don't re-wrap", Audio._variant_key("combat@2", 3), "combat@2")
+
 	# --- loc coverage: the teaching layer + key chrome exists in BOTH tables, so a
 	# string change can never silently regress DE/ES back to English again ---
 	print("--- loc coverage ---")

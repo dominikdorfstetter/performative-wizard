@@ -117,7 +117,7 @@ func _ready() -> void:
 		GameState.finalize_loadout()
 		GameState.enter(0, 0)
 	_bg.texture = SpriteBank.battle_bg(_bg_theme())
-	Audio.play_music(_combat_track())
+	Audio.play_music(_combat_track(), GameState.act)
 	_start_fight()
 
 # Pick a music track so different encounters sound different: bosses and elites
