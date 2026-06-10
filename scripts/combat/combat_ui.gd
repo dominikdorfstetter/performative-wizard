@@ -194,6 +194,81 @@ func _start_fight() -> void:
 	_prev_encore = 0
 	_prev_booed = false
 	_refresh()
+	_critic_tooltip()
+	_heckler_dropin()
+	if not GameState.seen_tutorial:
+		_show_tutorial(0)
+
+## The Critic's grade label gets the same custom hover help every other HUD element
+## has — it was the ONLY readout without one, and it's the USP.
+func _critic_tooltip() -> void:
+	if _critic == null:
+		return
+	var tip := TipIcon.new()
+	tip.texture = null
+	tip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tip.mouse_filter = Control.MOUSE_FILTER_STOP
+	tip.set_tip(Loc.t("The Critic"), Loc.t("She grades every fight live: S, A, B or C — scored on how boldly you play your Aura (peak reached, tiers lit, a clean finisher cash-out). An S opens a VIP room ahead; a C sends a heckler. Her taste drifts: repeat the same trick and it stops paying."))
+	_critic.add_child(tip)
+
+## If her last review sent a heckler, it DROPS into the fight with a barb — the map
+## mutation was invisible before; now the consequence has a face.
+func _heckler_dropin() -> void:
+	if String(GameState.current_node().get("critic_note", "")) != "heckler":
+		return
+	for i in cm.enemies.size():
+		if cm.enemies[i].data != null and cm.enemies[i].data.id == &"heckler":
+			if i < _enemy_sprites.size() and is_instance_valid(_enemy_sprites[i]):
+				var s: Control = _enemy_sprites[i]
+				var home_y: float = s.position.y
+				s.position.y = home_y - 180
+				var tw := s.create_tween()
+				tw.tween_property(s, "position:y", home_y, 0.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+				_say_bubble(_enemy_center(i) + Vector2(0, -130), Loc.t("she sent me. boo."), C_INTENT)
+				Audio.play("debuff", -4.0)
+			return
+
+# --- first-fight teaching layer (one-time, persisted via seen_tutorial) -----
+
+func _show_tutorial(step: int) -> void:
+	var titles := [Loc.t("YOUR HAND"), Loc.t("AURA — BANKED STYLE"), Loc.t("THE CRITIC IS WATCHING")]
+	var bodies := [
+		Loc.t("Play cards with Energy (top left). Attacks hit the marked target — click an enemy to switch. End Turn passes the spotlight."),
+		Loc.t("Aura builds every turn and persists all fight. Light the tiers — 6+: +2 damage, 12+: +1 card, 18+: attacks pierce. Crest 24 to hold the spotlight, then spend it ALL on a Finisher."),
+		Loc.t("Every fight gets a grade: S, A, B or C — scored on how boldly you play your Aura. An S opens a VIP room ahead; a C sends a heckler. Don't just win. Win the room."),
+	]
+	var anchors := [Vector2(396, 330), Vector2(380, 340), Vector2(420, 210)]
+	var overlay := Control.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(dim)
+	var pc := TipIcon.panel(titles[step], bodies[step])
+	pc.position = anchors[step]
+	pc.custom_minimum_size = Vector2(370, 0)
+	overlay.add_child(pc)
+	if step == 2:
+		var tex := SpriteBank.texture(&"the_critic")
+		if tex != null:
+			var tr := TextureRect.new()
+			tr.texture = tex
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			tr.position = anchors[step] + Vector2(-110, -6)
+			tr.size = Vector2(96, 96)
+			overlay.add_child(tr)
+	var last := step >= 2
+	var btn := NodeUI.small_button(Loc.t("got it — let's serve") if last else Loc.t("next"), func():
+		overlay.queue_free()
+		if last:
+			GameState.seen_tutorial = true
+			GameState.save_meta()
+		else:
+			_show_tutorial(step + 1), Color(0.45, 0.82, 0.55))
+	btn.position = anchors[step] + Vector2(80, 150)
+	overlay.add_child(btn)
+	add_child(overlay)
 
 # --- player widget (left, persistent) ------------------------------------
 
@@ -431,6 +506,13 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 		w.gui_input.connect(func(ev: InputEvent):
 			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 				cm.set_target(index))
+		# hover brightens the monster so click-to-retarget is discoverable
+		w.mouse_entered.connect(func():
+			if index < _enemy_sprites.size() and is_instance_valid(_enemy_sprites[index]):
+				_enemy_sprites[index].modulate = Color(1.35, 1.3, 1.15))
+		w.mouse_exited.connect(func():
+			if index < _enemy_sprites.size() and is_instance_valid(_enemy_sprites[index]):
+				_enemy_sprites[index].modulate = Color.WHITE)
 
 	# intent chip above the monster (icon + amount)
 	var intent := HBoxContainer.new()

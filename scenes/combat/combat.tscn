@@ -122,7 +122,7 @@ offset_top = 390.0
 offset_right = 1132.0
 offset_bottom = 434.0
 theme_override_font_sizes/font_size = 20
-text = "Bye ✌"
+text = "End Turn"
 
 [node name="HandLabel" type="Label" parent="."]
 layout_mode = 0

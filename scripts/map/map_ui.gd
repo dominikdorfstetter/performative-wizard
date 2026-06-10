@@ -119,6 +119,20 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 			badge.add_theme_font_size_override("font_size", 13)
 			badge.add_theme_color_override("font_color", Color(1, 1, 1) if (avail or current) else Color(1, 1, 1, 0.4))
 			b.add_child(badge)
+		# The Critic's pending verdict will rewrite the next fight you enter — show it
+		# ON THE MAP (crown = VIP gold ahead, heckler = she's sending one).
+		if avail and (GameState.pending_critic == "S" or GameState.pending_critic == "C"):
+			var mark := TextureRect.new()
+			mark.texture = SpriteBank.icon_texture(&"crown") if GameState.pending_critic == "S" else SpriteBank.texture(&"heckler")
+			mark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			mark.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			mark.position = Vector2(-7, -9)
+			mark.size = Vector2(20, 20)
+			b.add_child(mark)
+			var tw := mark.create_tween().set_loops()
+			tw.tween_property(mark, "modulate:a", 0.45, 0.6).set_trans(Tween.TRANS_SINE)
+			tw.tween_property(mark, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
 	add_child(b)
 
 func _build_info() -> void:
@@ -139,7 +153,7 @@ func _build_info() -> void:
 	_info.text = "    ".join(parts)
 	var trend := GameState.trend_label()
 	if trend != "":
-		_info.text += "\n%s    Critic %d" % [trend, GameState.critic_score]
+		_info.text += "\n%s    %s" % [trend, Loc.t("Critic score %d") % GameState.critic_score]
 	add_child(_info)
 	_build_artifact_row()
 	var deck_btn := Button.new()
@@ -174,6 +188,11 @@ func _build_info() -> void:
 		l.add_theme_color_override("font_color", TYPE_COLOR[t].lightened(0.2))
 		pair.add_child(l)
 		legend.add_child(pair)
+	var hint := Label.new()
+	hint.text = Loc.t("(badge = number of enemies)")
+	hint.add_theme_font_size_override("font_size", 14)
+	hint.add_theme_color_override("font_color", Color(0.55, 0.55, 0.62))
+	legend.add_child(hint)
 
 # Relics as pixel charms with hover tooltips (was an emoji list in the header label).
 func _build_artifact_row() -> void:

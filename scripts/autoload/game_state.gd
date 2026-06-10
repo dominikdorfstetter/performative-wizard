@@ -44,6 +44,7 @@ var critic_score := 0                        # lifetime style score from The Cri
 var sfx_on := true
 var music_on := true
 var locale := "en"
+var seen_tutorial := false                   # the first-fight teaching beats fire once
 
 const MAX_ACTS := 3
 
@@ -66,6 +67,7 @@ var pos_col := -1
 # The Critic (run-scoped): her verdict on the LAST fight, and the verdict still
 # waiting to reshape the NEXT room the player enters.
 var critic_last_rating := ""
+var critic_last_details: Dictionary = {}     # full rating dict — the reward screen's "because"
 var critic_last_signature: StringName = &""
 var critic_last_freshness := 1.0
 var pending_critic := ""
@@ -405,6 +407,7 @@ func record_show_rating(r: Dictionary) -> void:
 	var sig: StringName = r.get("signature", &"grind")
 	var fat := int(critic_fatigue.get(sig, 0))
 	critic_last_rating = rating
+	critic_last_details = r.duplicate()
 	critic_last_signature = sig
 	critic_last_freshness = maxf(0.0, 1.0 - 0.34 * fat)
 	pending_critic = rating
@@ -706,6 +709,7 @@ func load_meta() -> void:
 	sfx_on = bool(data.get("sfx_on", true))
 	music_on = bool(data.get("music_on", true))
 	locale = String(data.get("locale", "en"))
+	seen_tutorial = bool(data.get("seen_tutorial", false))
 	var run: Variant = data.get("run", {})
 	_run_snapshot = run if typeof(run) == TYPE_DICTIONARY else {}
 
@@ -722,7 +726,7 @@ func save_meta() -> void:
 	if f == null:
 		push_warning("[GameState] could not open save file for writing")
 		return
-	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale}
+	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale, "seen_tutorial": seen_tutorial}
 	if not _run_snapshot.is_empty():
 		payload["run"] = _run_snapshot
 	f.store_string(JSON.stringify(payload, "\t"))

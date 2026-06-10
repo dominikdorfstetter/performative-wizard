@@ -6,6 +6,8 @@ extends Control
 
 func _ready() -> void:
 	NodeUI.gradient_bg(self)
+	(%Title as Label).text = Loc.t("BIG W!   cop a card")
+	(%Title as Label).add_theme_font_override("font", NodeUI.DISPLAY_FONT)
 	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
 	(%Banner as Label).text = ""
 
@@ -15,6 +17,9 @@ func _ready() -> void:
 	Audio.play("coin", -4.0)
 	(%Subtitle as Label).text = "+%d gold  (now %d)    ·    HP %d/%d    ·    Deck %d" % [
 		gain, GameState.gold, GameState.player_hp, GameState.player_max_hp, GameState.deck.size()]
+	var vip := int(node.get("critic_bonus_gold", 0))
+	if vip > 0:
+		(%Subtitle as Label).text += "\n" + Loc.t("VIP ovation: +%d gold — she approved.") % vip
 
 	# The Critic's review of the fight you just had — and a heads-up on what her
 	# verdict did to the road ahead.
@@ -25,6 +30,12 @@ func _ready() -> void:
 		elif GameState.pending_critic == "C":
 			quip += "   " + Loc.t("— a heckler's waiting in your next fight.")
 		(%Subtitle as Label).text += "\n" + Loc.t("THE CRITIC:  ") + quip
+		var d := GameState.critic_last_details
+		if not d.is_empty():
+			(%Subtitle as Label).text += "\n" + Loc.t("because: peak Aura %d · %d tiers lit · %s") % [
+				int(d.get("peak_swag", 0)), int(d.get("thresholds_lit", 0)),
+				Loc.t("clean cash-out finish") if bool(d.get("finisher_clean", false)) else Loc.t("no finisher cash-out")]
+		_stamp_grade(GameState.critic_last_rating)
 
 	if node.get("type") == "Elite":
 		var aid := _random_unowned_artifact()
@@ -40,6 +51,43 @@ func _ready() -> void:
 			_options.add_child(_big_card(card, id))
 
 	(%Skip as Button).pressed.connect(_to_map)
+
+## The letter-grade stamp: her verdict slams onto the screen with a sting — the
+## review is the USP and used to be an unnoticed text line.
+func _stamp_grade(letter: String) -> void:
+	var colors := {"S": Color(1.0, 0.82, 0.29), "A": Color(0.6, 0.95, 0.7), "B": Color(0.85, 0.85, 0.95), "C": Color(0.92, 0.46, 0.5)}
+	var stamp := Label.new()
+	stamp.text = letter
+	stamp.add_theme_font_override("font", NodeUI.DISPLAY_FONT)
+	stamp.add_theme_font_size_override("font_size", 110)
+	stamp.add_theme_color_override("font_color", colors.get(letter, Color.WHITE))
+	stamp.position = Vector2(940, 52)
+	stamp.size = Vector2(140, 130)
+	stamp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stamp.pivot_offset = Vector2(70, 65)
+	stamp.rotation = deg_to_rad(-8)
+	stamp.scale = Vector2(2.6, 2.6)
+	stamp.modulate.a = 0.0
+	add_child(stamp)
+	var ring := Panel.new()
+	ring.position = Vector2(-10, 4)
+	ring.size = Vector2(160, 130)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.set_border_width_all(4)
+	sb.border_color = colors.get(letter, Color.WHITE)
+	sb.set_corner_radius_all(16)
+	ring.add_theme_stylebox_override("panel", sb)
+	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stamp.add_child(ring)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(stamp, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(stamp, "modulate:a", 1.0, 0.16)
+	if letter == "S" or letter == "A":
+		Audio.play("crowd", -3.0)
+	else:
+		Audio.play("debuff", -4.0)
 
 # scale cards up and box them so they spread across the screen instead of clustering
 func _big_card(card: CardData, id: StringName) -> Control:
