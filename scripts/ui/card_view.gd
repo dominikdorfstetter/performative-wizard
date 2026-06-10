@@ -89,8 +89,9 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	b.add_child(rule)
 
 	var upgraded := GameState.is_upgraded(card.id)
+	var umode := GameState.upgrade_mode(card.id)
 	var eff_cost := GameState.card_cost(card)
-	_add_label(b, str(eff_cost), Vector2(7, 7), Vector2(34, 34), 20, Color.BLACK, _circle(C_SWAG if upgraded else C_GOLD))
+	_add_label(b, str(eff_cost), Vector2(7, 7), Vector2(34, 34), 20, Color.BLACK, _circle(C_SWAG if umode == "cost" else C_GOLD))
 	# rarity gem (every card): a rotated square diamond, brighter for higher rarities
 	var gem := ColorRect.new()
 	gem.color = rc
@@ -101,15 +102,20 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	gem.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(gem)
 	if upgraded:
-		var up := TextureRect.new()
-		up.texture = SpriteBank.icon_texture(&"star")
-		up.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		up.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		up.modulate = C_SWAG
-		up.position = Vector2(98, 7)
-		up.size = Vector2(18, 18)
-		up.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(up)
+		# "value" glow-ups wear their +2 on the sleeve (description keeps base
+		# numbers); "cost" ones keep the classic star
+		if umode == "value":
+			_add_label(b, "+2", Vector2(94, 8), Vector2(28, 18), 14, C_SWAG)
+		else:
+			var up := TextureRect.new()
+			up.texture = SpriteBank.icon_texture(&"star")
+			up.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			up.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			up.modulate = C_SWAG
+			up.position = Vector2(98, 7)
+			up.size = Vector2(18, 18)
+			up.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.add_child(up)
 
 	# type tag ABOVE the title so 2-line titles never collide with it
 	_add_label(b, Loc.t(card.type).to_upper(), Vector2(6, 52), Vector2(138, 14), 10, C_DIM)

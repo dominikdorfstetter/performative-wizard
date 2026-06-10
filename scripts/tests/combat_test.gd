@@ -1045,6 +1045,45 @@ func _ready() -> void:
 	var fire_pool: Array = Database.get_wizard(&"fire").reward_pool
 	_check("neutral utilities reach fire too", &"vision_board" in fire_pool and &"saved_drafts" in fire_pool, true)
 
+	# --- glow up flavours: "cost" (classic) vs "value" (+2 amounts) ------------
+	print("--- glow up flavours ---")
+	var ember_card := Database.get_card(&"ember")
+	var cmup := CombatManager.new()
+	var pup := Combatant.new()
+	pup.max_hp = 60
+	pup.hp = 60
+	cmup.start_combat(pup, [Database.get_enemy(&"alley_cat")], [ember_card], 0, true, [], 1.0, 1.0, {&"ember": "value"})
+	_check("value upgrade keeps the cost", cmup.card_cost(ember_card), 1)
+	var cat_hp0: int = cmup.enemies[0].hp
+	cmup.set_target(0)
+	cmup.play_card(cmup.hand[0])
+	_check("value upgrade deals 6+2", cat_hp0 - cmup.enemies[0].hp, 8)
+	var cmup2 := CombatManager.new()
+	var pup2 := Combatant.new()
+	pup2.max_hp = 60
+	pup2.hp = 60
+	cmup2.start_combat(pup2, [Database.get_enemy(&"alley_cat")], [ember_card], 0, true, [], 1.0, 1.0, {&"ember": "cost"})
+	_check("cost upgrade shaves 1 energy", cmup2.card_cost(ember_card), 0)
+	var cat_hp1: int = cmup2.enemies[0].hp
+	cmup2.set_target(0)
+	cmup2.play_card(cmup2.hand[0])
+	_check("cost upgrade keeps base damage", cat_hp1 - cmup2.enemies[0].hp, 6)
+	var cmup3 := CombatManager.new()
+	var pup3 := Combatant.new()
+	pup3.max_hp = 60
+	pup3.hp = 60
+	cmup3.start_combat(pup3, [Database.get_enemy(&"alley_cat")], [ember_card], 0, true, [], 1.0, 1.0, {&"ember": true})
+	_check("legacy true reads as cost", cmup3.card_cost(ember_card), 0)
+	# upgrade modes survive the run-snapshot JSON round-trip
+	var saved_ups: Dictionary = GameState.card_upgrades.duplicate()
+	GameState.card_upgrades = {&"ember": "value", &"wink": "cost"}
+	var up_run: Dictionary = JSON.parse_string(JSON.stringify(GameState._run_to_dict()))
+	GameState.card_upgrades = {}
+	GameState._run_from_dict(up_run)
+	_check("value mode survives the snapshot", GameState.upgrade_mode(&"ember"), "value")
+	_check("cost mode survives the snapshot", GameState.upgrade_mode(&"wink"), "cost")
+	GameState.card_upgrades = saved_ups
+
 	# --- loc coverage: the teaching layer + key chrome exists in BOTH tables, so a
 	# string change can never silently regress DE/ES back to English again ---
 	print("--- loc coverage ---")

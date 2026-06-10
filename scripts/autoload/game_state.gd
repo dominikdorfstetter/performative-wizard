@@ -69,7 +69,7 @@ var gold := 0
 var act := 1                                 # 1..MAX_ACTS
 var asc_level := 0                           # ascension modifiers active this run
 var run_artifacts: Array[StringName] = []    # artefact ids held this run
-var card_upgrades: Dictionary = {}           # card_id -> true (Glow'd Up: costs 1 less)
+var card_upgrades: Dictionary = {}           # card_id -> "cost"|"value" (legacy true == "cost")
 var map: Array = []
 var pos_row := -1                            # -1 = haven't entered row 0 yet
 var pos_col := -1
@@ -242,16 +242,23 @@ func locked_wizard_hint(id: StringName) -> String:
 	return Loc.t("Locked — unlock at %d Clout  (you have %d earned)") % [w.unlock_clout, clout_earned]
 
 func is_upgraded(id: StringName) -> bool:
-	return card_upgrades.get(id, false)
+	return card_upgrades.has(id)
 
-func upgrade_card(id: StringName) -> void:
-	card_upgrades[id] = true
+## "cost" (Glow Up classic: 1 cheaper) or "value" (+2 on damage/Block/heal amounts).
+## Legacy saves stored `true`, which reads as "cost".
+func upgrade_mode(id: StringName) -> String:
+	if not card_upgrades.has(id):
+		return ""
+	return "value" if str(card_upgrades[id]) == "value" else "cost"
+
+func upgrade_card(id: StringName, mode := "cost") -> void:
+	card_upgrades[id] = mode
 
 ## Effective energy cost after Glow-Up (costs 1 less, min 0).
 func card_cost(card: CardData) -> int:
 	if card == null:
 		return 0
-	return max(0, card.cost - (1 if is_upgraded(card.id) else 0))
+	return max(0, card.cost - (1 if upgrade_mode(card.id) == "cost" else 0))
 
 func card_unlocked(id: StringName) -> bool:
 	var c := Database.get_card(id)
@@ -631,7 +638,7 @@ func _run_to_dict() -> Dictionary:
 		pas.append(String(p))
 	var ups := {}
 	for k in card_upgrades:
-		ups[String(k)] = true
+		ups[String(k)] = upgrade_mode(k)
 	var fat := {}
 	for k in critic_fatigue:
 		fat[String(k)] = int(critic_fatigue[k])
@@ -692,8 +699,9 @@ func _run_from_dict(d: Dictionary) -> bool:
 	for a in d.get("artifacts", []):
 		run_artifacts.append(StringName(String(a)))
 	card_upgrades = {}
-	for k in d.get("card_upgrades", {}):
-		card_upgrades[StringName(String(k))] = true
+	var ups_in: Dictionary = d.get("card_upgrades", {})
+	for k in ups_in:
+		card_upgrades[StringName(String(k))] = "value" if String(ups_in[k]) == "value" else "cost"
 	map = []
 	for row_in in rows_in:
 		if typeof(row_in) != TYPE_ARRAY:

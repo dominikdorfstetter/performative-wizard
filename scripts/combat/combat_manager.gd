@@ -71,7 +71,7 @@ var retain_hand := false        # set by the "retain" op; consumed at end_turn
 var passives: Array[StringName] = []
 var enemy_dmg_scale := 1.0
 var enemy_hp_scale := 1.0
-var upgrades: Dictionary = {}        # card_id -> true (Glow'd Up: costs 1 less)
+var upgrades: Dictionary = {}        # card_id -> "cost"|"value" (legacy true == "cost")
 var crit_chance := 0.0
 var last_crit := false
 var log_lines: Array[String] = []
@@ -254,7 +254,26 @@ func _tick_powers() -> void:
 		player.block += barrier
 
 func card_cost(card: CardData) -> int:
-	return max(0, card.cost - (1 if upgrades.get(card.id, false) else 0))
+	return max(0, card.cost - (1 if upgrade_mode(card) == "cost" else 0))
+
+## Mirrors GameState.upgrade_mode: "cost" (1 cheaper), "value" (+2 amounts), "" (none).
+## Legacy saves stored `true`, which reads as "cost".
+func upgrade_mode(card: CardData) -> String:
+	if not upgrades.has(card.id):
+		return ""
+	return "value" if str(upgrades[card.id]) == "value" else "cost"
+
+## A value-Glow'd card plays with +2 on its damage/Block/heal amounts.
+func _effective_effects(card: CardData) -> Array:
+	if upgrade_mode(card) != "value":
+		return card.effects
+	var out: Array = []
+	for e in card.effects:
+		var d: Dictionary = e.duplicate()
+		if String(d.get("op", "")) in ["damage", "damage_all", "block", "heal", "damage_if_status"]:
+			d["amount"] = int(d.get("amount", 0)) + 2
+		out.append(d)
+	return out
 
 func can_play(card: CardData) -> bool:
 	return state == State.PLAYER_TURN and energy >= card_cost(card)
@@ -303,7 +322,7 @@ func play_card(card: CardData) -> bool:
 		enemy_hp_before.append(e.hp)
 
 	var normal: Array = []
-	for e in card.effects:
+	for e in _effective_effects(card):
 		if String(e.get("op", "")).begins_with("finisher"):
 			_resolve_finisher(e, ctx)
 		else:

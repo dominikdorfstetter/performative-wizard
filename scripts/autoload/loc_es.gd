@@ -421,4 +421,10 @@ const TABLE := {
 	"%d cards. When it runs dry, your discard shuffles back in.": "%d cartas. Cuando se agota, tu descarte se baraja de vuelta.",
 	"%d cards. Played and discarded cards land here.": "%d cartas. Las cartas jugadas y descartadas caen aquí.",
 	"up next": "a continuación",
+	"Upgrade a card: make it cheaper OR hit harder.": "Mejora una carta: más barata O más pegada.",
+	"Sharper": "Más afilada",
+	"Juicier": "Más jugosa",
+	"Costs 1 less Energy. efficiency era.": "Cuesta 1 de Energía menos. era de la eficiencia.",
+	"+2 to its damage, Block and heals. more of everything.": "+2 a su daño, Bloqueo y curación. más de todo.",
+	"how does it glow up?": "¿cómo hace el glow up?",
 }
