@@ -98,6 +98,9 @@ func _ready() -> void:
 	_end_turn.text = Loc.t("End Turn")
 	_end_turn.add_theme_stylebox_override("normal", _panel_box(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
 	_end_turn.add_theme_stylebox_override("hover", _panel_box(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
+	_end_turn.add_theme_stylebox_override("pressed", _panel_box(Color(0.13, 0.30, 0.18), Color(0.36, 0.70, 0.45)))
+	_end_turn.add_theme_stylebox_override("disabled", _panel_box(Color(0.10, 0.14, 0.11), Color(0.25, 0.32, 0.27)))
+	_end_turn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	_result_panel.visible = false   # superseded by the run-end overlay (_run_end_panel)
 	set_process_unhandled_input(true)
 	_popups = Control.new()
@@ -105,7 +108,6 @@ func _ready() -> void:
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_popups)
 	_add_sparkles()
-	_add_twinkles()
 	if GameState.map.is_empty():
 		GameState.start_run(&"fire")
 		GameState.finalize_loadout()
@@ -663,9 +665,10 @@ func _idle_bob(node: Control, delay: float, amp: float) -> void:
 
 func _add_sparkles() -> void:
 	var p := CPUParticles2D.new()
-	p.amount = 44
-	p.lifetime = 8.0
-	p.preprocess = 5.0
+	p.texture = SpriteBank.icon_texture(&"star")   # textured mote, not a bare square
+	p.amount = 30
+	p.lifetime = 6.0
+	p.preprocess = 4.0
 	p.position = Vector2(576, 656)
 	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
 	p.emission_rect_extents = Vector2(600, 8)
@@ -674,9 +677,9 @@ func _add_sparkles() -> void:
 	p.gravity = Vector2(0, -5)
 	p.initial_velocity_min = 9.0
 	p.initial_velocity_max = 24.0
-	p.scale_amount_min = 2.0
-	p.scale_amount_max = 4.0
-	p.color = Color(1.0, 0.6, 0.88, 0.55)
+	p.scale_amount_min = 0.4
+	p.scale_amount_max = 0.8
+	p.color = Color(1.0, 0.6, 0.88, 0.3)
 	add_child(p)
 	move_child(p, 1)
 

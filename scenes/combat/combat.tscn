@@ -134,9 +134,9 @@ offset_bottom = 414.0
 [node name="Hand" type="HBoxContainer" parent="."]
 layout_mode = 0
 offset_left = 110.0
-offset_top = 446.0
+offset_top = 436.0
 offset_right = 1040.0
-offset_bottom = 646.0
+offset_bottom = 636.0
 theme_override_constants/separation = 12
 alignment = 1
 

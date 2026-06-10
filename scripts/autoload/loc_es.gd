@@ -35,7 +35,7 @@ const TABLE := {
 	"Skill": "Habilidad",
 	"Power": "Poder",
 	# --- class select ---
-	"pick your fighter — all your power is in the fit.    Clout: %d": "elige tu fighter — todo tu poder está en el outfit.    Clout: %d",
+	"pick your fighter — all your power is in the fit.    Clout to spend: %d": "elige tu fighter — todo tu poder está en el outfit.    Clout para gastar: %d",
 	"the %s": "la/el %s",
 	"%d HP": "%d PV",
 	"Locked — unlock at %d Clout  (you have %d earned)": "Bloqueado — desbloquea con %d Clout  (llevas %d ganados)",
@@ -366,4 +366,6 @@ const TABLE := {
 	"ACT %d CLEARED": "ACTO %d SUPERADO",
 	"the gauntlet escalates — deck, HP and relics carry over.": "la cosa se pone seria — mazo, PV y reliquias se conservan.",
 	"onward — Act %d": "adelante — Acto %d",
+	"scroll for more": "desplázate para ver más",
+	"Skip": "Saltar",
 }

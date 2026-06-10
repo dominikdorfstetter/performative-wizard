@@ -140,10 +140,15 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 static func _hover(b: Button, on: bool) -> void:
 	if b == null or b.disabled or not is_instance_valid(b):
 		return
+	# Tween relative to the button's BASE scale: the reward screen pre-scales its
+	# cards to 1.45, and an absolute tween permanently shrank them after one hover.
+	if not b.has_meta("base_scale"):
+		b.set_meta("base_scale", b.scale)
+	var base: Vector2 = b.get_meta("base_scale")
 	b.pivot_offset = b.size * 0.5 if b.size != Vector2.ZERO else Vector2(75, 101)
 	b.z_index = 5 if on else 0
 	var tw := b.create_tween()
-	tw.tween_property(b, "scale", Vector2(1.08, 1.08) if on else Vector2.ONE, 0.1)
+	tw.tween_property(b, "scale", base * 1.08 if on else base, 0.1)
 
 static func icon_for(card: CardData) -> StringName:
 	if card.id in ICON_BY_ID:

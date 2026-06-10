@@ -16,6 +16,7 @@ var _wizard: WizardData
 
 func _ready() -> void:
 	NodeUI.gradient_bg(self)
+	(%Title as Label).add_theme_font_override("font", NodeUI.DISPLAY_FONT)
 	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
 	(%SummaryPanel as Panel).add_theme_stylebox_override("panel", _panel(Color(0.13, 0.11, 0.17), Color(0.28, 0.24, 0.36)))
 	_wizard = Database.get_wizard(GameState.wizard_id)
@@ -36,6 +37,8 @@ func _ready() -> void:
 	enter.pressed.connect(_enter)
 	enter.add_theme_stylebox_override("normal", _panel(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
 	enter.add_theme_stylebox_override("hover", _panel(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
+	enter.add_theme_stylebox_override("pressed", _panel(Color(0.13, 0.30, 0.18), Color(0.36, 0.70, 0.45)))
+	enter.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	(%BackButton as Button).pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
 	_rebuild()
 

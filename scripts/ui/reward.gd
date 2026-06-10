@@ -50,7 +50,13 @@ func _ready() -> void:
 		if card != null:
 			_options.add_child(_big_card(card, id))
 
-	(%Skip as Button).pressed.connect(_to_map)
+	var skip := %Skip as Button
+	skip.pressed.connect(_to_map)
+	skip.add_theme_stylebox_override("normal", NodeUI.box(Color(0.15, 0.13, 0.2), Color(0.45, 0.5, 0.62), 2))
+	skip.add_theme_stylebox_override("hover", NodeUI.box(Color(0.22, 0.19, 0.3), Color(0.6, 0.66, 0.78), 2))
+	skip.add_theme_stylebox_override("pressed", NodeUI.box(Color(0.2, 0.17, 0.27), Color(0.45, 0.5, 0.62), 2))
+	skip.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	skip.text = Loc.t("Skip")
 
 ## The letter-grade stamp: her verdict slams onto the screen with a sting — the
 ## review is the USP and used to be an unnoticed text line.

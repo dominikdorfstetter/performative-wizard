@@ -26,7 +26,7 @@ const SCENE := {
 const LEFT := 150.0
 const RIGHT := 1010.0
 const TOP := 116.0
-const BOT := 600.0
+const BOT := 572.0
 const NODE := 50.0
 
 var _pos := {}
@@ -159,13 +159,17 @@ func _build_info() -> void:
 	var deck_btn := Button.new()
 	deck_btn.text = Loc.t("deck (%d)") % GameState.deck.size()
 	deck_btn.add_theme_font_size_override("font_size", 16)
+	deck_btn.add_theme_stylebox_override("normal", NodeUI.box(Color(0.15, 0.13, 0.2), Color(0.45, 0.5, 0.62), 2))
+	deck_btn.add_theme_stylebox_override("hover", NodeUI.box(Color(0.22, 0.19, 0.3), Color(0.6, 0.66, 0.78), 2))
+	deck_btn.add_theme_stylebox_override("pressed", NodeUI.box(Color(0.2, 0.17, 0.27), Color(0.45, 0.5, 0.62), 2))
+	deck_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	deck_btn.position = Vector2(968, 12)
 	deck_btn.size = Vector2(164, 34)
 	deck_btn.pressed.connect(_show_deck)
 	add_child(deck_btn)
 	# Pixel-icon legend (matches the node buttons), replacing the emoji hint line.
 	var legend := HBoxContainer.new()
-	legend.position = Vector2(20, 610)
+	legend.position = Vector2(20, 614)
 	legend.add_theme_constant_override("separation", 12)
 	add_child(legend)
 	var intro := Label.new()

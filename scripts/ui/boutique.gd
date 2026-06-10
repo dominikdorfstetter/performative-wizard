@@ -26,6 +26,16 @@ func _build() -> void:
 	for entry in GameState.BOUTIQUE:
 		grid.add_child(_stall(entry))
 
+	if GameState.BOUTIQUE.size() > 6:
+		var more := Label.new()
+		more.text = Loc.t("scroll for more")
+		more.position = Vector2(78, 574)
+		more.size = Vector2(996, 18)
+		more.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		more.add_theme_font_size_override("font_size", 13)
+		more.add_theme_color_override("font_color", Color(0.55, 0.55, 0.62))
+		add_child(more)
+
 	var back := NodeUI.small_button("Back", _to_menu, Color(0.4, 0.85, 0.55))
 	back.position = Vector2(486, 596)
 	add_child(back)

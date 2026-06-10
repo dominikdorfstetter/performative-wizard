@@ -7,8 +7,9 @@ extends Control
 
 func _ready() -> void:
 	NodeUI.gradient_bg(self)
+	(%Title as Label).add_theme_font_override("font", NodeUI.DISPLAY_FONT)
 	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
-	(%Subtitle as Label).text = Loc.t("pick your fighter — all your power is in the fit.    Clout: %d") % GameState.clout
+	(%Subtitle as Label).text = Loc.t("pick your fighter — all your power is in the fit.    Clout to spend: %d") % GameState.clout
 	if GameState.message != "":
 		_message.text = GameState.message
 		_message.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
@@ -24,6 +25,7 @@ func _ready() -> void:
 	var menu := Button.new()
 	menu.text = Loc.t("Menu")
 	menu.add_theme_font_size_override("font_size", 16)
+	_style_btn(menu)
 	menu.position = Vector2(24, 24)
 	menu.size = Vector2(120, 38)
 	menu.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/main_menu.tscn"))
@@ -75,6 +77,7 @@ func _build_ascension_picker() -> void:
 	var dec := Button.new()
 	dec.text = "-"
 	dec.add_theme_font_size_override("font_size", 20)
+	_style_btn(dec)
 	dec.pressed.connect(_asc_change.bind(-1))
 	box.add_child(dec)
 	_asc_label = Label.new()
@@ -87,6 +90,7 @@ func _build_ascension_picker() -> void:
 	var inc := Button.new()
 	inc.text = "+"
 	inc.add_theme_font_size_override("font_size", 20)
+	_style_btn(inc)
 	inc.pressed.connect(_asc_change.bind(1))
 	box.add_child(inc)
 	col.add_child(box)
@@ -120,6 +124,12 @@ func _label(parent: Control, text: String, pos: Vector2, sz: Vector2, fs: int, c
 	l.add_theme_font_size_override("font_size", fs)
 	l.add_theme_color_override("font_color", color)
 	parent.add_child(l)
+
+func _style_btn(b: Button) -> void:
+	b.add_theme_stylebox_override("normal", NodeUI.box(Color(0.15, 0.13, 0.2), Color(0.45, 0.5, 0.62), 2))
+	b.add_theme_stylebox_override("hover", NodeUI.box(Color(0.22, 0.19, 0.3), Color(0.6, 0.66, 0.78), 2))
+	b.add_theme_stylebox_override("pressed", NodeUI.box(Color(0.2, 0.17, 0.27), Color(0.45, 0.5, 0.62), 2))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
 func _box(bg: Color, border: Color) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
