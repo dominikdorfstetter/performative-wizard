@@ -89,12 +89,33 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	b.add_child(rule)
 
 	var upgraded := GameState.is_upgraded(card.id)
+	var umode := GameState.upgrade_mode(card.id)
 	var eff_cost := GameState.card_cost(card)
-	_add_label(b, str(eff_cost), Vector2(7, 7), Vector2(34, 34), 20, Color.BLACK, _circle(C_SWAG if upgraded else C_GOLD))
-	# rarity gem (every card), brighter diamond for higher rarities
-	_add_label(b, "◆", Vector2(119, 8), Vector2(24, 22), 14, rc)
+	_add_label(b, str(eff_cost), Vector2(7, 7), Vector2(34, 34), 20, Color.BLACK, _circle(C_SWAG if umode == "cost" else C_GOLD))
+	# rarity gem (every card): a rotated square diamond, brighter for higher rarities
+	var gem := ColorRect.new()
+	gem.color = rc
+	gem.size = Vector2(10, 10)
+	gem.position = Vector2(126, 12)
+	gem.pivot_offset = Vector2(5, 5)
+	gem.rotation = PI / 4.0
+	gem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(gem)
 	if upgraded:
-		_add_label(b, "✦+", Vector2(96, 6), Vector2(22, 18), 13, C_SWAG)
+		# "value" glow-ups wear their +2 on the sleeve (description keeps base
+		# numbers); "cost" ones keep the classic star
+		if umode == "value":
+			_add_label(b, "+2", Vector2(94, 8), Vector2(28, 18), 14, C_SWAG)
+		else:
+			var up := TextureRect.new()
+			up.texture = SpriteBank.icon_texture(&"star")
+			up.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			up.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			up.modulate = C_SWAG
+			up.position = Vector2(98, 7)
+			up.size = Vector2(18, 18)
+			up.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.add_child(up)
 
 	# type tag ABOVE the title so 2-line titles never collide with it
 	_add_label(b, Loc.t(card.type).to_upper(), Vector2(6, 52), Vector2(138, 14), 10, C_DIM)
@@ -119,16 +140,21 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	var dsize := 13 if disp_desc.length() <= 58 else 12
 	_add_label(b, disp_desc, Vector2(9, 120), Vector2(132, dh), dsize, Color(0.87, 0.87, 0.92))
 	if has_footer:
-		_add_label(b, "✦ Aura +%d" % card.swag_gain, Vector2(6, 176), Vector2(138, 16), 13, C_SWAG)
+		_add_label(b, "Aura +%d" % card.swag_gain, Vector2(6, 176), Vector2(138, 16), 13, C_SWAG)
 	return b
 
 static func _hover(b: Button, on: bool) -> void:
 	if b == null or b.disabled or not is_instance_valid(b):
 		return
+	# Tween relative to the button's BASE scale: the reward screen pre-scales its
+	# cards to 1.45, and an absolute tween permanently shrank them after one hover.
+	if not b.has_meta("base_scale"):
+		b.set_meta("base_scale", b.scale)
+	var base: Vector2 = b.get_meta("base_scale")
 	b.pivot_offset = b.size * 0.5 if b.size != Vector2.ZERO else Vector2(75, 101)
 	b.z_index = 5 if on else 0
 	var tw := b.create_tween()
-	tw.tween_property(b, "scale", Vector2(1.08, 1.08) if on else Vector2.ONE, 0.1)
+	tw.tween_property(b, "scale", base * 1.08 if on else base, 0.1)
 
 static func icon_for(card: CardData) -> StringName:
 	if card.id in ICON_BY_ID:

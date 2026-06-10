@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"crowd_work"
+title = "Crowd Work"
+description = "Deal 5 to ALL enemies. +2 Aura. work the room."
+cost = 2
+type = "Attack"
+rarity = "Rare"
+archetype = &"storm"
+swag_gain = 2
+swag_cost = 0
+unlock_clout = 90
+effects = [{ "op": "damage_all", "amount": 5 }]

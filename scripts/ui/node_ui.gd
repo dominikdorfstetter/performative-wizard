@@ -7,6 +7,18 @@ const BG := Color(0.08, 0.06, 0.11)
 const PINK := Color(1.0, 0.31, 0.70)
 const GOLD := Color(1.0, 0.82, 0.29)
 
+# The 4-step type scale every screen should draw from (one font, four sizes —
+# replaces the ~20 ad-hoc font_size overrides the art audit flagged).
+const FS_TITLE := 36
+const FS_HEADING := 22
+const FS_BODY := 16
+const FS_CAPTION := 13
+
+# Two-font system: Jersey 20 (project default, gui/theme/custom_font) carries all
+# body/UI text — its digits are unmistakable, which a deckbuilder lives on.
+# Pixelify Sans is DISPLAY ONLY (screen titles, no digits): its '5' reads as 'S'.
+const DISPLAY_FONT: FontFile = preload("res://assets/fonts/pixelify_sans.ttf")
+
 static func background(parent: Control) -> void:
 	gradient_bg(parent)
 
@@ -29,15 +41,29 @@ static func gradient_bg(parent: Control, top := Color(0.12, 0.09, 0.17), bottom 
 	parent.add_child(tr)
 	parent.move_child(tr, 0)
 
-static func title(parent: Control, text: String, color: Color = PINK) -> Label:
+static func title(parent: Control, text: String, color: Color = PINK, icon_tex: Texture2D = null) -> Label:
 	var l := Label.new()
 	l.text = Loc.t(text)
-	l.add_theme_font_size_override("font_size", 36)
+	l.add_theme_font_override("font", DISPLAY_FONT)
+	l.add_theme_font_size_override("font_size", FS_TITLE)
 	l.add_theme_color_override("font_color", color)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.position = Vector2(0, 48)
 	l.size = Vector2(1152, 50)
 	parent.add_child(l)
+	if icon_tex != null:
+		# pixel icon sitting just left of the centered title text
+		var ir := TextureRect.new()
+		ir.texture = icon_tex
+		ir.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ir.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ir.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ir.size = Vector2(36, 36)
+		var f := l.get_theme_font("font")
+		var fs := l.get_theme_font_size("font_size")
+		var text_w := f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		ir.position = Vector2(576.0 - text_w * 0.5 - 48.0, 55)
+		parent.add_child(ir)
 	return l
 
 static func sub(parent: Control, text: String, y: float = 108.0) -> Label:
@@ -52,7 +78,7 @@ static func sub(parent: Control, text: String, y: float = 108.0) -> Label:
 	return l
 
 ## A large choice card-button with a title and description.
-static func choice(text: String, desc: String, accent: Color, cb: Callable, enabled := true, icon := "") -> Button:
+static func choice(text: String, desc: String, accent: Color, cb: Callable, enabled := true, icon := "", icon_tex: Texture2D = null) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(300, 178)
 	b.disabled = not enabled
@@ -74,10 +100,18 @@ static func choice(text: String, desc: String, accent: Color, cb: Callable, enab
 	vb.add_theme_constant_override("separation", 10)
 	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(vb)
-	if icon != "":
+	if icon_tex != null:
+		var ir := TextureRect.new()
+		ir.texture = icon_tex
+		ir.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ir.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ir.custom_minimum_size = Vector2(44, 44)
+		ir.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vb.add_child(ir)
+	elif icon != "":
 		vb.add_child(_vlabel(icon, 42, Color.WHITE))
-	vb.add_child(_vlabel(Loc.t(text), 22, accent.lightened(0.35)))
-	vb.add_child(_vlabel(Loc.t(desc), 16, Color(0.82, 0.82, 0.88)))
+	vb.add_child(_vlabel(Loc.t(text), FS_HEADING, accent.lightened(0.35)))
+	vb.add_child(_vlabel(Loc.t(desc), FS_BODY, Color(0.82, 0.82, 0.88)))
 	return b
 
 static func _vlabel(text: String, fs: int, color: Color) -> Label:
@@ -94,7 +128,7 @@ static func _vlabel(text: String, fs: int, color: Color) -> Label:
 static func menu_button(text: String, cb: Callable, accent := Color(0.5, 0.55, 0.7), w := 340.0) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(w, 52)
-	b.add_theme_font_size_override("font_size", 22)
+	b.add_theme_font_size_override("font_size", FS_HEADING)
 	b.add_theme_stylebox_override("normal", box(Color(0.15, 0.13, 0.2), accent))
 	b.add_theme_stylebox_override("hover", box(Color(0.22, 0.19, 0.3), accent.lightened(0.3)))
 	b.add_theme_stylebox_override("pressed", box(Color(0.2, 0.17, 0.27), accent))
@@ -126,6 +160,111 @@ static func hbox(parent: Control, y: float, sep := 30) -> HBoxContainer:
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	parent.add_child(h)
 	return h
+
+## The canonical "you got an item" reveal: pixel icon, gold title, effect text.
+## Every acquisition moment (chest, events, elite loot) uses this SAME panel so
+## a new item always teaches what it does. Returns the panel (pre-popped).
+static func item_reveal(parent: Control, icon_tex: Texture2D, item_title: String, lines: Array, pos := Vector2(406, 236)) -> Panel:
+	var panel := Panel.new()
+	panel.position = pos
+	panel.size = Vector2(340, 200 + 20 * max(0, lines.size() - 1))
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.13, 0.11, 0.17)
+	sb.set_border_width_all(2)
+	sb.border_color = GOLD
+	sb.set_corner_radius_all(14)
+	panel.add_theme_stylebox_override("panel", sb)
+	parent.add_child(panel)
+	if icon_tex != null:
+		var tr := TextureRect.new()
+		tr.texture = icon_tex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.position = Vector2(126, 14)
+		tr.size = Vector2(88, 88)
+		panel.add_child(tr)
+	var t := Label.new()
+	t.text = Loc.t(item_title)
+	t.position = Vector2(12, 108)
+	t.size = Vector2(316, 30)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.add_theme_font_size_override("font_size", FS_HEADING)
+	t.add_theme_color_override("font_color", GOLD)
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(t)
+	var y := 142.0
+	for line in lines:
+		var l := Label.new()
+		l.text = Loc.t(String(line))
+		l.position = Vector2(12, y)
+		l.size = Vector2(316, 40)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD
+		l.add_theme_font_size_override("font_size", FS_BODY)
+		l.add_theme_color_override("font_color", Color(0.86, 0.86, 0.9))
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(l)
+		y += 22.0
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2(0.5, 0.5)
+	var tw := panel.create_tween()
+	tw.tween_property(panel, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	return panel
+
+## The Esc pause overlay (map + combat): resume, quick audio/fullscreen toggles,
+## and a confirmed abandon-run path — force-quitting used to be the only exit.
+static func pause_overlay(parent: Control, on_abandon: Callable) -> Control:
+	var overlay := Control.new()
+	overlay.name = "PauseOverlay"
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.01, 0.04, 0.72)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(dim)
+	var panel := Panel.new()
+	panel.position = Vector2(396, 130)
+	panel.size = Vector2(360, 400)
+	panel.add_theme_stylebox_override("panel", box(Color(0.10, 0.08, 0.14, 0.98), Color(0.28, 0.24, 0.36)))
+	overlay.add_child(panel)
+	var t := Label.new()
+	t.text = Loc.t("PAUSED")
+	t.add_theme_font_override("font", DISPLAY_FONT)
+	t.add_theme_font_size_override("font_size", 30)
+	t.add_theme_color_override("font_color", PINK)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.position = Vector2(0, 22)
+	t.size = Vector2(360, 40)
+	panel.add_child(t)
+	var vb := VBoxContainer.new()
+	vb.position = Vector2(40, 86)
+	vb.add_theme_constant_override("separation", 12)
+	panel.add_child(vb)
+	vb.add_child(menu_button(Loc.t("Resume"), overlay.queue_free, Color(0.45, 0.82, 0.55), 280.0))
+	var sfx_btn := menu_button("", Callable(), Color(0.5, 0.62, 0.85), 280.0)
+	sfx_btn.text = Loc.t("Sound FX:   %s") % Loc.t("On" if GameState.sfx_on else "Off")
+	sfx_btn.pressed.connect(func():
+		GameState.set_audio(not GameState.sfx_on, GameState.music_on)
+		sfx_btn.text = Loc.t("Sound FX:   %s") % Loc.t("On" if GameState.sfx_on else "Off"))
+	vb.add_child(sfx_btn)
+	var mus_btn := menu_button("", Callable(), Color(0.5, 0.62, 0.85), 280.0)
+	mus_btn.text = Loc.t("Music:   %s") % Loc.t("On" if GameState.music_on else "Off")
+	mus_btn.pressed.connect(func():
+		GameState.set_audio(GameState.sfx_on, not GameState.music_on)
+		mus_btn.text = Loc.t("Music:   %s") % Loc.t("On" if GameState.music_on else "Off"))
+	vb.add_child(mus_btn)
+	if not OS.has_feature("web"):
+		vb.add_child(menu_button(Loc.t("Toggle Fullscreen"), GameState.toggle_fullscreen, Color(0.5, 0.62, 0.85), 280.0))
+	var abandon := menu_button(Loc.t("Abandon Run"), Callable(), Color(0.9, 0.4, 0.42), 280.0)
+	abandon.pressed.connect(func():
+		if abandon.get_meta("armed", false):
+			on_abandon.call()
+		else:
+			abandon.set_meta("armed", true)
+			abandon.text = Loc.t("Abandon — sure?"))
+	vb.add_child(abandon)
+	parent.add_child(overlay)
+	return overlay
 
 static func box(bg: Color, border: Color, bw := 3) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()

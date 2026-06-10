@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"vision_board"
+title = "Vision Board"
+description = "Peek at your next 3 cards. Draw 1. manifest it."
+cost = 0
+type = "Skill"
+rarity = "Common"
+swag_gain = 0
+swag_cost = 0
+effects = [{ "op": "peek", "amount": 3 }, { "op": "draw", "amount": 1 }]

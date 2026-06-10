@@ -77,7 +77,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "let's get it →"
+text = "let's get it"
 
 [node name="BackButton" type="Button" parent="."]
 unique_name_in_owner = true
@@ -90,4 +90,4 @@ offset_top = -44.0
 offset_right = 196.0
 offset_bottom = -8.0
 theme_override_font_sizes/font_size = 16
-text = "← Back"
+text = "Back"

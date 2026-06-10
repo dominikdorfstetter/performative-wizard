@@ -9,8 +9,8 @@ func _build() -> void:
 	for c in get_children():
 		if not (c is ColorRect or c is TextureRect):
 			c.queue_free()
-	NodeUI.title(self, "✦ The Boutique", NodeUI.PINK)
-	NodeUI.sub(self, Loc.t("Spend Clout on permanent drip. You have ✦ %d Clout.") % GameState.clout)
+	NodeUI.title(self, "The Boutique", NodeUI.PINK, SpriteBank.icon_texture(&"crown"))
+	NodeUI.sub(self, Loc.t("Spend Clout on permanent drip. You have %d Clout.") % GameState.clout)
 
 	var scroll := ScrollContainer.new()
 	scroll.position = Vector2(78, 160)
@@ -26,7 +26,17 @@ func _build() -> void:
 	for entry in GameState.BOUTIQUE:
 		grid.add_child(_stall(entry))
 
-	var back := NodeUI.small_button("← Back", _to_menu, Color(0.4, 0.85, 0.55))
+	if GameState.BOUTIQUE.size() > 6:
+		var more := Label.new()
+		more.text = Loc.t("scroll for more")
+		more.position = Vector2(78, 574)
+		more.size = Vector2(996, 18)
+		more.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		more.add_theme_font_size_override("font_size", 13)
+		more.add_theme_color_override("font_color", Color(0.55, 0.55, 0.62))
+		add_child(more)
+
+	var back := NodeUI.small_button("Back", _to_menu, Color(0.4, 0.85, 0.55))
 	back.position = Vector2(486, 596)
 	add_child(back)
 
@@ -34,9 +44,9 @@ func _stall(entry: Dictionary) -> Control:
 	var p := Database.get_outfit(entry.id)
 	var owned: bool = entry.id in GameState.unlocked_outfits
 	var afford: bool = not owned and GameState.clout >= entry.cost
-	var desc := "%s\n✦ +%d/turn\n%s\n\n%s" % [
+	var desc := "%s\n+%d Aura/turn\n%s\n\n%s" % [
 		Loc.t(p.slot), p.drip, Loc.t(p.passive_text),
-		(Loc.t("OWNED") if owned else "✦ %d Clout" % entry.cost)]
+		(Loc.t("OWNED") if owned else "%d Clout" % entry.cost)]
 	var accent := Color(0.55, 0.78, 0.45) if owned else (NodeUI.GOLD if afford else Color(0.5, 0.5, 0.56))
 	var ab := NodeUI.choice(p.title, desc, accent, _buy.bind(entry), afford)
 	var itex := SpriteBank.item_texture(entry.id)
@@ -53,7 +63,8 @@ func _stall(entry: Dictionary) -> Control:
 
 func _buy(entry: Dictionary) -> void:
 	if GameState.buy_boutique(entry.id, entry.cost):
+		Audio.play("buff", -3.0)   # a permanent unlock deserves a fanfare
 		_build()
 
 func _to_menu() -> void:
-	get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn")
+	Fader.change_scene("res://scenes/hub/class_select.tscn")

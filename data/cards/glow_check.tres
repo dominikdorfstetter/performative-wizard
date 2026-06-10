@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"glow_check"
+title = "Glow Check"
+description = "Block 5. +2 Aura. mirror said yes."
+cost = 1
+type = "Skill"
+rarity = "Common"
+swag_gain = 2
+swag_cost = 0
+effects = [{ "op": "block", "amount": 5 }]

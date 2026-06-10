@@ -3,6 +3,8 @@ extends Control
 ## class rack — then enter the gauntlet. Equipped pieces inject cards, add Swag income,
 ## and grant passives (baked in by GameState.finalize_loadout).
 
+const TipIcon = preload("res://scripts/ui/tip_icon.gd")
+
 const ELEM_COLOR := {
 	"Fire": Color(0.86, 0.30, 0.27),
 	"Necro": Color(0.55, 0.78, 0.45),
@@ -16,6 +18,7 @@ var _wizard: WizardData
 
 func _ready() -> void:
 	NodeUI.gradient_bg(self)
+	(%Title as Label).add_theme_font_override("font", NodeUI.DISPLAY_FONT)
 	(%Title as Label).add_theme_color_override("font_color", Color(1.0, 0.31, 0.70))
 	(%SummaryPanel as Panel).add_theme_stylebox_override("panel", _panel(Color(0.13, 0.11, 0.17), Color(0.28, 0.24, 0.36)))
 	_wizard = Database.get_wizard(GameState.wizard_id)
@@ -32,11 +35,13 @@ func _ready() -> void:
 		tr.size = Vector2(54, 54)
 		add_child(tr)
 	var enter := %EnterButton as Button
-	enter.text = Loc.t("let's get it →")
+	enter.text = Loc.t("let's get it")
 	enter.pressed.connect(_enter)
 	enter.add_theme_stylebox_override("normal", _panel(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
 	enter.add_theme_stylebox_override("hover", _panel(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
-	(%BackButton as Button).pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
+	enter.add_theme_stylebox_override("pressed", _panel(Color(0.13, 0.30, 0.18), Color(0.36, 0.70, 0.45)))
+	enter.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	(%BackButton as Button).pressed.connect(func(): Fader.change_scene("res://scenes/hub/class_select.tscn"))
 	_rebuild()
 
 func _rebuild() -> void:
@@ -79,6 +84,7 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 	b.add_theme_stylebox_override("pressed", _panel(Color(0.2, 0.18, 0.25), border, 3))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.pressed.connect(func():
+		Audio.play("click", -7.0)
 		GameState.equip(slot, piece.id)
 		GameState.save_meta()
 		_rebuild())
@@ -90,31 +96,47 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tr.position = Vector2(150, 8)
-		tr.size = Vector2(40, 40)
+		tr.position = Vector2(144, 16)
+		tr.size = Vector2(48, 48)
 		b.add_child(tr)
-	var title := ("✓ " if equipped else "") + Loc.t(piece.title)
-	_lbl(b, title, Vector2(8, 6), Vector2(136, 20), 14, ec.lightened(0.35))
-	var sub := "✦ +%d" % piece.drip
+	_lbl(b, Loc.t(piece.title), Vector2(8, 10), Vector2(132, 36), 14, ec.lightened(0.35))
+	var sub := "+%d Aura/turn" % piece.drip if piece.drip > 0 else ""
 	if not piece.injected_cards.is_empty():
-		sub += "   +%d card" % piece.injected_cards.size()
-	_lbl(b, sub, Vector2(8, 27), Vector2(136, 16), 12, Color(0.8, 0.8, 0.85))
-	var pt := Loc.t(piece.passive_text) if piece.passive_text != "" else "—"
-	_lbl(b, pt, Vector2(8, 45), Vector2(182, 36), 11, Color(0.66, 0.66, 0.72))
+		sub += ("   " if sub != "" else "") + "+%d card" % piece.injected_cards.size()
+	if piece.passive_text != "":
+		sub += ("   " if sub != "" else "") + Loc.t("+passive")
+	_lbl(b, sub, Vector2(8, 52), Vector2(180, 18), 12, Color(0.8, 0.8, 0.85))
+	if equipped:
+		_lbl(b, Loc.t("WORN"), Vector2(140, 60), Vector2(48, 16), 11, Color(1.0, 0.82, 0.29))
+	# the full effect lives in a hover tooltip — the 11px clipped inline text is gone
+	var tip := TipIcon.new()
+	tip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tip.mouse_filter = Control.MOUSE_FILTER_PASS   # tooltip shows, click still equips
+	var body := ""
+	if piece.drip > 0:
+		body += Loc.t("Drip +%d Aura/turn.") % piece.drip
+	if piece.passive_text != "":
+		body += ("\n" if body != "" else "") + Loc.t(piece.passive_text)
+	if not piece.injected_cards.is_empty():
+		body += ("\n" if body != "" else "") + Loc.t("Adds %d cards to your deck.") % piece.injected_cards.size()
+	if body == "":
+		body = Loc.t("No passive.")
+	tip.set_tip("%s  (%s)" % [Loc.t(piece.title), Loc.t(piece.slot)], body)
+	b.add_child(tip)
 	return b
 
 func _update_summary() -> void:
 	var lines: Array[String] = []
 	lines.append(Loc.t("THE FIT"))
 	lines.append("")
-	lines.append(Loc.t("✦ Aura income: +%d / turn") % GameState.preview_drip())
+	lines.append(Loc.t("Aura income: +%d / turn") % GameState.preview_drip())
 	var injected := 0
 	var passives: Array[String] = []
 	for p in GameState.equipped_pieces():
 		injected += p.injected_cards.size()
 		if p.passive_text != "":
 			passives.append("• " + Loc.t(p.passive_text))
-	lines.append(Loc.t("🃏 Cards added to deck: %d") % injected)
+	lines.append(Loc.t("Cards added to deck: %d") % injected)
 	lines.append("")
 	lines.append(Loc.t("drip perks:"))
 	if passives.is_empty():
@@ -125,7 +147,7 @@ func _update_summary() -> void:
 
 func _enter() -> void:
 	GameState.finalize_loadout()
-	get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+	Fader.change_scene("res://scenes/map/map.tscn")
 
 # --- helpers ---
 func _lbl(parent: Control, text: String, pos: Vector2, sz: Vector2, fs: int, color: Color) -> void:

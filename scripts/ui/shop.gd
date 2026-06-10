@@ -21,8 +21,8 @@ func _ready() -> void:
 
 func _build() -> void:
 	_clear()
-	NodeUI.title(self, "🛒  The Plug", NodeUI.GOLD)
-	NodeUI.sub(self, "💰 %d gold  ·  treat yourself" % GameState.gold)
+	NodeUI.title(self, "The Pop-Up", NodeUI.GOLD, SpriteBank.icon_texture(&"coin"))
+	NodeUI.sub(self, Loc.t("%d gold  ·  treat yourself") % GameState.gold)
 
 	# cards for sale
 	var row := HBoxContainer.new()
@@ -33,23 +33,33 @@ func _build() -> void:
 	for i in _card_stock.size():
 		row.add_child(_card_stall(i))
 
-	# artefact for sale
+	# artefact for sale — the price gets its own label under the stall (packed into
+	# the description it rendered on the panel border and overflowed long texts)
 	if not _art_stock.is_empty():
 		var a := Database.get_artifact(_art_stock.id)
 		var afford: bool = not _art_stock.sold and GameState.gold >= _art_stock.price
-		var label := "SOLD" if _art_stock.sold else "%s\n\n💰 %d" % [a.description, _art_stock.price]
-		var ab := NodeUI.choice(a.title, label, Color(0.85, 0.4, 0.95), _buy_artifact, afford, a.emoji)
+		var label := Loc.t("SOLD") if _art_stock.sold else Loc.t(a.description)
+		var ab := NodeUI.choice(a.title, label, Color(0.85, 0.4, 0.95), _buy_artifact, afford, "", SpriteBank.artifact_texture(_art_stock.id))
 		ab.position = Vector2(800, 150)
 		add_child(ab)
+		if not _art_stock.sold:
+			var aprice := Label.new()
+			aprice.text = Loc.t("%d gold") % _art_stock.price
+			aprice.position = Vector2(800, 332)
+			aprice.size = Vector2(300, 20)
+			aprice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			aprice.add_theme_font_size_override("font_size", 16)
+			aprice.add_theme_color_override("font_color", NodeUI.GOLD if afford else Color(0.6, 0.6, 0.66))
+			add_child(aprice)
 
 	# services
-	var remove := NodeUI.small_button("yeet a card (%dg)" % REMOVE_COST, _remove_menu, Color(0.4, 0.7, 0.9))
+	var remove := NodeUI.small_button(Loc.t("yeet a card (%dg)") % REMOVE_COST, _remove_menu, Color(0.4, 0.7, 0.9))
 	remove.custom_minimum_size = Vector2(240, 44)
 	remove.position = Vector2(830, 350)
 	remove.disabled = GameState.gold < REMOVE_COST or GameState.deck.size() <= 1
 	add_child(remove)
 
-	var leave := NodeUI.small_button("dip ✌", _to_map, Color(0.4, 0.85, 0.55))
+	var leave := NodeUI.small_button("dip", _to_map, Color(0.4, 0.85, 0.55))
 	leave.position = Vector2(486, 600)
 	add_child(leave)
 
@@ -61,7 +71,7 @@ func _card_stall(i: int) -> Control:
 	var afford: bool = not item.sold and GameState.gold >= item.price
 	v.add_child(CardView.build(card, afford, _buy_card.bind(i)))
 	var price := Label.new()
-	price.text = "SOLD" if item.sold else "💰 %d" % item.price
+	price.text = Loc.t("SOLD") if item.sold else Loc.t("%d gold") % item.price
 	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price.add_theme_font_size_override("font_size", 16)
 	price.add_theme_color_override("font_color", NodeUI.GOLD if afford else Color(0.6, 0.6, 0.66))
@@ -123,4 +133,4 @@ func _clear() -> void:
 			c.queue_free()
 
 func _to_map() -> void:
-	get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+	Fader.change_scene("res://scenes/map/map.tscn")

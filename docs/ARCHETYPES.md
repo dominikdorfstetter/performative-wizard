@@ -1,4 +1,4 @@
-# Performative Wizard — Archetypes, Rarity & Per-Wizard Unlocks (2026-06-07)
+# Performative Wizards — Archetypes, Rarity & Per-Wizard Unlocks (2026-06-07)
 
 > Built from a 4-lens design panel (archetypes / progression / architecture / USP-integrity)
 > + adversarial critique. Direction from the owner: **vanilla starters → 2 build archetypes

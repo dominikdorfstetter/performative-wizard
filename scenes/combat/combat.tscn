@@ -122,7 +122,7 @@ offset_top = 390.0
 offset_right = 1132.0
 offset_bottom = 434.0
 theme_override_font_sizes/font_size = 20
-text = "Bye ✌"
+text = "End Turn"
 
 [node name="HandLabel" type="Label" parent="."]
 layout_mode = 0
@@ -134,9 +134,9 @@ offset_bottom = 414.0
 [node name="Hand" type="HBoxContainer" parent="."]
 layout_mode = 0
 offset_left = 110.0
-offset_top = 446.0
+offset_top = 436.0
 offset_right = 1040.0
-offset_bottom = 646.0
+offset_bottom = 636.0
 theme_override_constants/separation = 12
 alignment = 1
 

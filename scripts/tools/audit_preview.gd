@@ -6,6 +6,8 @@ const SCENES := [
 	["res://scenes/hub/class_select.tscn", "/tmp/a_class.png"],
 	["res://scenes/hub/dressing_room.tscn", "/tmp/a_dress.png"],
 	["res://scenes/hub/boutique.tscn", "/tmp/a_boutique.png"],
+	["res://scenes/hub/options.tscn", "/tmp/a_options.png"],
+	["res://scenes/hub/collection.tscn", "/tmp/a_collection.png"],
 	["res://scenes/map/map.tscn", "/tmp/a_map.png"],
 	["res://scenes/combat/combat.tscn", "/tmp/a_combat.png"],
 	["res://scenes/reward.tscn", "/tmp/a_reward.png"],

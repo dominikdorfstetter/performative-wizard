@@ -1,0 +1,38 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  headless-combat-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: godot
+          key: godot-4.6.3-linux-x86_64
+
+      - name: Download Godot 4.6.3
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL -o godot.zip \
+            https://github.com/godotengine/godot/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          mv Godot_v4.6.3-stable_linux.x86_64 godot
+          chmod +x godot
+
+      - name: Import assets
+        run: ./godot --headless --import . || true
+
+      - name: Run combat test suite
+        env:
+          PW_NO_SAVE: "1"
+        run: |
+          ./godot --headless scenes/test_combat.tscn 2>&1 | tee /tmp/test_out.txt
+          grep -E "passed, 0 failed" /tmp/test_out.txt

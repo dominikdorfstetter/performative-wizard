@@ -6,10 +6,17 @@ extends RefCounted
 
 signal changed
 signal combat_ended(victory: bool)
+## Fired just before an enemy resolves its intent (only when step_delay > 0), so the
+## view can wind up / lunge the acting enemy before its hit lands.
+signal enemy_acting(index: int, intent: Dictionary)
+## Fired by the "peek" op with the titles (top-of-pile first) so the view can
+## flash them; the same info also lands in the log for headless runs.
+signal peeked(titles: Array)
 
 enum State { PLAYER_TURN, ENEMY_TURN, WIN, LOSE }
 
 const HAND_SIZE := 5
+const HAND_CAP := 10            # retained cards + draws never exceed this
 const MAX_ENERGY := 3
 const LOG_KEEP := 6
 
@@ -28,6 +35,13 @@ var player: Combatant
 var enemies: Array[Combatant] = []
 var target_index := 0
 var turn := 0
+
+## Seconds between enemy actions during the enemy turn. 0 (default) resolves the whole
+## turn synchronously in one call — headless tests and the balance sim rely on that.
+## The view sets ~0.45 so each enemy telegraphs, lunges, and lands its hit as its own
+## visible beat. Guarded awaits: with step_delay == 0 no await ever executes, so the
+## synchronous contract is untouched.
+var step_delay := 0.0
 
 var energy := 0
 var max_energy := MAX_ENERGY
@@ -52,11 +66,12 @@ var booed := false          # fell out of the spotlight last turn-start
 var draw_pile: Array[CardData] = []
 var hand: Array[CardData] = []
 var discard_pile: Array[CardData] = []
+var retain_hand := false        # set by the "retain" op; consumed at end_turn
 
 var passives: Array[StringName] = []
 var enemy_dmg_scale := 1.0
 var enemy_hp_scale := 1.0
-var upgrades: Dictionary = {}        # card_id -> true (Glow'd Up: costs 1 less)
+var upgrades: Dictionary = {}        # card_id -> "cost"|"value" (legacy true == "cost")
 var crit_chance := 0.0
 var last_crit := false
 var log_lines: Array[String] = []
@@ -117,7 +132,7 @@ func _compute_crit() -> void:
 func live_crit_chance() -> float:
 	var cc := crit_chance
 	if has_passive(&"rizz_crit"):
-		cc += player.status(&"strength") * 0.05
+		cc += player.status(&"strength") * 0.04   # was 0.05 — pass #4 top-end shave
 	cc -= player.status(&"jinx") * 0.10
 	return max(0.0, cc)
 
@@ -195,7 +210,7 @@ func _start_player_turn() -> void:
 	booed = false
 	if swag >= THRESHOLD_ENCORE:
 		encore += 1
-		_say(Loc.t("🎤 ENCORE ×%d — the crowd wants MORE") % encore)
+		_say(Loc.t("ENCORE ×%d — the crowd wants MORE") % encore)
 	elif encore >= 2:
 		# Only a REAL built-up Encore (2+) being lost boos you — a 1-turn spotlight
 		# touch that you immediately cash out is not a flop. (Pass #2.)
@@ -203,7 +218,7 @@ func _start_player_turn() -> void:
 		swag = max(0, swag - lost)
 		encore = 0
 		booed = true
-		_say(Loc.t("📉 BOOED OFF — you fell out of the spotlight (−%d Aura)") % lost)
+		_say(Loc.t("BOOED OFF — you fell out of the spotlight (-%d Aura)") % lost)
 	elif encore > 0:
 		encore = 0   # brief touch, no penalty
 	if has_passive(&"strength_at_10_swag") and swag >= THRESHOLD_DRAW:
@@ -216,7 +231,7 @@ func _start_player_turn() -> void:
 		draw_n += 1
 	_draw(draw_n)
 	if drip > 0:
-		_say(Loc.t("— Your turn %d  (+%d aura → %d) —") % [turn, swag - before, swag])
+		_say(Loc.t("— Your turn %d  (+%d aura, now %d) —") % [turn, swag - before, swag])
 	else:
 		_say(Loc.t("— Your turn %d —") % turn)
 	_emit()
@@ -239,7 +254,26 @@ func _tick_powers() -> void:
 		player.block += barrier
 
 func card_cost(card: CardData) -> int:
-	return max(0, card.cost - (1 if upgrades.get(card.id, false) else 0))
+	return max(0, card.cost - (1 if upgrade_mode(card) == "cost" else 0))
+
+## Mirrors GameState.upgrade_mode: "cost" (1 cheaper), "value" (+2 amounts), "" (none).
+## Legacy saves stored `true`, which reads as "cost".
+func upgrade_mode(card: CardData) -> String:
+	if not upgrades.has(card.id):
+		return ""
+	return "value" if str(upgrades[card.id]) == "value" else "cost"
+
+## A value-Glow'd card plays with +2 on its damage/Block/heal amounts.
+func _effective_effects(card: CardData) -> Array:
+	if upgrade_mode(card) != "value":
+		return card.effects
+	var out: Array = []
+	for e in card.effects:
+		var d: Dictionary = e.duplicate()
+		if String(d.get("op", "")) in ["damage", "damage_all", "block", "heal", "damage_if_status"]:
+			d["amount"] = int(d.get("amount", 0)) + 2
+		out.append(d)
+	return out
 
 func can_play(card: CardData) -> bool:
 	return state == State.PLAYER_TURN and energy >= card_cost(card)
@@ -288,7 +322,7 @@ func play_card(card: CardData) -> bool:
 		enemy_hp_before.append(e.hp)
 
 	var normal: Array = []
-	for e in card.effects:
+	for e in _effective_effects(card):
 		if String(e.get("op", "")).begins_with("finisher"):
 			_resolve_finisher(e, ctx)
 		else:
@@ -300,14 +334,14 @@ func play_card(card: CardData) -> bool:
 		var en := enemies[i]
 		if not en.is_dead() and en.data != null and en.data.enrage > 0 and en.hp < int(enemy_hp_before[i]):
 			en.add_status(&"strength", en.data.enrage)
-			_say(Loc.t("%s is ENRAGED → +%d Rizz") % [Loc.t(en.display_name), en.data.enrage])
+			_say(Loc.t("%s is ENRAGED: +%d Rizz") % [Loc.t(en.display_name), en.data.enrage])
 
 	if is_attack:
 		spells_this_turn += 1
 
 	var tburn1 := tgt.status(&"burn") if tgt != null else 0
 	if last_crit:
-		_say(Loc.t("✦ CRIT! that's lethal rizz ✦"))
+		_say(Loc.t("CRIT! that's lethal rizz"))
 		# The Rizzard's crit IS its flex: a clean crit serves Aura (active, not drip),
 		# welding the crit kit to the Critic's grade so Rizz engages the USP. (Pass #2.5)
 		if has_passive(&"swag_on_crit"):
@@ -471,14 +505,21 @@ func live_rating() -> String:
 func end_turn() -> void:
 	if state != State.PLAYER_TURN:
 		return
-	discard_pile.append_array(hand)
-	hand.clear()
+	if retain_hand:
+		retain_hand = false
+		_say(Loc.t("you keep the hand — it's all part of the plan"))
+	else:
+		discard_pile.append_array(hand)
+		hand.clear()
 	var undead := player.status(&"undead")
 	if undead > 0:
 		var tgt := target()
 		if tgt != null:
-			tgt.take_damage(undead * 2)
-			_say(Loc.t("your %d Goons threw hands for %d") % [undead, undead * 2])
+			# critical mass (pass #4): a real mob (4+) hits for 3 each, not 2 —
+			# the Swarm engine now actually scales into long high-asc fights
+			var goon_dmg := undead * (3 if undead >= 4 else 2)
+			tgt.take_damage(goon_dmg)
+			_say(Loc.t("your %d Goons threw hands for %d") % [undead, goon_dmg])
 			if all_dead():
 				_finish(true)
 				return
@@ -499,25 +540,40 @@ func _enemy_turn() -> void:
 		if poisoned > 0:
 			_say(Loc.t("%s is Toxic'd for %d") % [Loc.t(e.display_name), poisoned])
 		if e.is_dead():
+			_emit()   # a DoT death gets its own beat before the next enemy moves
 			continue
 		if e.data == null or e.data.intents.is_empty():
 			continue
+		if step_delay > 0.0:
+			await _beat(step_delay)
+			enemy_acting.emit(enemies.find(e), peek_intent(e))
+			await _beat(step_delay * 0.4)   # windup: the lunge reads before the hit lands
 		var intent: Dictionary = e.data.intents[e.intent_index % e.data.intents.size()]
 		_resolve_intent(e, intent)
 		e.intent_index += 1
 		_decay(e)
 		e.block = 0
+		# Per-enemy emit: damage numbers, hurt flash, and bar updates land per attacker
+		# instead of one aggregated delta at the end of the whole turn.
+		_emit()
 		if player.is_dead():
 			_finish(false)
 			return
 	if all_dead():
 		_finish(true)
 		return
+	if step_delay > 0.0:
+		await _beat(step_delay * 0.8)
 	# Block held through the enemy turn (so it absorbed their attacks); clear it now,
 	# right before your next turn — StS-correct. (Was wrongly cleared in end_turn, so
 	# block never protected against enemies.)
 	player.block = 0
 	_start_player_turn()
+
+func _beat(seconds: float) -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null:
+		await tree.create_timer(seconds).timeout
 
 func _make_enemy(edata: EnemyData) -> Combatant:
 	var e := Combatant.new()
@@ -565,16 +621,16 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 		"drain_swag":
 			var before := swag
 			swag = max(0, swag - amount)
-			_say(Loc.t("%s drained %d of your Aura 😤") % [name, before - swag])
+			_say(Loc.t("%s drained %d of your Aura") % [name, before - swag])
 		"tax":
 			# Counter-play to hoarding: taxes your Aura only while you sit on a pile.
 			var thr := int(intent.get("threshold", THRESHOLD_DRAW))
 			if swag >= thr:
 				var before2 := swag
 				swag = max(0, swag - amount)
-				_say(Loc.t("%s taxed your hoard for %d 💸") % [name, before2 - swag])
+				_say(Loc.t("%s taxed your hoard for %d") % [name, before2 - swag])
 			else:
-				_say(Loc.t("%s wants to tax you but you're broke 💀") % name)
+				_say(Loc.t("%s wants to tax you but you're broke") % name)
 		"summon_ally":
 			var sid := StringName(intent.get("enemy", &""))
 			var ed := Database.get_enemy(sid)
@@ -634,6 +690,8 @@ func draw_cards(n: int) -> void:
 
 func _draw(n: int) -> void:
 	for i in n:
+		if hand.size() >= HAND_CAP:
+			return
 		if draw_pile.is_empty():
 			if discard_pile.is_empty():
 				return
@@ -641,6 +699,32 @@ func _draw(n: int) -> void:
 			discard_pile.clear()
 			draw_pile.shuffle()
 		hand.append(draw_pile.pop_back())
+
+## "peek" op: reveal the next n draws. If the draw pile is dry it reshuffles the
+## discard in first — exactly what _draw would do — so the peek never lies.
+func peek_draw(n: int) -> void:
+	if draw_pile.is_empty() and not discard_pile.is_empty():
+		recycle_discard()
+	var titles: Array = []
+	for i in range(mini(n, draw_pile.size())):
+		titles.append(draw_pile[draw_pile.size() - 1 - i].title)
+	if titles.is_empty():
+		_say(Loc.t("nothing left to peek — your piles are empty"))
+	else:
+		var disp: Array[String] = []
+		for t in titles:
+			disp.append(Loc.t(t))
+		_say(Loc.t("up next: %s") % " · ".join(disp))
+	peeked.emit(titles)
+
+## "shuffle_discard" op: the whole discard pile shuffles back into the draw pile.
+func recycle_discard() -> void:
+	if discard_pile.is_empty():
+		return
+	draw_pile.append_array(discard_pile)
+	discard_pile.clear()
+	draw_pile.shuffle()
+	_say(Loc.t("fresh rotation — the discard shuffles back in"))
 
 func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: int, pierced: bool) -> void:
 	var parts: Array[String] = []
@@ -658,12 +742,12 @@ func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: 
 		parts.append(Loc.t("pierced!"))
 	var msg := Loc.t("You play %s") % Loc.t(card.title)
 	if not parts.is_empty():
-		msg += "  →  " + ", ".join(parts)
+		msg += "  ·  " + ", ".join(parts)
 	_say(msg)
 
 func _finish(victory: bool) -> void:
 	state = State.WIN if victory else State.LOSE
-	_say(Loc.t("✦ BIG W ✦") if victory else Loc.t("you took an L 💀"))
+	_say(Loc.t("BIG W!") if victory else Loc.t("you took an L."))
 	# Emit the final UI update first (death poofs/popups run while the combat scene
 	# is still in the tree), THEN signal the end — which may change scene and detach us.
 	_emit()

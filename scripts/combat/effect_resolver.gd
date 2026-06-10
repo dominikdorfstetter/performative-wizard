@@ -82,6 +82,18 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 			var cmd = ctx.get("combat")
 			if cmd != null:
 				cmd.draw_cards(amount)
+		"peek":
+			var cmp = ctx.get("combat")
+			if cmp != null:
+				cmp.peek_draw(amount)
+		"shuffle_discard":
+			var cmsd = ctx.get("combat")
+			if cmsd != null:
+				cmsd.recycle_discard()
+		"retain":
+			var cmr = ctx.get("combat")
+			if cmr != null:
+				cmr.retain_hand = true
 		"sacrifice_strike":
 			_sacrifice_strike(e, ctx, source, target, bonus, pierce)
 		_:

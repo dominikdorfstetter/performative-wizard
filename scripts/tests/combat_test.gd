@@ -33,7 +33,7 @@ func _ready() -> void:
 
 	cm.hand = [Database.get_card(&"ignite")]
 	cm.play_card(cm.hand[0])
-	_check("enemy burn after ignite", cm.enemies[0].status(&"burn"), 3)
+	_check("enemy burn after ignite", cm.enemies[0].status(&"burn"), 4)
 	_check("swag after ignite pose", cm.swag, 3)
 
 	cm.hand = [Database.get_card(&"ember")]
@@ -41,8 +41,8 @@ func _ready() -> void:
 	_check("enemy hp after ember (no bonus)", cm.enemies[0].hp, 22)
 
 	cm.end_turn()
-	_check("enemy hp after burn tick", cm.enemies[0].hp, 19)
-	_check("enemy burn decayed", cm.enemies[0].status(&"burn"), 2)
+	_check("enemy hp after burn tick", cm.enemies[0].hp, 18)
+	_check("enemy burn decayed", cm.enemies[0].status(&"burn"), 3)
 	_check("player hp after cat attack", cm.player.hp, 66)
 
 	_check("t2 swag", cm.swag, 5)
@@ -51,7 +51,7 @@ func _ready() -> void:
 
 	cm.hand = [Database.get_card(&"ember")]
 	cm.play_card(cm.hand[0])
-	_check("enemy hp after boosted ember", cm.enemies[0].hp, 11)
+	_check("enemy hp after boosted ember", cm.enemies[0].hp, 10)
 
 	cm.swag = 6
 	cm.hand = [Database.get_card(&"grand_finale")]
@@ -100,7 +100,7 @@ func _ready() -> void:
 	_check("start_block_5 → 5 block", cm3.player.block, 5)
 	cm3.hand = [Database.get_card(&"ignite")]
 	cm3.play_card(cm3.hand[0])
-	_check("burn_plus_1 → 4 burn", cm3.enemies[0].status(&"burn"), 4)
+	_check("burn_plus_1 → 5 burn", cm3.enemies[0].status(&"burn"), 5)
 	_check("pose_plus_1 → swag 2", cm3.swag, 2)
 
 	var cm4 := CombatManager.new()
@@ -175,10 +175,10 @@ func _ready() -> void:
 	pr.max_hp = 72
 	pr.hp = 72
 	cmr.start_combat(pr, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"finger_guns")], 0, true, [&"rizz_crit"])
-	cmr.player.add_status(&"strength", 20)
+	cmr.player.add_status(&"strength", 25)   # 25 x 0.04 = guaranteed crit (pass #4 shave)
 	cmr.hand = [Database.get_card(&"finger_guns")]
 	cmr.play_card(cmr.hand[0])
-	_check("rizz crit (5+20)x2 kills cat", cmr.enemies[0].is_dead(), true)
+	_check("rizz crit (5+25)x2 kills cat", cmr.enemies[0].is_dead(), true)
 
 	var cmd2 := CombatManager.new()
 	var pd := Combatant.new()
@@ -481,15 +481,15 @@ func _ready() -> void:
 	var rnode := {"row": 3, "col": 0, "type": "Rest", "enemies": [], "links": [], "visited": false}
 	GameState.apply_critic_mutation(rnode)
 	_check("rest room untouched", rnode.get("enemies", []).size(), 0)
-	# critic_score round-trips through the save file
+	# critic_score round-trips through the save format — in memory only, so the
+	# suite never touches user://save.json and passes under PW_NO_SAVE=1 (CI)
 	GameState.critic_score = 7
-	GameState.save_meta()
+	var meta_json: Dictionary = JSON.parse_string(JSON.stringify(GameState._meta_to_dict()))
 	GameState.critic_score = 999
-	GameState.load_meta()
+	GameState._meta_from_dict(meta_json)
 	_check("critic_score persists via save", GameState.critic_score, 7)
 	GameState.critic_score = saved_cs
 	GameState.pending_critic = saved_pending
-	GameState.save_meta()
 	_check("clean finisher names its style", cmcr.style_signature(), &"swag_x3")
 
 	# --- Commit to the Bit: encore / booed / tax (P3) ------------------------
@@ -617,7 +617,7 @@ func _ready() -> void:
 	var dn2 := {"type": "Combat", "enemies": [&"alley_cat"]}
 	GameState.apply_critic_mutation(dn2)
 	_check("stale S → no VIP bonus", int(dn2.get("critic_bonus_gold", 0)), 0)
-	_check("stale verdict nags for novelty", GameState.critic_quip("S"), Loc.t("again? 🥱 serve me something NEW."))
+	_check("stale verdict nags for novelty", GameState.critic_quip("S"), Loc.t("again? serve me something NEW."))
 	GameState.record_show_rating({"rating": "S", "signature": &"spread"})
 	_check("a fresh new style pays out again", GameState.critic_last_freshness, 1.0)
 	GameState.critic_fatigue = saved_fat
@@ -656,13 +656,13 @@ func _ready() -> void:
 	_check("es translates enemy", Loc.t("Angry Toaster"), "Tostadora Furiosa")
 	_check("es translates banter", Loc.t("you fell off"), "te caíste")
 	_check("es translates critic name", Loc.t("The Critic"), "La Crítica")
-	_check("es translates critic verdict", Loc.t("👀 THE CRITIC:  %s"), "👀 LA CRÍTICA:  %s")
+	_check("es translates critic verdict", Loc.t("THE CRITIC:  %s"), "LA CRÍTICA:  %s")
 	Loc.set_locale("de")
 	_check("de translates meter tier", Loc.t("PIERCE"), "DURCHBRUCH")
-	_check("de translates critic quip", Loc.t("S — serve. obsessed. devastating. 💅"), "S — serve. besessen. vernichtend. 💅")
+	_check("de translates critic quip", Loc.t("S — serve. obsessed. devastating."), "S — serve. besessen. vernichtend.")
 	_check("de translates heckler", Loc.t("Heckler"), "Zwischenrufer")
-	_check("de translates encore line", Loc.t("🎤 ENCORE ×%d — the crowd wants MORE"), "🎤 ENCORE ×%d — der Saal will MEHR")
-	_check("de translates trend", Loc.t("📉 TREND: flop era  (−1 Aura/turn)"), "📉 TREND: flop era  (−1 Aura/Zug)")
+	_check("de translates encore line", Loc.t("ENCORE ×%d — the crowd wants MORE"), "ENCORE ×%d — der Saal will MEHR")
+	_check("de translates trend", Loc.t("TREND: flop era  (-1 Aura/turn)"), "TREND: flop era  (-1 Aura/Zug)")
 	Loc.set_locale("es")
 	_check("es translates finisher desc", Loc.t("Finisher. Spend ALL Aura. Deal Aura × 1.5 to ALL enemies."), "Finisher. Gasta TODA la Aura. Inflige Aura × 1,5 a TODOS los enemigos.")
 	Loc.set_locale("en")
@@ -903,6 +903,263 @@ func _ready() -> void:
 	cmep._emit()
 	_check("peak_undead tracks the board", cmep.peak_undead, 4)
 	_check("big goon board -> swarm signature", cmep.style_signature(), &"swarm")
+
+	# --- sequenced enemy turn (step_delay > 0): suspends at the first beat, then
+	# completes asynchronously; enemy_acting fires once per living attacker. The
+	# default step_delay == 0 path is what every other test in this file exercises.
+	print("--- sequenced enemy turn ---")
+	var cmsq := CombatManager.new()
+	var psq := Combatant.new()
+	psq.max_hp = 80
+	psq.hp = 80
+	var seq_acts: Array = []
+	cmsq.enemy_acting.connect(func(i: int, _intent: Dictionary): seq_acts.append(i))
+	var sqdeck: Array[CardData] = [Database.get_card(&"ember")]
+	cmsq.start_combat(psq, [Database.get_enemy(&"alley_cat"), Database.get_enemy(&"alley_cat")], sqdeck, 0, true)
+	cmsq.step_delay = 0.02
+	var hp_before_seq := cmsq.player.hp
+	cmsq.end_turn()
+	_check("sequenced turn suspends mid-enemy-turn", cmsq.state, CombatManager.State.ENEMY_TURN)
+	await get_tree().create_timer(0.6).timeout
+	_check("sequenced turn completes to player turn", cmsq.state, CombatManager.State.PLAYER_TURN)
+	_check("sequenced turn advanced the turn counter", cmsq.turn, 2)
+	_check("enemy_acting fired once per living attacker", seq_acts, [0, 1])
+	_check("both sequenced attackers landed their hits", cmsq.player.hp < hp_before_seq, true)
+
+	# --- run snapshot: JSON round-trip restores the run exactly (no disk I/O here —
+	# save_run/save_meta write user://save.json, which tests must never touch) ---
+	print("--- run snapshot ---")
+	GameState.start_run(&"fire")
+	GameState.finalize_loadout()
+	GameState.gold = 123
+	GameState.player_hp = 17
+	GameState.act = 2
+	GameState.run_artifacts = [&"ember_pin"] as Array[StringName]
+	GameState.card_upgrades = {&"ember": true}
+	GameState.pending_critic = "S"
+	GameState.pending_freshness = 1.0
+	GameState.critic_fatigue = {&"hoard": 2}
+	var first_col: int = GameState.map[0][0].col
+	GameState.enter(0, first_col)   # consumes pending_critic into a VIP node mutation
+	var snap_rows: int = GameState.map.size()
+	var snap_deck: int = GameState.deck.size()
+	var snap: Variant = JSON.parse_string(JSON.stringify(GameState._run_to_dict()))
+	_check("snapshot serializes to a dictionary", typeof(snap), TYPE_DICTIONARY)
+	GameState.start_run(&"fire")    # scramble the live run
+	GameState.finalize_loadout()
+	GameState.gold = 0
+	_check("snapshot restores after the scramble", GameState._run_from_dict(snap), true)
+	_check("restored gold", GameState.gold, 123)
+	_check("restored hp", GameState.player_hp, 17)
+	_check("restored act", GameState.act, 2)
+	_check("restored deck size", GameState.deck.size(), snap_deck)
+	_check("restored map rows", GameState.map.size(), snap_rows)
+	_check("restored position", [GameState.pos_row, GameState.pos_col], [0, first_col])
+	_check("restored artifacts", GameState.run_artifacts, [&"ember_pin"] as Array[StringName])
+	_check("restored upgrade flag", GameState.is_upgraded(&"ember"), true)
+	_check("restored critic fatigue", int(GameState.critic_fatigue.get(&"hoard", 0)), 2)
+	_check("restored critic mutation on the entered node", String(GameState.node_at(0, first_col).get("critic_note", "")), "vip")
+	_check("map cols re-typed to int after JSON round-trip", typeof(GameState.map[0][0].col), TYPE_INT)
+	var bad_snap := {"wizard_id": "nope", "map": [], "deck": []}
+	_check("invalid snapshot rejected", GameState._run_from_dict(bad_snap), false)
+
+	# --- pile manipulation: peek / shuffle_discard / retain + the hand cap ---
+	print("--- pile manipulation ---")
+	var cmpile := CombatManager.new()
+	var ppile := Combatant.new()
+	ppile.max_hp = 60
+	ppile.hp = 60
+	var pile_deck: Array[CardData] = []
+	for i in 8:
+		pile_deck.append(Database.get_card(&"ember"))
+	cmpile.start_combat(ppile, [Database.get_enemy(&"alley_cat")], pile_deck, 0, true)
+	_check("draw pile holds the undrawn 3", cmpile.draw_pile.size(), 3)
+	var peeked_titles: Array = []
+	cmpile.peeked.connect(func(t): peeked_titles.append_array(t))
+	cmpile.peek_draw(2)
+	_check("peek reveals 2", peeked_titles.size(), 2)
+	_check("peek 1st matches the next draw", peeked_titles[0], cmpile.draw_pile[cmpile.draw_pile.size() - 1].title)
+	_check("peek does not consume cards", cmpile.draw_pile.size(), 3)
+	# peek on a dry draw pile reshuffles the discard in first (same as _draw would)
+	cmpile.discard_pile.append_array(cmpile.draw_pile)
+	cmpile.draw_pile.clear()
+	cmpile.peek_draw(1)
+	_check("dry peek reshuffles the discard in", cmpile.draw_pile.size(), 3)
+	_check("dry peek leaves no discard behind", cmpile.discard_pile.size(), 0)
+	# thrift_flip: its own discard joins the recycle, then draw 1
+	var cmflip := CombatManager.new()
+	var pflip := Combatant.new()
+	pflip.max_hp = 60
+	pflip.hp = 60
+	cmflip.start_combat(pflip, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"thrift_flip")], 0, true)
+	cmflip.discard_pile.append(Database.get_card(&"ember"))
+	cmflip.discard_pile.append(Database.get_card(&"ember"))
+	var flip_swag0 := cmflip.swag
+	_check("thrift flip is in hand", cmflip.hand.size(), 1)
+	_check("thrift flip plays", cmflip.play_card(cmflip.hand[0]), true)
+	_check("thrift flip recycles + draws 1", cmflip.hand.size(), 1)
+	_check("thrift flip leaves no discard", cmflip.discard_pile.size(), 0)
+	_check("thrift flip banks aura", cmflip.swag > flip_swag0, true)
+	# saved_drafts: the unplayed hand survives end_turn, then next turn tops it up
+	var cmret := CombatManager.new()
+	var pret := Combatant.new()
+	pret.max_hp = 60
+	pret.hp = 60
+	var ret_deck: Array[CardData] = [Database.get_card(&"saved_drafts"), Database.get_card(&"ember"), Database.get_card(&"ember")]
+	cmret.start_combat(pret, [Database.get_enemy(&"alley_cat")], ret_deck, 0, true)
+	_check("retain test hand", cmret.hand.size(), 3)
+	for c in cmret.hand:
+		if c.id == &"saved_drafts":
+			cmret.play_card(c)
+			break
+	_check("retain flag set", cmret.retain_hand, true)
+	cmret.end_turn()
+	_check("retain consumed", cmret.retain_hand, false)
+	var kept_embers := 0
+	for c in cmret.hand:
+		if c.id == &"ember":
+			kept_embers += 1
+	_check("both embers survived end_turn", kept_embers, 2)
+	_check("next turn topped the hand up", cmret.hand.size(), 3)
+	# the hand cap stops pathological retain+draw loops
+	var cmcap := CombatManager.new()
+	var pcap := Combatant.new()
+	pcap.max_hp = 60
+	pcap.hp = 60
+	var cap_deck: Array[CardData] = []
+	for i in 14:
+		cap_deck.append(Database.get_card(&"ember"))
+	cmcap.start_combat(pcap, [Database.get_enemy(&"alley_cat")], cap_deck, 0, true)
+	cmcap.draw_cards(20)
+	_check("hand caps at 10", cmcap.hand.size(), CombatManager.HAND_CAP)
+	# the nine new cards exist and sit in the right pools
+	var new_ids: Array = [&"vision_board", &"thrift_flip", &"saved_drafts", &"side_eye", &"love_bomb", &"glow_check", &"bold_move", &"future_spouse", &"crowd_work"]
+	var missing_cards: Array = []
+	for nid in new_ids:
+		if Database.get_card(nid) == null:
+			missing_cards.append(nid)
+	_check("all nine new cards load", missing_cards, [])
+	var rizz_pool: Array = Database.get_wizard(&"rizz").reward_pool
+	_check("rizz pool grew to 23", rizz_pool.size(), 23)
+	_check("rizz pool has the new commons", &"side_eye" in rizz_pool and &"love_bomb" in rizz_pool and &"glow_check" in rizz_pool, true)
+	var fire_pool: Array = Database.get_wizard(&"fire").reward_pool
+	_check("neutral utilities reach fire too", &"vision_board" in fire_pool and &"saved_drafts" in fire_pool, true)
+
+	# --- glow up flavours: "cost" (classic) vs "value" (+2 amounts) ------------
+	print("--- glow up flavours ---")
+	var ember_card := Database.get_card(&"ember")
+	var cmup := CombatManager.new()
+	var pup := Combatant.new()
+	pup.max_hp = 60
+	pup.hp = 60
+	cmup.start_combat(pup, [Database.get_enemy(&"alley_cat")], [ember_card], 0, true, [], 1.0, 1.0, {&"ember": "value"})
+	_check("value upgrade keeps the cost", cmup.card_cost(ember_card), 1)
+	var cat_hp0: int = cmup.enemies[0].hp
+	cmup.set_target(0)
+	cmup.play_card(cmup.hand[0])
+	_check("value upgrade deals 6+2", cat_hp0 - cmup.enemies[0].hp, 8)
+	var cmup2 := CombatManager.new()
+	var pup2 := Combatant.new()
+	pup2.max_hp = 60
+	pup2.hp = 60
+	cmup2.start_combat(pup2, [Database.get_enemy(&"alley_cat")], [ember_card], 0, true, [], 1.0, 1.0, {&"ember": "cost"})
+	_check("cost upgrade shaves 1 energy", cmup2.card_cost(ember_card), 0)
+	var cat_hp1: int = cmup2.enemies[0].hp
+	cmup2.set_target(0)
+	cmup2.play_card(cmup2.hand[0])
+	_check("cost upgrade keeps base damage", cat_hp1 - cmup2.enemies[0].hp, 6)
+	var cmup3 := CombatManager.new()
+	var pup3 := Combatant.new()
+	pup3.max_hp = 60
+	pup3.hp = 60
+	cmup3.start_combat(pup3, [Database.get_enemy(&"alley_cat")], [ember_card], 0, true, [], 1.0, 1.0, {&"ember": true})
+	_check("legacy true reads as cost", cmup3.card_cost(ember_card), 0)
+	# upgrade modes survive the run-snapshot JSON round-trip
+	var saved_ups: Dictionary = GameState.card_upgrades.duplicate()
+	GameState.card_upgrades = {&"ember": "value", &"wink": "cost"}
+	var up_run: Dictionary = JSON.parse_string(JSON.stringify(GameState._run_to_dict()))
+	GameState.card_upgrades = {}
+	GameState._run_from_dict(up_run)
+	_check("value mode survives the snapshot", GameState.upgrade_mode(&"ember"), "value")
+	_check("cost mode survives the snapshot", GameState.upgrade_mode(&"wink"), "cost")
+	GameState.card_upgrades = saved_ups
+
+	# --- per-act music variants build, cache, and leave the menu alone ----------
+	print("--- act music variants ---")
+	_check("act 2 combat gets its own variant", Audio._variant_key("combat", 2), "combat@2")
+	_check("variant is cached as a stream", Audio._tracks.has("combat@2"), true)
+	_check("act 1 stays the base track", Audio._variant_key("combat", 1), "combat")
+	_check("menu never varies", Audio._variant_key("menu", 3), "menu")
+	_check("variant keys don't re-wrap", Audio._variant_key("combat@2", 3), "combat@2")
+
+	# --- loc coverage: the teaching layer + key chrome exists in BOTH tables, so a
+	# string change can never silently regress DE/ES back to English again ---
+	print("--- loc coverage ---")
+	var de_tbl: Dictionary = preload("res://scripts/autoload/loc_de.gd").TABLE
+	var es_tbl: Dictionary = preload("res://scripts/autoload/loc_es.gd").TABLE
+	var cu_script := preload("res://scripts/combat/combat_ui.gd")
+	var must: Array = []
+	for k in cu_script.STATUS_DESC:
+		must.append(cu_script.STATUS_DESC[k])
+	must.append_array([
+		"Their next move", "Attacks for %d.", "Attacks %d times for %d each (%d total).",
+		"Braces for %d Block.", "Heals %d HP.", "Hits you with %s %d. ",
+		"Buffs itself: %s +%d.", "Drains %d of your Aura.",
+		"Taxes %d Aura if you're hoarding above a threshold.",
+		"Summons backup into the fight.", "Bides its time.",
+		"Energy", "Aura", "Gold",
+		"Spent to play cards; refills to max at the start of each turn.",
+		"Banked style — it persists the whole fight. 6+: +2 dmg · 12+: +1 draw · 18+: pierce · 24+: the Encore spotlight. Finishers spend it all.",
+		"Run currency — spend it in shops on cards, removals, and relics.",
+		"End Turn", "BLOCKED %d", "+Block", "+2DMG", "DRAW", "PIERCE",
+		"Act %d/%d", "Gold %d", "Clout %d", "deck (%d)", "your deck  (%d cards)",
+		"THE CRITIC:  ", "— FINALE —", "ENCORE ×%d!", "BOOED!",
+		"Locked — unlock at %d Clout  (you have %d earned)",
+		"Resume Run   (Act %d)", "Continue   (%d Clout)", "%d gold", "SOLD",
+		"No passive.", "Drip +%d Aura/turn.",
+		"Draw %d", "Discard %d", "Draw pile", "Discard pile",
+		"%d cards. When it runs dry, your discard shuffles back in.",
+		"%d cards. Played and discarded cards land here.", "up next", "up next: %s",
+		"fresh rotation — the discard shuffles back in",
+		"you keep the hand — it's all part of the plan",
+		"nothing left to peek — your piles are empty",
+	])
+	# blanket rule: EVERY card description ships in both languages — 10 archetype-PR
+	# cards had silently slipped the triple-edit rule before this assert existed
+	for cid in Database.cards:
+		must.append(Database.cards[cid].description)
+	# events finally translate (all 11); spot-check one string per event so a
+	# dropped key can't silently regress a whole encounter back to English
+	must.append_array([
+		"it's serving a look and lowkey staring back. unsettling fr.",
+		"a hooded figure's got mystery cards. trust the process?",
+		"\"let's unpack that deck, bestie.\" cut one card from your deck for good.",
+		"a velvet box hums. \"trade a little vitality for a little power?\"",
+		"suspiciously clean water, absolutely loaded with old coins.",
+		"dusty, ornate, lowkey humming. rummage or nah?",
+		"she's at a corner table, reviewing a matcha. she has DEFINITELY seen you.",
+		"She sips. She nods, slowly. Your next fight is pre-reviewed: VIP room ahead.",
+		"Her pen comes out. It's already writing. A heckler will attend your next fight.",
+		"two clipboard interns from the Critic's office. they're rating fits today.",
+		"a guy with a speaker offers to gas you up. rates negotiable.",
+		"backstage at a venue. finders keepers is the law of the land here.",
+		"the wizard group chat is BEEFING at 3am. someone has to say something.",
+		"You move on, none the worse.",
+	])
+	for t in GameState.TREND_LABEL.values():
+		must.append(String(t))
+	for arr in GameState.CRITIC_LINES.values():
+		for line in arr:
+			must.append(String(line))
+	var missing_de: Array = []
+	var missing_es: Array = []
+	for k in must:
+		if not de_tbl.has(k):
+			missing_de.append(k)
+		if not es_tbl.has(k):
+			missing_es.append(k)
+	_check("teaching layer + chrome covered in DE", missing_de, [])
+	_check("teaching layer + chrome covered in ES", missing_es, [])
 
 	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
 	print("--- rarity ladder ---")

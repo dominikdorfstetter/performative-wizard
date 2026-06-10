@@ -10,30 +10,30 @@ const DEF := {
 	&"alley_cat": {"c": "e0883c", "shape": "round", "feat": "ears", "eye": "8fd96b", "angry": false},
 	&"disgruntled_pigeon": {"c": "8a93a6", "shape": "round", "feat": "beak", "eye": "ffffff", "angry": true},
 	&"garden_gnome": {"c": "d8b088", "shape": "tall", "feat": "hat", "eye": "ffffff", "angry": false},
-	&"angry_toaster": {"c": "b9c0c9", "shape": "square", "feat": "slots", "eye": "ffffff", "angry": true},
+	&"angry_toaster": {"c": "b9c0c9", "shape": "wide", "feat": "slots", "eye": "ffffff", "angry": true},
 	&"haunted_umbrella": {"c": "8a5bd0", "shape": "tall", "feat": "wings", "eye": "d6ff66", "angry": true},
 	&"sock_puppet": {"c": "e6e6ee", "shape": "tall", "feat": "mouth", "eye": "ffffff", "angry": false},
-	&"possessed_wardrobe": {"c": "8a5a3a", "shape": "square", "feat": "doors", "eye": "ff6b6b", "angry": true},
+	&"possessed_wardrobe": {"bulk": 1.3, "c": "8a5a3a", "shape": "square", "feat": "doors", "eye": "ff6b6b", "angry": true},
 	&"taxidermy_owl": {"c": "9a6b3f", "shape": "round", "feat": "tufts", "eye": "ffd24a", "angry": false},
-	&"the_critic": {"c": "b23b3b", "shape": "round", "feat": "horns", "eye": "ffd24a", "angry": true},
+	&"the_critic": {"bulk": 2.0, "c": "b23b3b", "shape": "round", "feat": "horns", "eye": "ffd24a", "angry": true},
 	&"feral_houseplant": {"c": "4e9a48", "shape": "blob", "feat": "spikes", "eye": "ffffff", "angry": true},
 	&"cursed_mirror": {"c": "acc4d4", "shape": "square", "feat": "none", "eye": "c08ce0", "angry": false},
 	&"possessed_mannequin": {"c": "d8c2a2", "shape": "tall", "feat": "none", "eye": "241a30", "angry": true, "cyclops": true},
 	&"rabid_roomba": {"c": "4a4f57", "shape": "blob", "feat": "antenna", "eye": "ff5a5a", "angry": true},
-	&"goblin_gremlin": {"c": "6f9a3a", "shape": "round", "feat": "fangs", "eye": "ffd24a", "angry": true},
-	&"gargoyle_cherub": {"c": "9aa0a8", "shape": "round", "feat": "wings", "eye": "ffffff", "angry": true},
+	&"goblin_gremlin": {"c": "6f9a3a", "shape": "imp", "feat": "fangs", "eye": "ffd24a", "angry": true},
+	&"gargoyle_cherub": {"bulk": 1.2, "c": "9aa0a8", "shape": "wide", "feat": "wings", "eye": "ffffff", "angry": true},
 	&"black_cat": {"c": "2c2735", "shape": "round", "feat": "ears", "eye": "ffd24a", "angry": true},
-	&"shade_thrower": {"c": "5b4a78", "shape": "diamond", "feat": "crest", "eye": "ff6b8f", "angry": true},
-	&"clout_goblin": {"c": "7aa83a", "shape": "round", "feat": "fangs", "eye": "ffd24a", "angry": true},
+	&"shade_thrower": {"c": "5b4a78", "shape": "floaty", "feat": "crest", "eye": "ff6b8f", "angry": true},
+	&"clout_goblin": {"c": "7aa83a", "shape": "imp", "feat": "fangs", "eye": "ffd24a", "angry": true},
 	&"ringlight_wraith": {"c": "d8d2e8", "shape": "diamond", "feat": "halo", "eye": "ff5ab0", "angry": true},
 	&"wifi_router": {"c": "2c3a4a", "shape": "square", "feat": "antenna", "eye": "5fd0e0", "angry": true},
-	&"vending_machine": {"c": "c0423c", "shape": "tall", "feat": "slots", "eye": "ffd24a", "angry": true},
-	&"gym_rat": {"c": "9a8a78", "shape": "round", "feat": "ears", "eye": "ff5a5a", "angry": true},
-	&"the_algorithm": {"c": "26243a", "shape": "square", "feat": "antenna", "eye": "ff5ab0", "angry": true},
+	&"vending_machine": {"bulk": 1.3, "c": "c0423c", "shape": "tall", "feat": "slots", "eye": "ffd24a", "angry": true},
+	&"gym_rat": {"bulk": 1.2, "c": "9a8a78", "shape": "wide", "feat": "ears", "eye": "ff5a5a", "angry": true},
+	&"the_algorithm": {"bulk": 2.0, "c": "26243a", "shape": "square", "feat": "antenna", "eye": "ff5ab0", "angry": true},
 	# Critic's heckler — a loudmouth she drops into a flop room.
-	&"heckler": {"c": "9a5fbf", "shape": "round", "feat": "mouth", "eye": "ffd24a", "angry": true},
+	&"heckler": {"bulk": 0.9, "c": "9a5fbf", "shape": "round", "feat": "mouth", "eye": "ffd24a", "angry": true},
 	# Summoned minion ("goon") for the necromancer's Undead stacks.
-	&"goon": {"c": "7fa86a", "shape": "round", "feat": "tufts", "eye": "ff4d4d", "angry": true},
+	&"goon": {"bulk": 0.8, "c": "7fa86a", "shape": "round", "feat": "tufts", "eye": "ff4d4d", "angry": true},
 }
 
 # wizards: humanoid sprites (pointy hat, face, robe)
@@ -46,6 +46,40 @@ const WIZ := {
 # Small 16x16 motif icons for cards/keywords. Each is layers of horizontal spans
 # [row, x0, x1] painted in order.
 const ICON := {
+	"door": [
+		{"c": "6a4326", "s": [[2, 5, 10], [3, 4, 11], [4, 4, 11], [5, 4, 11], [6, 4, 11], [7, 4, 11], [8, 4, 11], [9, 4, 11], [10, 4, 11], [11, 4, 11], [12, 4, 11], [13, 4, 11]]},
+		{"c": "9a6a42", "s": [[3, 5, 10], [4, 5, 10], [5, 5, 10], [6, 5, 10], [7, 5, 10], [8, 5, 10], [9, 5, 10], [10, 5, 10], [11, 5, 10], [12, 5, 10], [13, 5, 10]]},
+		{"c": "ffd24a", "s": [[8, 9, 9]]},
+	],
+	"boot": [
+		{"c": "6a4326", "s": [[4, 5, 7], [5, 5, 7], [6, 5, 7], [7, 5, 7], [8, 5, 7], [9, 5, 8], [10, 5, 10], [11, 5, 12], [12, 5, 12]]},
+		{"c": "3d2716", "s": [[13, 4, 13]]},
+		{"c": "ffd24a", "s": [[6, 5, 5], [8, 5, 5]]},
+	],
+	"scissors": [
+		{"c": "cdd3dd", "s": [[3, 4, 5], [4, 5, 6], [5, 6, 7], [3, 10, 11], [4, 9, 10], [5, 8, 9], [6, 7, 8]]},
+		{"c": "ffd24a", "s": [[7, 7, 8]]},
+		{"c": "e05a8a", "s": [[8, 6, 7], [9, 5, 6], [10, 4, 6], [11, 4, 6], [8, 8, 9], [9, 9, 10], [10, 9, 11], [11, 9, 11]]},
+	],
+	"gear": [
+		{"c": "9aa0ac", "s": [[2, 7, 8], [13, 7, 8], [7, 2, 3], [8, 2, 3], [7, 12, 13], [8, 12, 13], [4, 6, 9], [5, 5, 10], [6, 4, 11], [7, 4, 11], [8, 4, 11], [9, 4, 11], [10, 5, 10], [11, 6, 9]]},
+		{"c": "5a5f6a", "s": [[7, 7, 8], [8, 7, 8]]},
+	],
+	"padlock": [
+		{"c": "9aa0ac", "s": [[3, 5, 10], [4, 4, 5], [4, 10, 11], [5, 4, 5], [5, 10, 11], [6, 4, 5], [6, 10, 11]]},
+		{"c": "ffd24a", "s": [[7, 3, 12], [8, 3, 12], [9, 3, 12], [10, 3, 12], [11, 3, 12], [12, 3, 12], [13, 4, 11]]},
+		{"c": "6a4326", "s": [[9, 7, 8], [10, 7, 8]]},
+	],
+	"torch": [
+		{"c": "d9531f", "s": [[3, 6, 9], [4, 5, 10], [5, 5, 10], [6, 6, 9], [7, 7, 8]]},
+		{"c": "ffd24a", "s": [[4, 7, 8], [5, 7, 8]]},
+		{"c": "6a4326", "s": [[8, 7, 8], [9, 7, 8], [10, 7, 8], [11, 7, 8], [12, 7, 8], [13, 7, 8]]},
+	],
+	"mic": [
+		{"c": "cdd3dd", "s": [[2, 6, 9], [3, 5, 10], [4, 5, 10], [5, 5, 10], [6, 6, 9]]},
+		{"c": "9aa0ac", "s": [[3, 6, 7], [4, 6, 6]]},
+		{"c": "3a3344", "s": [[7, 7, 8], [8, 7, 9], [9, 8, 9], [10, 8, 10], [11, 9, 10], [12, 9, 11], [13, 10, 11]]},
+	],
 	"sword": [
 		{"c": "8a5a3a", "s": [[12, 3, 4], [11, 4, 5]]},
 		{"c": "ffd24a", "s": [[11, 4, 7], [10, 5, 6]]},
@@ -153,6 +187,10 @@ const ICON := {
 		{"c": "8fa0c0", "s": [[3, 7, 8], [4, 6, 11], [5, 5, 11], [6, 5, 10], [7, 4, 10], [8, 5, 10], [9, 5, 10], [10, 6, 9], [11, 7, 8]]},
 		{"c": "1a1420", "s": [[3, 8, 8], [4, 7, 8], [5, 8, 9], [6, 7, 7], [7, 8, 8], [8, 6, 7], [9, 8, 8], [10, 7, 7]]},
 	],
+	"quest": [
+		{"c": "c08ce0", "s": [[3, 6, 9], [4, 5, 6], [4, 9, 10], [5, 9, 10], [6, 8, 10], [7, 7, 9], [8, 7, 8], [9, 7, 8], [11, 7, 8]]},
+		{"c": "e0caf5", "s": [[3, 7, 8], [11, 7, 7]]},
+	],
 }
 
 # Outfit item icons, one silhouette per slot, drawn in 3 shades of the element colour.
@@ -257,6 +295,31 @@ func _inside(shape: String, x: int, y: int) -> bool:
 				return rx * rx + ry * ry <= 1.0
 			var halfw: int = max(0, 5 - (y - 10))
 			return x >= 7 - halfw and x <= 8 + halfw
+		"wide":
+			# broad shoulders up top, tucked waist — the bruiser silhouette
+			if y < 4 or y > 14:
+				return false
+			var wh := 7 if y <= 9 else 5
+			return x >= 7 - wh and x <= 8 + wh
+		"imp":
+			# pointy hood tapering into a squat bulb — the mischief silhouette
+			if y >= 8:
+				var ix := (x - 7.5) / 5.8
+				var iy := (y - 11.0) / 3.9
+				return ix * ix + iy * iy <= 1.0
+			if y < 3:
+				return false
+			var hw: int = max(1, y - 2)
+			return x >= 7 - hw + 1 and x <= 8 + hw - 1
+		"floaty":
+			# a head that never touches the ground, trailing wispy fringes
+			var fx := (x - 7.5) / 5.6
+			var fy := (y - 7.0) / 5.0
+			if fx * fx + fy * fy <= 1.0 and y <= 10:
+				return true
+			if y >= 11 and y <= 12:
+				return x >= 3 and x <= 12 and (x + y) % 3 != 0
+			return false
 	var dx := (x - 7.5) / 5.6
 	var dy := (y - 9.0) / 5.6
 	return dx * dx + dy * dy <= 1.0

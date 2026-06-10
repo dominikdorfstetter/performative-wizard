@@ -2,14 +2,15 @@ extends Control
 ## The run map. Draws the branching node graph (connections via _draw, nodes as buttons),
 ## shows run status, and routes the chosen node to the right scene.
 
-const TYPE_ICON := {
-	"Combat": "👊", "Elite": "💀", "Event": "❓", "Shop": "🛒",
-	"Rest": "🛋", "Chest": "📦", "Boss": "👑",
-}
 const TYPE_PIX := {
-	"Combat": "fist", "Elite": "skull", "Event": "swirl", "Shop": "coin",
+	"Combat": "fist", "Elite": "skull", "Event": "quest", "Shop": "coin",
 	"Rest": "zzz", "Chest": "chest", "Boss": "crown",
 }
+const TYPE_WORD := {
+	"Combat": "fight", "Elite": "elite", "Event": "event", "Shop": "shop",
+	"Rest": "rest", "Chest": "chest", "Boss": "boss",
+}
+const TipIcon = preload("res://scripts/ui/tip_icon.gd")
 const TYPE_COLOR := {
 	"Combat": Color(0.86, 0.30, 0.27), "Elite": Color(0.85, 0.4, 0.95),
 	"Event": Color(0.4, 0.7, 0.9), "Shop": Color(0.95, 0.8, 0.3),
@@ -25,7 +26,7 @@ const SCENE := {
 const LEFT := 150.0
 const RIGHT := 1010.0
 const TOP := 116.0
-const BOT := 600.0
+const BOT := 572.0
 const NODE := 50.0
 
 var _pos := {}
@@ -35,6 +36,7 @@ func _ready() -> void:
 	if GameState.map.is_empty():           # standalone fallback
 		GameState.start_run(GameState.wizard_id)
 		GameState.finalize_loadout()
+	GameState.save_run()                   # quit-safe checkpoint: the run resumes from here
 	Audio.play_music("menu")
 	_compute_positions()
 	_build_info()
@@ -72,6 +74,30 @@ func _build_nodes() -> void:
 	for r in rows.size():
 		for node in rows[r]:
 			_add_node_button(r, node)
+	_add_you_are_here()
+
+## A mini wizard bobbing beside the current node — the map had no presence marker.
+func _add_you_are_here() -> void:
+	if GameState.pos_row < 0:
+		return
+	var key := "%d_%d" % [GameState.pos_row, GameState.pos_col]
+	if not _pos.has(key):
+		return
+	var tex := SpriteBank.wizard_texture(GameState.wizard_id)
+	if tex == null:
+		return
+	var tr := TextureRect.new()
+	tr.texture = tex
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tr.position = _pos[key] + Vector2(20, -52)
+	tr.size = Vector2(40, 40)
+	add_child(tr)
+	var home_y := tr.position.y
+	var tw := tr.create_tween().set_loops()
+	tw.tween_property(tr, "position:y", home_y - 6, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(tr, "position:y", home_y, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _add_node_button(r: int, node: Dictionary) -> void:
 	var c: int = node.col
@@ -92,6 +118,10 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	if avail:
 		b.pressed.connect(_enter.bind(r, c, type))
+		# the legend says "tap a glowing node" — make them actually glow
+		var glow := b.create_tween().set_loops()
+		glow.tween_property(b, "modulate", Color(1.28, 1.22, 1.0), 0.7).set_trans(Tween.TRANS_SINE)
+		glow.tween_property(b, "modulate", Color.WHITE, 0.7).set_trans(Tween.TRANS_SINE)
 
 	var pix := SpriteBank.icon_texture(StringName(TYPE_PIX.get(type, "swirl")))
 	if pix != null:
@@ -103,16 +133,6 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 		icon.position = Vector2(11, 10)
 		icon.size = Vector2(28, 28)
 		icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.4)
-		b.add_child(icon)
-	else:
-		var icon := Label.new()
-		icon.text = TYPE_ICON.get(type, "?")
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-		icon.add_theme_font_size_override("font_size", 24)
-		icon.modulate = Color.WHITE if (avail or current) else Color(1, 1, 1, 0.45)
 		b.add_child(icon)
 	# enemy-count badge so you can read the encounter before entering
 	if type == "Combat" or type == "Elite":
@@ -127,6 +147,20 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 			badge.add_theme_font_size_override("font_size", 13)
 			badge.add_theme_color_override("font_color", Color(1, 1, 1) if (avail or current) else Color(1, 1, 1, 0.4))
 			b.add_child(badge)
+		# The Critic's pending verdict will rewrite the next fight you enter — show it
+		# ON THE MAP (crown = VIP gold ahead, heckler = she's sending one).
+		if avail and (GameState.pending_critic == "S" or GameState.pending_critic == "C"):
+			var mark := TextureRect.new()
+			mark.texture = SpriteBank.icon_texture(&"crown") if GameState.pending_critic == "S" else SpriteBank.texture(&"heckler")
+			mark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			mark.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			mark.position = Vector2(-7, -9)
+			mark.size = Vector2(20, 20)
+			b.add_child(mark)
+			var tw := mark.create_tween().set_loops()
+			tw.tween_property(mark, "modulate:a", 0.45, 0.6).set_trans(Tween.TRANS_SINE)
+			tw.tween_property(mark, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
 	add_child(b)
 
 func _build_info() -> void:
@@ -135,39 +169,84 @@ func _build_info() -> void:
 	_info.size = Vector2(1112, 80)
 	_info.add_theme_font_size_override("font_size", 18)
 	var w := Database.get_wizard(GameState.wizard_id)
-	var asc := "  🔥asc%d" % GameState.asc_level if GameState.asc_level > 0 else ""
-	_info.text = "%s %s    Act %d/%d%s    ❤ %d/%d    💰 %d    ✦ Clout %d    %s" % [
-		w.emoji, w.title, GameState.act, GameState.MAX_ACTS, asc,
-		GameState.player_hp, GameState.player_max_hp,
-		GameState.gold, GameState.clout, _artifact_text()]
+	var parts: Array[String] = [
+		Loc.t(w.title),
+		Loc.t("Act %d/%d") % [GameState.act, GameState.MAX_ACTS],
+	]
+	if GameState.asc_level > 0:
+		parts.append(Loc.t("Asc %d") % GameState.asc_level)
+	parts.append("HP %d/%d" % [GameState.player_hp, GameState.player_max_hp])
+	parts.append(Loc.t("Gold %d") % GameState.gold)
+	parts.append(Loc.t("Clout %d") % GameState.clout)
+	_info.text = "    ".join(parts)
 	var trend := GameState.trend_label()
 	if trend != "":
-		_info.text += "\n%s    👀 Critic ✦%d" % [trend, GameState.critic_score]
+		_info.text += "\n%s    %s" % [trend, Loc.t("Critic score %d") % GameState.critic_score]
 	add_child(_info)
+	_build_artifact_row()
 	var deck_btn := Button.new()
-	deck_btn.text = "🃏 deck (%d)" % GameState.deck.size()
+	deck_btn.text = Loc.t("deck (%d)") % GameState.deck.size()
 	deck_btn.add_theme_font_size_override("font_size", 16)
+	deck_btn.add_theme_stylebox_override("normal", NodeUI.box(Color(0.15, 0.13, 0.2), Color(0.45, 0.5, 0.62), 2))
+	deck_btn.add_theme_stylebox_override("hover", NodeUI.box(Color(0.22, 0.19, 0.3), Color(0.6, 0.66, 0.78), 2))
+	deck_btn.add_theme_stylebox_override("pressed", NodeUI.box(Color(0.2, 0.17, 0.27), Color(0.45, 0.5, 0.62), 2))
+	deck_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	deck_btn.position = Vector2(968, 12)
 	deck_btn.size = Vector2(164, 34)
 	deck_btn.pressed.connect(_show_deck)
 	add_child(deck_btn)
+	# Pixel-icon legend (matches the node buttons), replacing the emoji hint line.
+	var legend := HBoxContainer.new()
+	legend.position = Vector2(20, 614)
+	legend.add_theme_constant_override("separation", 12)
+	add_child(legend)
+	var intro := Label.new()
+	intro.text = Loc.t("tap a glowing node:")
+	intro.add_theme_font_size_override("font_size", 14)
+	intro.add_theme_color_override("font_color", Color(0.6, 0.6, 0.66))
+	legend.add_child(intro)
+	for t in ["Combat", "Elite", "Event", "Shop", "Rest", "Chest", "Boss"]:
+		var pair := HBoxContainer.new()
+		pair.add_theme_constant_override("separation", 3)
+		var ic := TextureRect.new()
+		ic.texture = SpriteBank.icon_texture(StringName(TYPE_PIX[t]))
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ic.custom_minimum_size = Vector2(18, 18)
+		pair.add_child(ic)
+		var l := Label.new()
+		l.text = Loc.t(TYPE_WORD[t])
+		l.add_theme_font_size_override("font_size", 14)
+		l.add_theme_color_override("font_color", TYPE_COLOR[t].lightened(0.2))
+		pair.add_child(l)
+		legend.add_child(pair)
 	var hint := Label.new()
-	hint.position = Vector2(20, 612)
-	hint.size = Vector2(700, 24)
+	hint.text = Loc.t("(badge = number of enemies)")
 	hint.add_theme_font_size_override("font_size", 14)
-	hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.66))
-	hint.text = "tap a glowing node to advance.  👊 fight  💀 elite  ❓ event  🛒 shop  🛋 rest  📦 chest  👑 boss"
-	add_child(hint)
+	hint.add_theme_color_override("font_color", Color(0.55, 0.55, 0.62))
+	legend.add_child(hint)
 
-func _artifact_text() -> String:
-	if GameState.run_artifacts.is_empty():
-		return ""
-	var parts: Array[String] = []
+# Relics as pixel charms with hover tooltips (was an emoji list in the header label).
+func _build_artifact_row() -> void:
+	var x := 700.0
 	for aid in GameState.run_artifacts:
 		var a := Database.get_artifact(aid)
-		if a != null:
-			parts.append(a.emoji)
-	return "🎒 " + " ".join(parts)
+		if a == null:
+			continue
+		var tex := SpriteBank.artifact_texture(aid)
+		if tex == null:
+			continue
+		var tr := TipIcon.new()
+		tr.texture = tex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.custom_minimum_size = Vector2(22, 22)
+		tr.size = Vector2(22, 22)
+		tr.position = Vector2(x, 16)
+		tr.mouse_filter = Control.MOUSE_FILTER_STOP
+		tr.set_tip(Loc.t(a.title), Loc.t(a.description))
+		add_child(tr)
+		x += 25
 
 func _show_deck() -> void:
 	var overlay := Control.new()
@@ -177,7 +256,7 @@ func _show_deck() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(bg)
 	var title := Label.new()
-	title.text = "your deck  (%d cards)" % GameState.deck.size()
+	title.text = Loc.t("your deck  (%d cards)") % GameState.deck.size()
 	title.position = Vector2(0, 36)
 	title.size = Vector2(1152, 36)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -204,8 +283,21 @@ func _show_deck() -> void:
 	add_child(overlay)
 
 func _enter(r: int, c: int, type: String) -> void:
+	Audio.play("click", -6.0)
 	GameState.enter(r, c)
-	get_tree().change_scene_to_file(SCENE.get(type, "res://scenes/combat/combat.tscn"))
+	Fader.change_scene(SCENE.get(type, "res://scenes/combat/combat.tscn"))
+
+var _pause: Control
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+		if is_instance_valid(_pause):
+			_pause.queue_free()
+		else:
+			_pause = NodeUI.pause_overlay(self, func():
+				GameState.abandon_run()
+				Fader.change_scene("res://scenes/hub/class_select.tscn"))
+		get_viewport().set_input_as_handled()
 
 func _circle(bg: Color, border: Color, bw: int) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()

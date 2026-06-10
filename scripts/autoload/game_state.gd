@@ -3,6 +3,13 @@ extends Node
 ## meta progression (unlocked wardrobe + Clout), persisted to user://save.json.
 
 const SAVE_PATH := "user://save.json"
+const SAVE_VERSION := 1
+
+# The demo's conversion funnel — shown on run-end screens and the act interstitial.
+# An empty string hides its button (set the Discord invite before launch).
+const LINK_ITCH := "https://dominikdorfstetter.itch.io/performative-wizard"
+const LINK_DISCORD := ""
+const LINK_ISSUES := "https://github.com/dominikdorfstetter/performative-wizard/issues"
 
 const SLOTS: Array[String] = ["Hat", "Robe", "Staff", "Boots", "Trinket"]
 
@@ -43,6 +50,11 @@ var critic_score := 0                        # lifetime style score from The Cri
 var sfx_on := true
 var music_on := true
 var locale := "en"
+var seen_tutorial := false                   # the first-fight teaching beats fire once
+var fullscreen_on := false                   # persisted; ignored on web (browser-controlled)
+var effects_on := true                       # screen shake + full-screen hit flashes (a11y)
+var music_vol := 1.0
+var sfx_vol := 1.0
 
 const MAX_ACTS := 3
 
@@ -57,7 +69,7 @@ var gold := 0
 var act := 1                                 # 1..MAX_ACTS
 var asc_level := 0                           # ascension modifiers active this run
 var run_artifacts: Array[StringName] = []    # artefact ids held this run
-var card_upgrades: Dictionary = {}           # card_id -> true (Glow'd Up: costs 1 less)
+var card_upgrades: Dictionary = {}           # card_id -> "cost"|"value" (legacy true == "cost")
 var map: Array = []
 var pos_row := -1                            # -1 = haven't entered row 0 yet
 var pos_col := -1
@@ -65,6 +77,7 @@ var pos_col := -1
 # The Critic (run-scoped): her verdict on the LAST fight, and the verdict still
 # waiting to reshape the NEXT room the player enters.
 var critic_last_rating := ""
+var critic_last_details: Dictionary = {}     # full rating dict — the reward screen's "because"
 var critic_last_signature: StringName = &""
 var critic_last_freshness := 1.0
 var pending_critic := ""
@@ -77,12 +90,49 @@ var trend: StringName = &""
 
 var message := ""
 
+# The serialized run-in-progress (snapshotted at each map entry, cleared when the run
+# ends). Lives inside save.json next to the meta keys.
+var _run_snapshot: Dictionary = {}
+
 func _ready() -> void:
+	var fresh := not FileAccess.file_exists(SAVE_PATH)
 	load_meta()
 	_ensure_defaults()
+	if fresh:
+		# first boot ever: greet DE/ES players in their OS language (README sells
+		# EN/DE/ES, but nothing ever consulted the locale before)
+		var sys := OS.get_locale_language()
+		if sys in Loc.LOCALES:
+			locale = sys
 	Audio.set_sfx_muted(not sfx_on)
 	Audio.set_music_muted(not music_on)
+	Audio.set_music_volume(music_vol)
+	Audio.set_sfx_volume(sfx_vol)
 	Loc.set_locale(locale)
+	if fullscreen_on and not OS.has_feature("web"):
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+## One global fullscreen handler (F11, or Cmd+Ctrl+F for the macOS convention) —
+## it used to be copy-pasted onto exactly 2 of ~10 screens while the menu footer
+## advertised it everywhere.
+func _unhandled_input(event: InputEvent) -> void:
+	if OS.has_feature("web"):
+		return   # the browser owns fullscreen
+	if event is InputEventKey and event.pressed and not event.echo:
+		var combo: bool = event.keycode == KEY_F and event.ctrl_pressed and event.meta_pressed
+		if event.keycode == KEY_F11 or combo:
+			toggle_fullscreen()
+			get_viewport().set_input_as_handled()
+
+func toggle_fullscreen() -> void:
+	var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
+	fullscreen_on = not fs
+	save_meta()
+
+## Abandoning mid-run counts as a loss: Clout still banks, the snapshot clears.
+func abandon_run() -> void:
+	finish_run(false)
 
 func set_language(l: String) -> void:
 	locale = l
@@ -117,6 +167,7 @@ func new_game() -> void:
 	critic_score = 0
 	run_artifacts = []
 	map = []
+	_run_snapshot = {}
 	save_meta()
 
 func has_save() -> bool:
@@ -188,19 +239,26 @@ func locked_wizard_hint(id: StringName) -> String:
 	var w := Database.get_wizard(id)
 	if w == null or wizard_unlocked(id):
 		return ""
-	return Loc.t("🔒  Unlock at ✦ %d  (you have ✦ %d earned)") % [w.unlock_clout, clout_earned]
+	return Loc.t("Locked — unlock at %d Clout  (you have %d earned)") % [w.unlock_clout, clout_earned]
 
 func is_upgraded(id: StringName) -> bool:
-	return card_upgrades.get(id, false)
+	return card_upgrades.has(id)
 
-func upgrade_card(id: StringName) -> void:
-	card_upgrades[id] = true
+## "cost" (Glow Up classic: 1 cheaper) or "value" (+2 on damage/Block/heal amounts).
+## Legacy saves stored `true`, which reads as "cost".
+func upgrade_mode(id: StringName) -> String:
+	if not card_upgrades.has(id):
+		return ""
+	return "value" if str(card_upgrades[id]) == "value" else "cost"
+
+func upgrade_card(id: StringName, mode := "cost") -> void:
+	card_upgrades[id] = mode
 
 ## Effective energy cost after Glow-Up (costs 1 less, min 0).
 func card_cost(card: CardData) -> int:
 	if card == null:
 		return 0
-	return max(0, card.cost - (1 if is_upgraded(card.id) else 0))
+	return max(0, card.cost - (1 if upgrade_mode(card.id) == "cost" else 0))
 
 func card_unlocked(id: StringName) -> bool:
 	var c := Database.get_card(id)
@@ -363,10 +421,14 @@ func enter(row: int, col: int) -> Dictionary:
 func node_scales(node: Dictionary) -> Array:
 	# deeper acts and ascension make everything tougher
 	# Softened 2026-06-07 after the balance playtest: the act2→act3 spike was a
-	# damage-driven attrition cliff. Lowered per-act/row HP+dmg to smooth the ramp;
-	# asc-HP kept at 0.08 so the ascension endgame stays brutal. (See docs/USP.md.)
-	var act_hp := 1.0 + 0.30 * (act - 1) + 0.08 * asc_level
-	var act_dmg := 1.0 + 0.17 * (act - 1) + 0.05 * asc_level
+	# damage-driven attrition cliff. Lowered per-act/row HP+dmg to smooth the ramp.
+	# Balance pass #4 (2026-06-10): asc-HP now kinks at 4 (0.08 -> 0.05/level).
+	# Pure HP sponges past asc4 only punished the flat-damage classes — the asc8
+	# boss spread was fire 10 / necro 19 / rizz 82. Threat (dmg) stays linear.
+	var asc_hp := 0.08 * mini(asc_level, 4) + 0.05 * maxi(0, asc_level - 4)
+	var asc_dmg := 0.05 * mini(asc_level, 4) + 0.035 * maxi(0, asc_level - 4)
+	var act_hp := 1.0 + 0.30 * (act - 1) + asc_hp
+	var act_dmg := 1.0 + 0.17 * (act - 1) + asc_dmg
 	if node.get("type") == "Boss":
 		return [act_hp, act_dmg]
 	var r: int = node.get("row", 0)
@@ -384,7 +446,7 @@ func combat_reward(node: Dictionary) -> int:
 
 # Several voice lines per grade so back-to-back fights don't repeat verbatim.
 const CRITIC_LINES := {
-	"S": ["S — serve. obsessed. devastating. 💅", "S — the giiirls are SERVING. iconic.", "S — i felt that in my SOUL. headliner."],
+	"S": ["S — serve. obsessed. devastating.", "S — the giiirls are SERVING. iconic.", "S — i felt that in my SOUL. headliner."],
 	"A": ["A — ate. left a crumb on the plate.", "A — a real look. almost made me clap.", "A — so close to perfect it's annoying."],
 	"B": ["B — mid showing, bestie. do better.", "B — it was giving... fine. i guess.", "B — i've seen worse. i've seen way better."],
 	"C": ["C — flop era. who told you that was giving?", "C — boo. i've seen NPCs with more drip.", "C — that wasn't a fit, that was a cry for help."],
@@ -399,6 +461,7 @@ func record_show_rating(r: Dictionary) -> void:
 	var sig: StringName = r.get("signature", &"grind")
 	var fat := int(critic_fatigue.get(sig, 0))
 	critic_last_rating = rating
+	critic_last_details = r.duplicate()
 	critic_last_signature = sig
 	critic_last_freshness = maxf(0.0, 1.0 - 0.34 * fat)
 	pending_critic = rating
@@ -442,7 +505,7 @@ func apply_critic_mutation(n: Dictionary) -> void:
 ## style she gets bored and demands something new — the drift made audible.
 func critic_quip(rating: String) -> String:
 	if (rating == "S" or rating == "A") and critic_last_freshness <= 0.0:
-		return Loc.t("again? 🥱 serve me something NEW.")
+		return Loc.t("again? serve me something NEW.")
 	var arr: Array = CRITIC_LINES.get(rating, CRITIC_LINES["C"])
 	return Loc.t(arr[critic_score % arr.size()])
 
@@ -452,9 +515,9 @@ func critic_quip(rating: String) -> String:
 const TRENDS: Array[StringName] = [&"its_giving", &"flop_era", &"going_viral"]
 const TREND_MOD := {&"its_giving": 1, &"flop_era": -1, &"going_viral": 1}
 const TREND_LABEL := {
-	&"its_giving": "📈 TREND: it's giving abundance  (+1 Aura/turn)",
-	&"flop_era": "📉 TREND: flop era  (−1 Aura/turn)",
-	&"going_viral": "🔥 TREND: going viral  (+1 Aura/turn)",
+	&"its_giving": "TREND: it's giving abundance  (+1 Aura/turn)",
+	&"flop_era": "TREND: flop era  (-1 Aura/turn)",
+	&"going_viral": "TREND: going viral  (+1 Aura/turn)",
 }
 
 func _roll_trend() -> void:
@@ -482,7 +545,8 @@ func finish_run(victory: bool) -> void:
 	message = "Run over. +%d Clout (total %d)." % [earned, clout]
 	var unlocked := _wizards_unlocked_between(before, clout_earned)
 	if not unlocked.is_empty():
-		message += "\n✦ NEW FIT UNLOCKED: %s!" % ", ".join(unlocked)
+		message += "\nNEW FIT UNLOCKED: %s!" % ", ".join(unlocked)
+	_run_snapshot = {}   # the run is over; Resume must not bring it back
 	save_meta()
 
 ## Names of wizards whose unlock threshold falls in (lo, hi] — i.e. just unlocked.
@@ -494,6 +558,32 @@ func _wizards_unlocked_between(lo: int, hi: int) -> Array:
 			names.append(w.pname)
 	return names
 
+## EVERYTHING that unlocked when lifetime Clout moved (lo, hi] — wizards, cards,
+## relics. The game computed these forever but never announced them anywhere.
+func unlocks_between(lo: int, hi: int) -> Array[String]:
+	var out: Array[String] = []
+	out.append_array(_wizards_unlocked_between(lo, hi))
+	for cid in Database.cards:
+		var c: CardData = Database.cards[cid]
+		if c.unlock_clout > lo and c.unlock_clout <= hi:
+			out.append(Loc.t(c.title))
+	for aid in Database.artifacts:
+		var a: ArtifactData = Database.artifacts[aid]
+		if a.unlock_clout > lo and a.unlock_clout <= hi:
+			out.append(Loc.t(a.title))
+	return out
+
+## The closest still-locked wizard: {name, need} or {} when everything's unlocked.
+## Powers the 'one more run' progress bar on the run-end screen.
+func next_wizard_unlock() -> Dictionary:
+	var best := {}
+	for wid in [&"necro", &"rizz"]:
+		var w := Database.get_wizard(wid)
+		if w != null and clout_earned < w.unlock_clout:
+			if best.is_empty() or w.unlock_clout < int(best.need):
+				best = {"name": w.pname, "need": w.unlock_clout}
+	return best
+
 ## Called when a boss dies. Returns true if the run continues into a new act.
 func advance_act() -> bool:
 	if act >= MAX_ACTS:
@@ -504,8 +594,162 @@ func advance_act() -> bool:
 	map = MapGenerator.generate(randi())
 	pos_row = -1
 	pos_col = -1
-	message = "✦ ACT %d ✦  the gauntlet escalates." % act
+	message = "— ACT %d —  the gauntlet escalates." % act
 	return true
+
+# --- run snapshot (quit-safe resume) ---------------------------------------
+# The run is snapshotted whenever the player stands ON THE MAP (map_ui calls
+# save_run). Combat state is deliberately never serialized: resuming after a
+# mid-fight quit costs that one fight, not the run.
+
+func has_run_save() -> bool:
+	return not _run_snapshot.is_empty()
+
+func run_save_act() -> int:
+	return int(_run_snapshot.get("act", 1))
+
+func save_run() -> void:
+	_run_snapshot = _run_to_dict()
+	save_meta()
+
+## Restore the saved run into the live fields. Returns false (and drops the
+## snapshot) if it fails validation, so callers can fall back to the hub.
+func resume_run() -> bool:
+	if _run_snapshot.is_empty():
+		return false
+	if not _run_from_dict(_run_snapshot):
+		push_warning("[GameState] run snapshot failed validation — discarding it")
+		_run_snapshot = {}
+		save_meta()
+		return false
+	return true
+
+func _run_to_dict() -> Dictionary:
+	var rows: Array = []
+	for row in map:
+		var r: Array = []
+		for n in row:
+			r.append(_node_to_dict(n))
+		rows.append(r)
+	var dk: Array = []
+	for id in deck:
+		dk.append(String(id))
+	var arts: Array = []
+	for id in run_artifacts:
+		arts.append(String(id))
+	var pas: Array = []
+	for p in passives:
+		pas.append(String(p))
+	var ups := {}
+	for k in card_upgrades:
+		ups[String(k)] = upgrade_mode(k)
+	var fat := {}
+	for k in critic_fatigue:
+		fat[String(k)] = int(critic_fatigue[k])
+	return {
+		"wizard_id": String(wizard_id), "deck": dk, "passives": pas,
+		"player_max_hp": player_max_hp, "player_hp": player_hp, "drip": drip,
+		"gold": gold, "act": act, "asc_level": asc_level, "artifacts": arts,
+		"card_upgrades": ups, "map": rows, "pos_row": pos_row, "pos_col": pos_col,
+		"critic_last_rating": critic_last_rating,
+		"critic_last_signature": String(critic_last_signature),
+		"critic_last_freshness": critic_last_freshness,
+		"pending_critic": pending_critic, "pending_freshness": pending_freshness,
+		"critic_fatigue": fat, "trend": String(trend),
+	}
+
+func _node_to_dict(n: Dictionary) -> Dictionary:
+	var ens: Array = []
+	for e in n.get("enemies", []):
+		ens.append(String(e))
+	var links: Array = []
+	for l in n.get("links", []):
+		links.append(int(l))
+	var nd := {
+		"type": String(n.get("type", "Combat")), "row": int(n.get("row", 0)),
+		"col": int(n.get("col", 0)), "links": links, "enemies": ens,
+		"visited": bool(n.get("visited", false)),
+	}
+	if n.has("critic_bonus_gold"):
+		nd["critic_bonus_gold"] = int(n["critic_bonus_gold"])
+	if n.has("critic_note"):
+		nd["critic_note"] = String(n["critic_note"])
+	return nd
+
+## Apply a (JSON-round-tripped, so numbers may be floats) snapshot. Every field is
+## re-typed explicitly; validation failures leave meta untouched and return false.
+func _run_from_dict(d: Dictionary) -> bool:
+	var wid := StringName(String(d.get("wizard_id", "")))
+	if Database.get_wizard(wid) == null:
+		return false
+	var rows_in: Array = d.get("map", [])
+	var deck_in: Array = d.get("deck", [])
+	if rows_in.is_empty() or deck_in.is_empty():
+		return false
+	wizard_id = wid
+	deck = []
+	for id in deck_in:
+		deck.append(StringName(String(id)))
+	passives = []
+	for p in d.get("passives", []):
+		passives.append(StringName(String(p)))
+	player_max_hp = max(1, int(d.get("player_max_hp", 1)))
+	player_hp = clampi(int(d.get("player_hp", 1)), 1, player_max_hp)
+	drip = int(d.get("drip", 0))
+	gold = max(0, int(d.get("gold", 0)))
+	act = clampi(int(d.get("act", 1)), 1, MAX_ACTS)
+	asc_level = max(0, int(d.get("asc_level", 0)))
+	run_artifacts = []
+	for a in d.get("artifacts", []):
+		run_artifacts.append(StringName(String(a)))
+	card_upgrades = {}
+	var ups_in: Dictionary = d.get("card_upgrades", {})
+	for k in ups_in:
+		card_upgrades[StringName(String(k))] = "value" if String(ups_in[k]) == "value" else "cost"
+	map = []
+	for row_in in rows_in:
+		if typeof(row_in) != TYPE_ARRAY:
+			return false
+		var row_out: Array = []
+		for n in row_in:
+			if typeof(n) != TYPE_DICTIONARY:
+				return false
+			row_out.append(_node_from_dict(n))
+		map.append(row_out)
+	pos_row = int(d.get("pos_row", -1))
+	pos_col = int(d.get("pos_col", -1))
+	critic_last_rating = String(d.get("critic_last_rating", ""))
+	critic_last_signature = StringName(String(d.get("critic_last_signature", "")))
+	critic_last_freshness = float(d.get("critic_last_freshness", 1.0))
+	pending_critic = String(d.get("pending_critic", ""))
+	pending_freshness = float(d.get("pending_freshness", 1.0))
+	critic_fatigue = {}
+	var fat_in: Dictionary = d.get("critic_fatigue", {})
+	for k in fat_in:
+		critic_fatigue[StringName(String(k))] = int(fat_in[k])
+	trend = StringName(String(d.get("trend", "")))
+	if trend == &"":
+		_roll_trend()
+	message = ""
+	return true
+
+func _node_from_dict(n: Dictionary) -> Dictionary:
+	var ens: Array = []
+	for e in n.get("enemies", []):
+		ens.append(StringName(String(e)))
+	var links: Array = []
+	for l in n.get("links", []):
+		links.append(int(l))
+	var nd := {
+		"type": String(n.get("type", "Combat")), "row": int(n.get("row", 0)),
+		"col": int(n.get("col", 0)), "links": links, "enemies": ens,
+		"visited": bool(n.get("visited", false)),
+	}
+	if n.has("critic_bonus_gold"):
+		nd["critic_bonus_gold"] = int(n["critic_bonus_gold"])
+	if n.has("critic_note"):
+		nd["critic_note"] = String(n["critic_note"])
+	return nd
 
 # --- meta save -----------------------------------------------------------
 
@@ -533,6 +777,11 @@ func load_meta() -> void:
 	var data: Variant = JSON.parse_string(f.get_as_text())
 	if typeof(data) != TYPE_DICTIONARY:
 		return
+	_meta_from_dict(data)
+
+## Payload half of load_meta — kept separate so tests can round-trip the save
+## format in memory without touching the real user://save.json.
+func _meta_from_dict(data: Dictionary) -> void:
 	unlocked_outfits.clear()
 	for o in data.get("unlocked_outfits", []):
 		unlocked_outfits.append(StringName(o))
@@ -546,16 +795,31 @@ func load_meta() -> void:
 	sfx_on = bool(data.get("sfx_on", true))
 	music_on = bool(data.get("music_on", true))
 	locale = String(data.get("locale", "en"))
+	seen_tutorial = bool(data.get("seen_tutorial", false))
+	fullscreen_on = bool(data.get("fullscreen_on", false))
+	effects_on = bool(data.get("effects_on", true))
+	music_vol = clampf(float(data.get("music_vol", 1.0)), 0.0, 1.0)
+	sfx_vol = clampf(float(data.get("sfx_vol", 1.0)), 0.0, 1.0)
+	var run: Variant = data.get("run", {})
+	_run_snapshot = run if typeof(run) == TYPE_DICTIONARY else {}
 
 func save_meta() -> void:
+	if OS.has_environment("PW_NO_SAVE"):
+		return   # dev tools / CI runs must never touch the real save file
+	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if f == null:
+		push_warning("[GameState] could not open save file for writing")
+		return
+	f.store_string(JSON.stringify(_meta_to_dict(), "\t"))
+
+func _meta_to_dict() -> Dictionary:
 	var owned: Array[String] = []
 	for id in unlocked_outfits:
 		owned.append(String(id))
 	var eq := {}
 	for slot in equipped:
 		eq[slot] = String(equipped[slot])
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if f == null:
-		push_warning("[GameState] could not open save file for writing")
-		return
-	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale}, "\t"))
+	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale, "seen_tutorial": seen_tutorial, "fullscreen_on": fullscreen_on, "effects_on": effects_on, "music_vol": music_vol, "sfx_vol": sfx_vol}
+	if not _run_snapshot.is_empty():
+		payload["run"] = _run_snapshot
+	return payload

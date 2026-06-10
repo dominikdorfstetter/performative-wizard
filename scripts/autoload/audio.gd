@@ -6,7 +6,19 @@ const RATE := 22050
 
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
+const MUSIC_DB := -17.0
 var _music: AudioStreamPlayer
+var _music_tw: Tween
+var _music_off_db := 0.0
+var _sfx_off_db := 0.0
+
+func set_music_volume(v: float) -> void:
+	_music_off_db = linear_to_db(maxf(v, 0.01))
+	if _music != null and (_music_tw == null or not _music_tw.is_valid()):
+		_music.volume_db = MUSIC_DB + _music_off_db
+
+func set_sfx_volume(v: float) -> void:
+	_sfx_off_db = linear_to_db(maxf(v, 0.01))
 var _sfx := {}
 var _tracks := {}
 var _current_track := "menu"
@@ -19,7 +31,7 @@ func _ready() -> void:
 		add_child(p)
 		_players.append(p)
 	_music = AudioStreamPlayer.new()
-	_music.volume_db = -17.0
+	_music.volume_db = MUSIC_DB
 	add_child(_music)
 	_build_sfx()
 	_build_tracks()
@@ -33,14 +45,37 @@ func play(name: String, vol_db := -7.0) -> void:
 	var p := _players[_next]
 	_next = (_next + 1) % _players.size()
 	p.stream = s
-	p.volume_db = vol_db
+	p.volume_db = vol_db + _sfx_off_db
 	p.play()
+
+## Per-act variation (critic review item 6): acts 2/3 transpose the in-run tracks
+## up 2/4 semitones and push the tempo +6/+12 BPM, so a 45-minute run never loops
+## one identical bar set. Variants build lazily on first request (masked by the
+## scene fade) and cache for the session.
+const ACT_PITCH := {2: 1.1225, 3: 1.2599}
+const ACT_BPM := {2: 6.0, 3: 12.0}
+
+func _variant_key(track: String, act: int) -> String:
+	var a: int = clampi(act, 1, 3)
+	if a <= 1 or track == "menu" or "@" in track or not TRACK_DEFS.has(track):
+		return track
+	var key := "%s@%d" % [track, a]
+	if not _tracks.has(key):
+		var d: Dictionary = TRACK_DEFS[track].duplicate(true)
+		d["bpm"] = float(d.bpm) + float(ACT_BPM[a])
+		var prog: Array = []
+		for f in d.prog:
+			prog.append(float(f) * float(ACT_PITCH[a]))
+		d["prog"] = prog
+		_tracks[key] = _build_track(d)
+	return key
 
 ## Switch to a named track (menu/combat/combat2/elite/boss). Re-calling with the
 ## track that's already playing is a no-op, so scenes can call it freely.
-func play_music(track := "") -> void:
+func play_music(track := "", act := 1) -> void:
 	if track == "":
 		track = _current_track
+	track = _variant_key(track, act)
 	if music_muted:
 		_current_track = track   # remember it for unmute
 		return
@@ -50,8 +85,20 @@ func play_music(track := "") -> void:
 	if _current_track == track and _music.playing:
 		return
 	_current_track = track
-	_music.stream = s
-	_music.play()
+	if _music.playing:
+		# crossfade: dip, swap streams, swell back — no more mid-bar hard cuts
+		if _music_tw != null and _music_tw.is_valid():
+			_music_tw.kill()
+		_music_tw = create_tween()
+		_music_tw.tween_property(_music, "volume_db", -50.0, 0.25)
+		_music_tw.tween_callback(func():
+			_music.stream = s
+			_music.play())
+		_music_tw.tween_property(_music, "volume_db", MUSIC_DB + _music_off_db, 0.35)
+	else:
+		_music.volume_db = MUSIC_DB + _music_off_db
+		_music.stream = s
+		_music.play()
 
 func stop_music() -> void:
 	_music.stop()

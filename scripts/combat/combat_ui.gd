@@ -3,6 +3,8 @@ extends Control
 ## pixel backdrop. Attacks lunge, blocks flash, hits recoil. Reads the encounter from
 ## the current map node; on victory awards gold and routes to the reward screen.
 
+const TipIcon = preload("res://scripts/ui/tip_icon.gd")
+
 const C_PANEL_BORDER := Color(0.28, 0.24, 0.36)
 const C_HP := Color(0.85, 0.27, 0.24)
 const C_HP_TRACK := Color(0.22, 0.12, 0.13)
@@ -21,11 +23,31 @@ const GOON_SIZE := 50.0
 
 const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed", &"poison": "Toxic", &"ritual": "Locked In", &"aura_engine": "Aura Farm", &"hive_mind": "Hive", &"barrier": "Barrier"}
 const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl", &"frail": "crack", &"poison": "drop", &"ritual": "crown", &"aura_engine": "star", &"hive_mind": "bones", &"barrier": "shield"}
-const PLAYER_LINES := ["aura farming fr 🧿", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy ✨", "locked TF in", "we mogging rn 😤"]
-const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you? 💀", "stay mad bestie"]
+# One-line help shown in the hover tooltip so players know what's affecting them.
+const STATUS_DESC := {
+	&"block": "Absorbs incoming damage; resets at the start of your next turn.",
+	&"strength": "Rizz — adds its value to the damage of every attack.",
+	&"vulnerable": "Cooked — takes +50% damage while it lasts.",
+	&"weak": "Mid — deals 25% less damage while it lasts.",
+	&"burn": "Roasted — takes this much at the start of its turn, then ramps down 1. Ignores Block.",
+	&"poison": "Toxic — takes this much at turn start (ignores Block), then ramps down 1.",
+	&"undead": "Goons — at end of turn each hits a random enemy for 2, and they soak hits against you.",
+	&"jinx": "Jinxed — −10% crit chance per stack.",
+	&"frail": "Exposed — you gain 25% less Block while it lasts.",
+	&"ritual": "Locked In — gain this much Rizz at the start of each of your turns.",
+	&"aura_engine": "Aura Farm — gain this much Aura at the start of each turn.",
+	&"hive_mind": "Hive — summon this many Goons each turn.",
+	&"barrier": "Barrier — gain this much Block each turn.",
+}
+const PLAYER_LINES := ["aura farming fr", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy", "locked TF in", "we mogging rn"]
+const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you?", "stay mad bestie"]
 
 var cm: CombatManager
 var _popups: Control
+var _draw_counter: Label     # bottom-left pile readout (count + contents tooltip)
+var _disc_counter: Label     # bottom-right pile readout
+var _draw_tip: TipIcon
+var _disc_tip: TipIcon
 var _player_sprite: TextureRect
 var _player_hp_bar: ProgressBar
 var _player_hp_text: Label
@@ -36,6 +58,7 @@ var _enemy_widgets: Array = []
 var _enemy_sprites: Array = []
 var _prev_enemy_hp: Array = []
 var _prev_player_hp := -1
+var _prev_player_block := 0
 var _prev_player_str := 0
 var _prev_pstatus: Dictionary = {}
 var _prev_swag := 0
@@ -74,26 +97,27 @@ func _ready() -> void:
 	_critic.add_theme_font_size_override("font_size", 18)
 	_energy.add_theme_color_override("font_color", C_GOLD)
 	_gold.add_theme_color_override("font_color", C_GOLD)
+	_setup_hud_icons()
 	_end_turn.pressed.connect(_on_end_turn)
-	_end_turn.text = Loc.t("Bye ✌")
+	_end_turn.text = Loc.t("End Turn")
 	_end_turn.add_theme_stylebox_override("normal", _panel_box(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
 	_end_turn.add_theme_stylebox_override("hover", _panel_box(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
-	_result_panel.add_theme_stylebox_override("panel", _panel_box(Color(0.13, 0.11, 0.17), C_PANEL_BORDER))
-	$ResultPanel/RestartButton.pressed.connect(_to_menu)
-	_result_panel.visible = false
+	_end_turn.add_theme_stylebox_override("pressed", _panel_box(Color(0.13, 0.30, 0.18), Color(0.36, 0.70, 0.45)))
+	_end_turn.add_theme_stylebox_override("disabled", _panel_box(Color(0.10, 0.14, 0.11), Color(0.25, 0.32, 0.27)))
+	_end_turn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	_result_panel.visible = false   # superseded by the run-end overlay (_run_end_panel)
 	set_process_unhandled_input(true)
 	_popups = Control.new()
 	_popups.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_popups)
 	_add_sparkles()
-	_add_twinkles()
 	if GameState.map.is_empty():
 		GameState.start_run(&"fire")
 		GameState.finalize_loadout()
 		GameState.enter(0, 0)
 	_bg.texture = SpriteBank.battle_bg(_bg_theme())
-	Audio.play_music(_combat_track())
+	Audio.play_music(_combat_track(), GameState.act)
 	_start_fight()
 
 # Pick a music track so different encounters sound different: bosses and elites
@@ -154,15 +178,21 @@ func _start_fight() -> void:
 
 	var scales: Array = GameState.node_scales(node)
 	cm = CombatManager.new()
+	cm.step_delay = 0.45   # sequence the enemy turn: each attacker gets its own beat
 	cm.changed.connect(_refresh)
+	cm.enemy_acting.connect(_on_enemy_acting)
 	cm.combat_ended.connect(_on_combat_ended)
+	cm.peeked.connect(_on_peeked)
+	_build_pile_counters()
 	cm.start_combat(player, encounter, deck, GameState.effective_drip(), false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
 	_build_player_widget(w)
 	_build_fit_strip()
+	_build_artifact_strip()
 	_prev_enemy_hp = []
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
 	_prev_player_hp = cm.player.hp
+	_prev_player_block = cm.player.block
 	_prev_swag = cm.swag
 	_prev_state = cm.state
 	_prev_lit = 0
@@ -170,6 +200,81 @@ func _start_fight() -> void:
 	_prev_encore = 0
 	_prev_booed = false
 	_refresh()
+	_critic_tooltip()
+	_heckler_dropin()
+	if not GameState.seen_tutorial:
+		_show_tutorial(0)
+
+## The Critic's grade label gets the same custom hover help every other HUD element
+## has — it was the ONLY readout without one, and it's the USP.
+func _critic_tooltip() -> void:
+	if _critic == null:
+		return
+	var tip := TipIcon.new()
+	tip.texture = null
+	tip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tip.mouse_filter = Control.MOUSE_FILTER_STOP
+	tip.set_tip(Loc.t("The Critic"), Loc.t("She grades every fight live: S, A, B or C — scored on how boldly you play your Aura (peak reached, tiers lit, a clean finisher cash-out). An S opens a VIP room ahead; a C sends a heckler. Her taste drifts: repeat the same trick and it stops paying."))
+	_critic.add_child(tip)
+
+## If her last review sent a heckler, it DROPS into the fight with a barb — the map
+## mutation was invisible before; now the consequence has a face.
+func _heckler_dropin() -> void:
+	if String(GameState.current_node().get("critic_note", "")) != "heckler":
+		return
+	for i in cm.enemies.size():
+		if cm.enemies[i].data != null and cm.enemies[i].data.id == &"heckler":
+			if i < _enemy_sprites.size() and is_instance_valid(_enemy_sprites[i]):
+				var s: Control = _enemy_sprites[i]
+				var home_y: float = s.position.y
+				s.position.y = home_y - 180
+				var tw := s.create_tween()
+				tw.tween_property(s, "position:y", home_y, 0.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+				_say_bubble(_enemy_center(i) + Vector2(0, -130), Loc.t("she sent me. boo."), C_INTENT)
+				Audio.play("debuff", -4.0)
+			return
+
+# --- first-fight teaching layer (one-time, persisted via seen_tutorial) -----
+
+func _show_tutorial(step: int) -> void:
+	var titles := [Loc.t("YOUR HAND"), Loc.t("AURA — BANKED STYLE"), Loc.t("THE CRITIC IS WATCHING")]
+	var bodies := [
+		Loc.t("Play cards with Energy (top left). Attacks hit the marked target — click an enemy to switch. End Turn passes the spotlight."),
+		Loc.t("Aura builds every turn and persists all fight. Light the tiers — 6+: +2 damage, 12+: +1 card, 18+: attacks pierce. Crest 24 to hold the spotlight, then spend it ALL on a Finisher."),
+		Loc.t("Every fight gets a grade: S, A, B or C — scored on how boldly you play your Aura. An S opens a VIP room ahead; a C sends a heckler. Don't just win. Win the room."),
+	]
+	var anchors := [Vector2(396, 330), Vector2(380, 340), Vector2(420, 210)]
+	var overlay := Control.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(dim)
+	var pc := TipIcon.panel(titles[step], bodies[step])
+	pc.position = anchors[step]
+	pc.custom_minimum_size = Vector2(370, 0)
+	overlay.add_child(pc)
+	if step == 2:
+		var tex := SpriteBank.texture(&"the_critic")
+		if tex != null:
+			var tr := TextureRect.new()
+			tr.texture = tex
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			tr.position = anchors[step] + Vector2(-110, -6)
+			tr.size = Vector2(96, 96)
+			overlay.add_child(tr)
+	var last := step >= 2
+	var btn := NodeUI.small_button(Loc.t("got it — let's serve") if last else Loc.t("next"), func():
+		overlay.queue_free()
+		if last:
+			GameState.seen_tutorial = true
+			GameState.save_meta()
+		else:
+			_show_tutorial(step + 1), Color(0.45, 0.82, 0.55))
+	btn.position = anchors[step] + Vector2(80, 150)
+	overlay.add_child(btn)
+	add_child(overlay)
 
 # --- player widget (left, persistent) ------------------------------------
 
@@ -221,21 +326,154 @@ func _build_player_widget(w: WizardData) -> void:
 	_player_status_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_player_status_box)
 
+# Pixel resource icons replacing inline HUD emoji (energy bolt / aura star / gold coin),
+# with hover help on the Aura meter. Left-aligned readouts shift right to make room.
+func _setup_hud_icons() -> void:
+	_energy.position.x += 26
+	var e := _hud_icon(&"bolt", Vector2(_energy.position.x - 26, _energy.position.y + 2), 22)
+	e.set_tip(Loc.t("Energy"), Loc.t("Spent to play cards; refills to max at the start of each turn."))
+	_swag_value.position.x += 26
+	var a := _hud_icon(&"star", Vector2(_swag_value.position.x - 26, _swag_value.position.y + 2), 22)
+	a.set_tip(Loc.t("Aura"), Loc.t("Banked style — it persists the whole fight. 6+: +2 dmg · 12+: +1 draw · 18+: pierce · 24+: the Encore spotlight. Finishers spend it all."))
+	# gold (coin): keep top-right, anchor a coin just left of the now left-aligned number
+	_gold.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var c := TipIcon.new()
+	c.texture = SpriteBank.icon_texture(&"coin")
+	c.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	c.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	c.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	c.offset_left = -246
+	c.offset_top = 8
+	c.size = Vector2(22, 22)
+	c.mouse_filter = Control.MOUSE_FILTER_STOP
+	c.set_tip(Loc.t("Gold"), Loc.t("Run currency — spend it in shops on cards, removals, and relics."))
+	add_child(c)
+
+## Draw/discard pile counters in the bottom corners — the deck finally has visible
+## state, and each tooltip lists the pile's contents (alphabetised so the draw
+## order isn't leaked). (Critic review item 1: pile visibility.)
+func _build_pile_counters() -> void:
+	_draw_counter = _pile_label(Vector2(16, 600), HORIZONTAL_ALIGNMENT_LEFT)
+	_disc_counter = _pile_label(Vector2(1016, 600), HORIZONTAL_ALIGNMENT_RIGHT)
+	_draw_tip = _pile_tip(_draw_counter)
+	_disc_tip = _pile_tip(_disc_counter)
+
+func _pile_label(pos: Vector2, align: int) -> Label:
+	var l := Label.new()
+	l.position = pos
+	l.size = Vector2(120, 24)
+	l.horizontal_alignment = align
+	l.add_theme_font_size_override("font_size", 14)
+	l.add_theme_color_override("font_color", Color(0.62, 0.58, 0.72))
+	add_child(l)
+	return l
+
+func _pile_tip(host: Label) -> TipIcon:
+	var tip := TipIcon.new()
+	tip.texture = null
+	tip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tip.mouse_filter = Control.MOUSE_FILTER_STOP
+	host.add_child(tip)
+	return tip
+
+func _refresh_pile_counters() -> void:
+	if _draw_counter == null:
+		return
+	_draw_counter.text = Loc.t("Draw %d") % cm.draw_pile.size()
+	_disc_counter.text = Loc.t("Discard %d") % cm.discard_pile.size()
+	_draw_tip.set_tip(Loc.t("Draw pile"),
+		Loc.t("%d cards. When it runs dry, your discard shuffles back in.") % cm.draw_pile.size()
+		+ _pile_contents(cm.draw_pile))
+	_disc_tip.set_tip(Loc.t("Discard pile"),
+		Loc.t("%d cards. Played and discarded cards land here.") % cm.discard_pile.size()
+		+ _pile_contents(cm.discard_pile))
+
+func _pile_contents(pile: Array) -> String:
+	if pile.is_empty():
+		return ""
+	var counts := {}
+	for c in pile:
+		var t: String = Loc.t(c.title)
+		counts[t] = int(counts.get(t, 0)) + 1
+	var names := counts.keys()
+	names.sort()
+	var lines: Array[String] = []
+	for n in names:
+		lines.append(("%d× %s" % [counts[n], n]) if counts[n] > 1 else String(n))
+	return "\n\n" + "\n".join(lines)
+
+## "peek" toast: the revealed cards flash above the draw counter (they're also in
+## the log, but the toast is the legible version).
+func _on_peeked(titles: Array) -> void:
+	if titles.is_empty() or not is_inside_tree():
+		return
+	var disp: Array[String] = []
+	for t in titles:
+		disp.append(Loc.t(t))
+	var p := TipIcon.panel(Loc.t("up next"), " · ".join(disp))
+	p.position = Vector2(16, 540)
+	p.modulate.a = 0.0
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE   # a toast must never eat card clicks
+	_popups.add_child(p)
+	var tw := p.create_tween()
+	tw.tween_property(p, "modulate:a", 1.0, 0.15)
+	tw.tween_interval(2.2)
+	tw.tween_property(p, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(p.queue_free)
+
+func _hud_icon(icon: StringName, pos: Vector2, sz: int) -> TipIcon:
+	var t := TipIcon.new()
+	t.texture = SpriteBank.icon_texture(icon)
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	t.position = pos
+	t.size = Vector2(sz, sz)
+	t.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(t)
+	return t
+
 func _build_fit_strip() -> void:
+	# Equipped outfit pieces (top-left), each with a hover tooltip = name + passive.
 	var x := 16.0
 	for p in GameState.equipped_pieces():
 		var tex := SpriteBank.item_texture(p.id)
 		if tex == null:
 			continue
-		var tr := TextureRect.new()
+		var tr := TipIcon.new()
 		tr.texture = tex
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.mouse_filter = Control.MOUSE_FILTER_STOP
 		tr.position = Vector2(x, 64)
 		tr.size = Vector2(24, 24)
+		var body := Loc.t(p.passive_text) if p.passive_text != "" else Loc.t("No passive.")
+		if p.drip > 0:
+			body += "\n" + Loc.t("Drip +%d Aura/turn.") % p.drip
+		tr.set_tip("%s  (%s)" % [Loc.t(p.title), p.slot], body)
 		add_child(tr)
 		x += 27
+
+# The relics you're holding this run — finally visible IN combat, each charm's tooltip
+# spells out what it's doing to you. (Art pass: "you don't know what's affecting you".)
+func _build_artifact_strip() -> void:
+	var x := 16.0
+	for aid in GameState.run_artifacts:
+		var a := Database.get_artifact(aid)
+		if a == null:
+			continue
+		var tex := SpriteBank.artifact_texture(aid)
+		if tex == null:
+			continue
+		var tr := TipIcon.new()
+		tr.texture = tex
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.mouse_filter = Control.MOUSE_FILTER_STOP
+		tr.position = Vector2(x, 94)
+		tr.size = Vector2(22, 22)
+		tr.set_tip(Loc.t(a.title), Loc.t(a.description))
+		add_child(tr)
+		x += 25
 
 # --- summoned goons ------------------------------------------------------
 
@@ -306,20 +544,23 @@ func _refresh() -> void:
 		return
 	var over := cm.state == CombatManager.State.WIN or cm.state == CombatManager.State.LOSE
 	_turn_banner.text = Loc.t("THEIR TURN") if cm.state == CombatManager.State.ENEMY_TURN else Loc.t("TURN %d") % cm.turn
-	_gold.text = "💰 %d" % GameState.gold
+	_gold.text = "%d" % GameState.gold
 	_log_line.text = cm.log_lines[-1] if not cm.log_lines.is_empty() else ""
 
 	if _player_hp_bar != null:
-		_player_hp_bar.value = cm.player.hp
+		if int(_player_hp_bar.value) != cm.player.hp:
+			var hp_tw := _player_hp_bar.create_tween()
+			hp_tw.tween_property(_player_hp_bar, "value", float(cm.player.hp), 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		_player_hp_text.text = "%d / %d" % [cm.player.hp, cm.player.max_hp]
 		_fill_status(_player_status_box, cm.player)
 
-	_energy.text = Loc.t("⚡ Energy  %d / %d") % [cm.energy, cm.max_energy]
-	_swag_value.text = Loc.t("✦ AURA  %d   (+%d/turn)") % [cm.swag, cm.drip]
+	_energy.text = "%d / %d" % [cm.energy, cm.max_energy]
+	_swag_value.text = Loc.t("AURA  %d   (+%d/turn)") % [cm.swag, cm.drip]
 	_update_swag_meter()
 	_update_critic_rating()
 	_end_turn.disabled = over or cm.state != CombatManager.State.PLAYER_TURN
 
+	_refresh_pile_counters()
 	_rebuild_enemies(over)
 	_rebuild_hand(over)
 	_sync_goons()
@@ -346,6 +587,13 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 		w.gui_input.connect(func(ev: InputEvent):
 			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 				cm.set_target(index))
+		# hover brightens the monster so click-to-retarget is discoverable
+		w.mouse_entered.connect(func():
+			if index < _enemy_sprites.size() and is_instance_valid(_enemy_sprites[index]):
+				_enemy_sprites[index].modulate = Color(1.35, 1.3, 1.15))
+		w.mouse_exited.connect(func():
+			if index < _enemy_sprites.size() and is_instance_valid(_enemy_sprites[index]):
+				_enemy_sprites[index].modulate = Color.WHITE)
 
 	# intent chip above the monster (icon + amount)
 	var intent := HBoxContainer.new()
@@ -395,6 +643,12 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 	w.add_child(stbox)
 	_fill_status(stbox, e)
 
+	# Display bulk (critic review item 2): bosses tower at 2x, bruisers loom,
+	# minions shrink — feet stay on the baseline, growth goes up and outward.
+	var bulk := 1.0
+	if e.data != null:
+		bulk = float(SpriteBank.DEF.get(e.data.id, {}).get("bulk", 1.0))
+
 	# ground shadow + monster sprite
 	var shadow := Panel.new()
 	var ss := StyleBoxFlat.new()
@@ -402,8 +656,8 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 	ss.set_corner_radius_all(14)
 	shadow.add_theme_stylebox_override("panel", ss)
 	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shadow.position = Vector2(40, 188)
-	shadow.size = Vector2(70, 12)
+	shadow.position = Vector2(75.0 - 35.0 * bulk, 188)
+	shadow.size = Vector2(70.0 * bulk, 12)
 	w.add_child(shadow)
 
 	var sprite := TextureRect.new()
@@ -412,28 +666,32 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sprite.position = Vector2(33, 100)
-	sprite.size = Vector2(84, 90)
+	var sw := 84.0 * bulk
+	var sh := 90.0 * bulk
+	sprite.position = Vector2(75.0 - sw / 2.0, 190.0 - sh)
+	sprite.size = Vector2(sw, sh)
 	if dead:
-		var skull := Label.new()
-		skull.text = "☠"
+		var skull := TextureRect.new()
+		skull.texture = SpriteBank.icon_texture(&"skull")
 		skull.set_anchors_preset(Control.PRESET_FULL_RECT)
-		skull.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		skull.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		skull.add_theme_font_size_override("font_size", 40)
+		skull.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		skull.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		skull.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		skull.modulate = Color(1, 1, 1, 0.7)
 		sprite.add_child(skull)
 	w.add_child(sprite)
+	if bulk > 1.0:
+		# a towering sprite slides behind the name/bar chrome instead of covering it
+		w.move_child(sprite, 0)
 	if not dead:
 		_idle_bob(sprite, index * 0.3, 5.0)
 
 	if targeted:
-		var arrow := Label.new()
-		arrow.text = "▼"
-		arrow.position = Vector2(0, 90)
-		arrow.size = Vector2(150, 18)
-		arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		arrow.add_theme_color_override("font_color", C_TARGET)
+		# gold triangle target marker (a drawn polygon — the font has no ▼ glyph)
+		var arrow := Polygon2D.new()
+		arrow.polygon = PackedVector2Array([Vector2(-8, 0), Vector2(8, 0), Vector2(0, 11)])
+		arrow.color = C_TARGET
+		arrow.position = Vector2(75, 92)
 		w.add_child(arrow)
 	return [w, sprite]
 
@@ -499,9 +757,10 @@ func _idle_bob(node: Control, delay: float, amp: float) -> void:
 
 func _add_sparkles() -> void:
 	var p := CPUParticles2D.new()
-	p.amount = 44
-	p.lifetime = 8.0
-	p.preprocess = 5.0
+	p.texture = SpriteBank.icon_texture(&"star")   # textured mote, not a bare square
+	p.amount = 30
+	p.lifetime = 6.0
+	p.preprocess = 4.0
 	p.position = Vector2(576, 656)
 	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
 	p.emission_rect_extents = Vector2(600, 8)
@@ -510,9 +769,9 @@ func _add_sparkles() -> void:
 	p.gravity = Vector2(0, -5)
 	p.initial_velocity_min = 9.0
 	p.initial_velocity_max = 24.0
-	p.scale_amount_min = 2.0
-	p.scale_amount_max = 4.0
-	p.color = Color(1.0, 0.6, 0.88, 0.55)
+	p.scale_amount_min = 0.4
+	p.scale_amount_max = 0.8
+	p.color = Color(1.0, 0.6, 0.88, 0.3)
 	add_child(p)
 	move_child(p, 1)
 
@@ -605,6 +864,8 @@ func _death_poof(pos: Vector2) -> void:
 	get_tree().create_timer(1.2).timeout.connect(p.queue_free)
 
 func _shake(amount: float) -> void:
+	if not GameState.effects_on:
+		return
 	var tw := create_tween()
 	for i in 5:
 		tw.tween_property(self, "position", Vector2(randf_range(-amount, amount), randf_range(-amount, amount)), 0.04)
@@ -627,11 +888,11 @@ func _finisher_cashout(swag_before: int) -> void:
 	var tw := create_tween()
 	tw.tween_property(_swag_bar, "value", 0.0, 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 
-func _finale_banner() -> void:
+func _finale_banner(text := "") -> void:
 	if _popups == null:
 		return
 	var l := Label.new()
-	l.text = Loc.t("✦ FINALE ✦")
+	l.text = text if text != "" else Loc.t("— FINALE —")
 	l.add_theme_font_size_override("font_size", 60)
 	l.add_theme_color_override("font_color", C_GOLD)
 	l.size = Vector2(440, 90)
@@ -655,6 +916,20 @@ func _lunge(node: Control) -> void:
 	tw.tween_property(node, "position:x", home.x + 34, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(node, "position:x", home.x, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
+## The acting enemy winds up toward the wizard just before its intent resolves, so
+## each attacker in the sequenced enemy turn reads as its own beat.
+func _on_enemy_acting(index: int, _intent: Dictionary) -> void:
+	if index < 0 or index >= _enemy_sprites.size():
+		return
+	var s: Control = _enemy_sprites[index]
+	if s == null or not is_instance_valid(s):
+		return
+	var home_x: float = s.position.x
+	# bind to the sprite: it's freed on the next _rebuild_enemies
+	var tw := s.create_tween()
+	tw.tween_property(s, "position:x", home_x - 30.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(s, "position:x", home_x, 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
 func _punch(node: Control) -> void:
 	if node == null or not is_instance_valid(node):
 		return
@@ -670,7 +945,9 @@ func _punch(node: Control) -> void:
 	tw.tween_property(node, "modulate", Color.WHITE, 0.24)
 
 func _block_flash() -> void:
-	_float_text(Vector2(150, 250), "🛡", Color(0.45, 0.7, 1.0))
+	_float_text(Vector2(150, 250), Loc.t("+Block"), Color(0.45, 0.7, 1.0))
+	if not GameState.effects_on:
+		return
 	var fl := ColorRect.new()
 	fl.color = Color(0.3, 0.55, 1.0, 0.0)
 	fl.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -713,6 +990,13 @@ func _emit_popups() -> void:
 	elif _prev_player_hp >= 0 and cm.player.hp > _prev_player_hp:
 		_float_text(Vector2(150, 250), "+%d" % (cm.player.hp - _prev_player_hp), Color(0.5, 0.95, 0.6))
 		Audio.play("heal", -4.0)
+	elif cm.state == CombatManager.State.ENEMY_TURN and cm.player.block < _prev_player_block:
+		# A fully-absorbed enemy hit (HP untouched, Block consumed) is the fight's most
+		# satisfying defensive moment — give it a tell instead of silence.
+		_float_text(Vector2(150, 250), Loc.t("BLOCKED %d") % (_prev_player_block - cm.player.block), Color(0.45, 0.7, 1.0))
+		_block_flash()
+		Audio.play("block")
+	_prev_player_block = cm.player.block
 	if max_dmg >= 14:
 		_shake(7.0)
 	var str_now: int = cm.player.status(&"strength")
@@ -742,11 +1026,11 @@ func _banter() -> void:
 	_prev_swag = cm.swag
 	# Commit-to-the-Bit tells: the spotlight building, or the boo when it drops.
 	if cm.encore > _prev_encore and cm.encore > 0:
-		_say_bubble(Vector2(150, 130), Loc.t("🎤 ENCORE ×%d!") % cm.encore, C_GOLD)
+		_say_bubble(Vector2(150, 130), Loc.t("ENCORE ×%d!") % cm.encore, C_GOLD)
 		Audio.play("buff", -5.0)
 	_prev_encore = cm.encore
 	if cm.booed and not _prev_booed:
-		_float_text(Vector2(150, 200), Loc.t("BOOED 📉"), Color(0.95, 0.42, 0.45))
+		_float_text(Vector2(150, 200), Loc.t("BOOED!"), Color(0.95, 0.42, 0.45))
 		Audio.play("debuff", -4.0)
 	_prev_booed = cm.booed
 	if cm.state == CombatManager.State.ENEMY_TURN and _prev_state != CombatManager.State.ENEMY_TURN:
@@ -757,6 +1041,8 @@ func _banter() -> void:
 	_prev_state = cm.state
 
 func _hurt_flash() -> void:
+	if not GameState.effects_on:
+		return
 	var fl := ColorRect.new()
 	fl.color = Color(0.9, 0.12, 0.12, 0.0)
 	fl.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -848,12 +1134,15 @@ func _status_chip(id: StringName, value: int) -> Control:
 	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var icon_name: String = STATUS_ICON.get(id, "")
 	if icon_name != "":
-		var tr := TextureRect.new()
+		var tr := TipIcon.new()
 		tr.texture = SpriteBank.icon_texture(icon_name)
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# PASS (not STOP): show the tooltip but let clicks fall through to click-to-target.
+		tr.mouse_filter = Control.MOUSE_FILTER_PASS
 		tr.custom_minimum_size = Vector2(18, 18)
+		var nm: String = STATUS_NAME.get(id, String(id).capitalize())
+		tr.set_tip("%s %d" % [nm, value], Loc.t(STATUS_DESC.get(id, "")))
 		h.add_child(tr)
 	var lbl := Label.new()
 	lbl.text = str(value)
@@ -862,15 +1151,6 @@ func _status_chip(id: StringName, value: int) -> Control:
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	h.add_child(lbl)
 	return h
-
-func _status_text(c: Combatant) -> String:
-	var parts: Array[String] = []
-	if c.block > 0:
-		parts.append("🛡 %d" % c.block)
-	for k in c.statuses:
-		if c.statuses[k] > 0:
-			parts.append("%s %d" % [STATUS_NAME.get(k, String(k).capitalize()), c.statuses[k]])
-	return "  ".join(parts)
 
 func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 	var it := cm.peek_intent(e)
@@ -909,7 +1189,7 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 			col = Color(0.95, 0.85, 0.45)
 		"tax":
 			icon = "star"
-			text = "💸%d" % int(it.get("amount", 0))
+			text = "-%d" % int(it.get("amount", 0))
 			col = Color(0.95, 0.78, 0.4)
 		"summon_ally":
 			icon = "bones"
@@ -918,12 +1198,13 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 		_:
 			text = "?"
 	if icon != "":
-		var tr := TextureRect.new()
+		var tr := TipIcon.new()
 		tr.texture = SpriteBank.icon_texture(icon)
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.mouse_filter = Control.MOUSE_FILTER_PASS
 		tr.custom_minimum_size = Vector2(20, 20)
+		tr.set_tip(Loc.t("Their next move"), _intent_desc(it))
 		box.add_child(tr)
 	var lbl := Label.new()
 	lbl.text = text
@@ -932,6 +1213,36 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 	lbl.add_theme_font_size_override("font_size", 17)
 	lbl.add_theme_color_override("font_color", col)
 	box.add_child(lbl)
+
+# Human-readable description of an enemy's telegraphed intent, for the hover tooltip.
+func _intent_desc(it: Dictionary) -> String:
+	var amt := int(it.get("amount", 0))
+	match String(it.get("op", "")):
+		"attack":
+			var hits: int = max(1, int(it.get("hits", 1)))
+			var dmg := int(round(amt * cm.enemy_dmg_scale))
+			if hits > 1:
+				return Loc.t("Attacks %d times for %d each (%d total).") % [hits, dmg, dmg * hits]
+			return Loc.t("Attacks for %d.") % dmg
+		"block":
+			return Loc.t("Braces for %d Block.") % amt
+		"heal":
+			return Loc.t("Heals %d HP.") % amt
+		"apply_status":
+			var s := StringName(it.get("status", &""))
+			var nm: String = STATUS_NAME.get(s, String(s).capitalize())
+			return Loc.t("Hits you with %s %d. ") % [nm, amt] + Loc.t(STATUS_DESC.get(s, ""))
+		"buff":
+			var s2 := StringName(it.get("status", &""))
+			var nm2: String = STATUS_NAME.get(s2, String(s2).capitalize())
+			return Loc.t("Buffs itself: %s +%d.") % [nm2, amt]
+		"drain_swag":
+			return Loc.t("Drains %d of your Aura.") % amt
+		"tax":
+			return Loc.t("Taxes %d Aura if you're hoarding above a threshold.") % amt
+		"summon_ally":
+			return Loc.t("Summons backup into the fight.")
+	return Loc.t("Bides its time.")
 
 # The Aura meter: three tiers that light/unlight live so a glance reads which
 # passive buffs are on right now. Fill goes gold when all three are lit.
@@ -945,10 +1256,10 @@ func _update_swag_meter() -> void:
 	var lit := 0
 	for t in tiers:
 		if cm.swag >= int(t[0]):
-			parts.append("●" + String(t[1]))
+			parts.append("[" + String(t[1]) + "]")
 			lit += 1
 		else:
-			parts.append("○" + String(t[1]))
+			parts.append(String(t[1]))
 	_thresholds.text = "  ".join(parts)
 	var col := C_SWAG_DIM
 	if lit >= 3:
@@ -969,7 +1280,7 @@ func _update_critic_rating() -> void:
 	if _critic == null:
 		return
 	var letter := cm.live_rating()
-	_critic.text = Loc.t("👀 THE CRITIC:  %s") % letter
+	_critic.text = Loc.t("THE CRITIC  %s") % letter
 	_critic.add_theme_color_override("font_color", _rating_color(letter))
 	if _prev_rating != "" and letter != _prev_rating:
 		_pulse(_critic)
@@ -1016,23 +1327,49 @@ func _style_bar(bar: ProgressBar, fill: Color, track: Color) -> void:
 
 # --- input & flow --------------------------------------------------------
 
+var _pause: Control
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11:
-		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-		DisplayServer.window_set_mode(
-			DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
+	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	if event.keycode == KEY_ESCAPE:
+		if is_instance_valid(_pause):
+			_pause.queue_free()
+		else:
+			_pause = NodeUI.pause_overlay(self, func():
+				GameState.abandon_run()
+				Fader.change_scene("res://scenes/hub/class_select.tscn"))
 		get_viewport().set_input_as_handled()
+	elif event.keycode == KEY_SPACE or event.keycode == KEY_ENTER:
+		if cm != null and cm.state == CombatManager.State.PLAYER_TURN and not is_instance_valid(_pause):
+			cm.end_turn()
+			get_viewport().set_input_as_handled()
 
 func _on_end_turn() -> void:
 	cm.end_turn()
 
 func _on_combat_ended(victory: bool) -> void:
-	# A finisher that lands the killing blow gets its trailer shot before we leave.
-	if victory and cm.finisher_clean:
-		Audio.play("crowd", -2.0)
-		_shake(16.0)
-		_finale_banner()
+	# Every kill gets savored: the finisher keeps its trailer shot, any other win
+	# pops a BIG W banner — the killing blow used to hard-cut away on the same frame.
+	if victory:
+		if cm.finisher_clean:
+			Audio.play("crowd", -2.0)
+			_shake(16.0)
+			_finale_banner()
+		else:
+			_finale_banner(Loc.t("BIG W!"))
 		await get_tree().create_timer(0.9).timeout
+		if not is_inside_tree():
+			return
+	else:
+		Audio.stop_music()
+		if _player_sprite != null and is_instance_valid(_player_sprite):
+			_player_sprite.process_mode = Node.PROCESS_MODE_DISABLED   # freezes the idle bob
+			_player_sprite.pivot_offset = _player_sprite.size * 0.5
+			var fall := create_tween()
+			fall.tween_property(_player_sprite, "modulate", Color(0.55, 0.25, 0.3), 0.45)
+			fall.parallel().tween_property(_player_sprite, "rotation", deg_to_rad(82), 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		await get_tree().create_timer(0.6).timeout
 		if not is_inside_tree():
 			return
 	Audio.play("win" if victory else "lose", -2.0)
@@ -1041,20 +1378,136 @@ func _on_combat_ended(victory: bool) -> void:
 		GameState.record_show_rating(cm.compute_show_rating())   # The Critic reviews the fight
 		var node := GameState.current_node()
 		if node.get("type") == "Boss":
+			var cleared := GameState.act
 			if GameState.advance_act():
-				# act cleared, but the run continues — push into the next act's map
-				get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+				# act cleared, but the run continues — give the moment a beat (and the
+				# one-time follow CTA the audit placed exactly here) before the new map
+				_act_clear_panel(cleared)
 			else:
+				var before := GameState.clout_earned
 				GameState.finish_run(true)
-				get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn")
+				_run_end_panel(true, GameState.clout_earned - before, before)
 		else:
-			get_tree().change_scene_to_file("res://scenes/reward.tscn")
+			Fader.change_scene("res://scenes/reward.tscn")
 		return
+	var before_l := GameState.clout_earned
 	GameState.finish_run(false)
-	_result_label.text = "BIG L 💀"
-	_result_label.add_theme_color_override("font_color", C_HP)
-	_result_panel.visible = true
+	_run_end_panel(false, GameState.clout_earned - before_l, before_l)
 	_refresh()
 
-func _to_menu() -> void:
-	get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn")
+# --- run-end & act-clear ceremony -----------------------------------------
+# Death is how most demo sessions end and victory is the best conversion moment;
+# both used to be a bare label. Now they pay out: Clout banked, unlock progress,
+# the Critic's last word, and the follow/feedback funnel.
+
+func _end_overlay() -> Control:
+	var overlay := Control.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var dim := ColorRect.new()
+	dim.color = Color(0.03, 0.02, 0.05, 0.78)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(dim)
+	var panel := Panel.new()
+	panel.position = Vector2(286, 96)
+	panel.size = Vector2(580, 470)
+	panel.add_theme_stylebox_override("panel", _panel_box(Color(0.10, 0.08, 0.14, 0.98), C_PANEL_BORDER, 3))
+	overlay.add_child(panel)
+	add_child(overlay)
+	overlay.set_meta("panel", panel)
+	return overlay
+
+func _end_label(panel: Panel, text: String, y: float, fs: int, color: Color, display := false) -> Label:
+	var l := Label.new()
+	l.text = text
+	if display:
+		l.add_theme_font_override("font", NodeUI.DISPLAY_FONT)
+	l.add_theme_font_size_override("font_size", fs)
+	l.add_theme_color_override("font_color", color)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD
+	l.position = Vector2(20, y)
+	l.size = Vector2(540, 60)
+	panel.add_child(l)
+	return l
+
+func _cta_row(panel: Panel, y: float) -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 14)
+	row.position = Vector2(20, y)
+	row.size = Vector2(540, 40)
+	panel.add_child(row)
+	var links := [
+		[Loc.t("follow on itch.io"), GameState.LINK_ITCH, Color(0.95, 0.45, 0.55)],
+		[Loc.t("join the Discord"), GameState.LINK_DISCORD, Color(0.55, 0.6, 0.95)],
+		[Loc.t("report a bug"), GameState.LINK_ISSUES, Color(0.5, 0.62, 0.7)],
+	]
+	for link in links:
+		if String(link[1]) == "":
+			continue
+		var b := NodeUI.small_button(String(link[0]), func(): OS.shell_open(String(link[1])), link[2])
+		b.custom_minimum_size = Vector2(160, 36)
+		b.add_theme_font_size_override("font_size", 14)
+		row.add_child(b)
+
+func _run_end_panel(victory: bool, earned: int, lifetime_before: int) -> void:
+	var overlay := _end_overlay()
+	var panel: Panel = overlay.get_meta("panel")
+	if victory:
+		_end_label(panel, Loc.t("BIG W — TOUR COMPLETE"), 22, 40, C_GOLD, true)
+		_end_label(panel, Loc.t("all 3 acts served. the city is talking about you."), 74, 17, Color(0.85, 0.85, 0.9))
+	else:
+		_end_label(panel, Loc.t("BIG L."), 22, 40, C_HP, true)
+		_end_label(panel, Loc.t("the run ends here — but Clout is forever."), 74, 17, Color(0.85, 0.85, 0.9))
+	if GameState.critic_last_rating != "":
+		_end_label(panel, Loc.t("THE CRITIC:  ") + GameState.critic_quip(GameState.critic_last_rating), 108, 16, Color(0.95, 0.7, 0.85))
+	_end_label(panel, Loc.t("+%d Clout earned   (lifetime %d)") % [earned, GameState.clout_earned], 156, 22, C_GOLD)
+	var fresh := GameState.unlocks_between(lifetime_before, GameState.clout_earned)
+	if not fresh.is_empty():
+		_end_label(panel, Loc.t("NEW UNLOCKS: %s") % ", ".join(fresh), 196, 16, Color(0.6, 0.95, 0.7))
+	var nxt := GameState.next_wizard_unlock()
+	if not nxt.is_empty():
+		_end_label(panel, Loc.t("%s unlocks at %d Clout — you have %d") % [nxt.name, int(nxt.need), GameState.clout_earned], 240, 15, Color(0.8, 0.8, 0.88))
+		var bar := ProgressBar.new()
+		bar.show_percentage = false
+		bar.max_value = int(nxt.need)
+		bar.value = GameState.clout_earned
+		bar.position = Vector2(120, 274)
+		bar.size = Vector2(340, 14)
+		_style_bar(bar, C_GOLD, Color(0.2, 0.17, 0.13))
+		panel.add_child(bar)
+	var again := NodeUI.menu_button(Loc.t("Run it back"), func(): Fader.change_scene("res://scenes/hub/class_select.tscn"), Color(0.45, 0.82, 0.55), 250.0)
+	again.position = Vector2(40, 320)
+	panel.add_child(again)
+	var menu := NodeUI.menu_button(Loc.t("Main Menu"), func(): Fader.change_scene("res://scenes/hub/main_menu.tscn"), Color(0.5, 0.55, 0.7), 250.0)
+	menu.position = Vector2(300, 320)
+	panel.add_child(menu)
+	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 388, 14, Color(0.6, 0.6, 0.68))
+	_cta_row(panel, 414)
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2(0.7, 0.7)
+	panel.modulate.a = 0.0
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(panel, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(panel, "modulate:a", 1.0, 0.2)
+
+func _act_clear_panel(cleared_act: int) -> void:
+	var overlay := _end_overlay()
+	var panel: Panel = overlay.get_meta("panel")
+	_end_label(panel, Loc.t("ACT %d CLEARED") % cleared_act, 30, 38, C_GOLD, true)
+	if GameState.critic_last_rating != "":
+		_end_label(panel, Loc.t("THE CRITIC:  ") + GameState.critic_quip(GameState.critic_last_rating), 96, 16, Color(0.95, 0.7, 0.85))
+	_end_label(panel, Loc.t("the gauntlet escalates — deck, HP and relics carry over."), 140, 16, Color(0.85, 0.85, 0.9))
+	var cont := NodeUI.menu_button(Loc.t("onward — Act %d") % GameState.act, func(): Fader.change_scene("res://scenes/map/map.tscn"), Color(0.45, 0.82, 0.55), 280.0)
+	cont.position = Vector2(150, 230)
+	panel.add_child(cont)
+	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 330, 14, Color(0.6, 0.6, 0.68))
+	_cta_row(panel, 358)
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2(0.7, 0.7)
+	panel.modulate.a = 0.0
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(panel, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(panel, "modulate:a", 1.0, 0.2)

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"saved_drafts"
+title = "Saved to Drafts"
+description = "Keep your unplayed hand this turn. +2 Aura. post it tomorrow."
+cost = 1
+type = "Skill"
+rarity = "Rare"
+swag_gain = 2
+swag_cost = 0
+unlock_clout = 50
+effects = [{ "op": "retain" }]

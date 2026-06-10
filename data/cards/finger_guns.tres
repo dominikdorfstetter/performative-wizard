@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"finger_guns"
 title = "Finger Guns"
-description = "Deal 5. pew pew 🔫"
+description = "Deal 5. pew pew"
 cost = 1
 type = "Attack"
 rarity = "Common"
