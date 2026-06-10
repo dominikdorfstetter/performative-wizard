@@ -111,6 +111,7 @@ func _update_asc_label() -> void:
 			n, GameState.ascension, n * 8, n * 6, n * 10]
 
 func _choose(id: StringName) -> void:
+	Audio.play("click", -6.0)
 	GameState.start_run(id)
 	Fader.change_scene("res://scenes/hub/dressing_room.tscn")
 

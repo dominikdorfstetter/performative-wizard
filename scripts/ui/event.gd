@@ -65,6 +65,7 @@ func _therapist() -> void:
 	h.add_child(NodeUI.choice("I'm fine actually", "skip it, pocket 20 gold (copay refund).", NodeUI.GOLD, _therapist_skip, true, "", SpriteBank.icon_texture(&"coin")))
 
 func _therapist_skip() -> void:
+	Audio.play("coin", -5.0)
 	GameState.gold += 20
 	_outcome("You ghost the session and pocket 20 gold. growth!")
 
@@ -118,6 +119,7 @@ func _fountain() -> void:
 	h.add_child(NodeUI.choice("Toss 15g, make a wish", "manifest an artefact.", Color(0.85, 0.4, 0.95), _fountain_toss, GameState.gold >= 15, "", SpriteBank.icon_texture(&"coin")))
 
 func _fountain_drink() -> void:
+	Audio.play("heal", -4.0)
 	GameState.player_hp = min(GameState.player_max_hp, GameState.player_hp + 16)
 	_outcome("Refreshing! Healed 16 HP.")
 
@@ -163,6 +165,7 @@ func _outcome(text: String) -> void:
 	add_child(cont)
 
 func _hurt(n: int) -> void:
+	Audio.play("hurt", -4.0)
 	GameState.player_hp = max(1, GameState.player_hp - n)
 
 func _unowned() -> StringName:

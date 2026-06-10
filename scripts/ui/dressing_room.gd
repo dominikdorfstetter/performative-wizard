@@ -82,6 +82,7 @@ func _make_piece_button(slot: String, piece: OutfitData) -> Button:
 	b.add_theme_stylebox_override("pressed", _panel(Color(0.2, 0.18, 0.25), border, 3))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.pressed.connect(func():
+		Audio.play("click", -7.0)
 		GameState.equip(slot, piece.id)
 		GameState.save_meta()
 		_rebuild())

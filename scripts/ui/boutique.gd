@@ -63,6 +63,7 @@ func _stall(entry: Dictionary) -> Control:
 
 func _buy(entry: Dictionary) -> void:
 	if GameState.buy_boutique(entry.id, entry.cost):
+		Audio.play("buff", -3.0)   # a permanent unlock deserves a fanfare
 		_build()
 
 func _to_menu() -> void:

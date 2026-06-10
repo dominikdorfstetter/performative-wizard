@@ -470,7 +470,9 @@ func _refresh() -> void:
 	_log_line.text = cm.log_lines[-1] if not cm.log_lines.is_empty() else ""
 
 	if _player_hp_bar != null:
-		_player_hp_bar.value = cm.player.hp
+		if int(_player_hp_bar.value) != cm.player.hp:
+			var hp_tw := _player_hp_bar.create_tween()
+			hp_tw.tween_property(_player_hp_bar, "value", float(cm.player.hp), 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		_player_hp_text.text = "%d / %d" % [cm.player.hp, cm.player.max_hp]
 		_fill_status(_player_status_box, cm.player)
 

@@ -15,12 +15,10 @@ func _ready() -> void:
 	var node := GameState.current_node()
 	var gain := GameState.combat_reward(node) + GameState.gold_income()
 	GameState.gold += gain
-	Audio.play("coin", -4.0)
-	(%Subtitle as Label).text = "+%d gold  (now %d)    ·    HP %d/%d    ·    Deck %d" % [
-		gain, GameState.gold, GameState.player_hp, GameState.player_max_hp, GameState.deck.size()]
+	var tail := ""
 	var vip := int(node.get("critic_bonus_gold", 0))
 	if vip > 0:
-		(%Subtitle as Label).text += "\n" + Loc.t("VIP ovation: +%d gold — she approved.") % vip
+		tail += "\n" + Loc.t("VIP ovation: +%d gold — she approved.") % vip
 
 	# The Critic's review of the fight you just had — and a heads-up on what her
 	# verdict did to the road ahead.
@@ -30,13 +28,25 @@ func _ready() -> void:
 			quip += "   " + Loc.t("— a VIP room opens ahead.")
 		elif GameState.pending_critic == "C":
 			quip += "   " + Loc.t("— a heckler's waiting in your next fight.")
-		(%Subtitle as Label).text += "\n" + Loc.t("THE CRITIC:  ") + quip
+		tail += "\n" + Loc.t("THE CRITIC:  ") + quip
 		var d := GameState.critic_last_details
 		if not d.is_empty():
-			(%Subtitle as Label).text += "\n" + Loc.t("because: peak Aura %d · %d tiers lit · %s") % [
+			tail += "\n" + Loc.t("because: peak Aura %d · %d tiers lit · %s") % [
 				int(d.get("peak_swag", 0)), int(d.get("thresholds_lit", 0)),
 				Loc.t("clean cash-out finish") if bool(d.get("finisher_clean", false)) else Loc.t("no finisher cash-out")]
 		_stamp_grade(GameState.critic_last_rating)
+
+	# gold counts up with coin ticks instead of appearing as a static total
+	var goal := GameState.gold
+	var sub_lbl := %Subtitle as Label
+	var count := func(v: int) -> void:
+		sub_lbl.text = ("+%d gold  (now %d)    ·    HP %d/%d    ·    Deck %d" % [
+			v, goal - gain + v, GameState.player_hp, GameState.player_max_hp, GameState.deck.size()]) + tail
+	count.call(0)
+	var count_tw := create_tween()
+	count_tw.tween_method(count, 0, gain, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	Audio.play("coin", -4.0)
+	get_tree().create_timer(0.3).timeout.connect(func(): Audio.play("coin", -7.0))
 
 	if node.get("type") == "Elite":
 		var aid := _random_unowned_artifact()
@@ -46,13 +56,22 @@ func _ready() -> void:
 			(%Banner as Label).text = "you looted:  %s — %s" % [Loc.t(a.title), Loc.t(a.description)]
 			(%Banner as Label).add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
 
+	var deal_i := 0
 	for id in GameState.reward_offer(3):
 		var card := Database.get_card(id)
 		if card != null:
-			_options.add_child(_big_card(card, id))
+			var holder := _big_card(card, id)
+			holder.modulate.a = 0.0
+			_options.add_child(holder)
+			var deal := create_tween()
+			deal.tween_interval(0.12 + deal_i * 0.13)
+			deal.tween_callback(func(): Audio.play("card", -10.0))
+			deal.tween_property(holder, "modulate:a", 1.0, 0.16)
+			deal_i += 1
 
 	var skip := %Skip as Button
 	skip.pressed.connect(_to_map)
+	skip.pressed.connect(Audio.play.bind("click", -7.0))
 	skip.add_theme_stylebox_override("normal", NodeUI.box(Color(0.15, 0.13, 0.2), Color(0.45, 0.5, 0.62), 2))
 	skip.add_theme_stylebox_override("hover", NodeUI.box(Color(0.22, 0.19, 0.3), Color(0.6, 0.66, 0.78), 2))
 	skip.add_theme_stylebox_override("pressed", NodeUI.box(Color(0.2, 0.17, 0.27), Color(0.45, 0.5, 0.62), 2))
@@ -116,6 +135,7 @@ func _random_unowned_artifact() -> StringName:
 	return &""
 
 func _take(id: StringName) -> void:
+	Audio.play("card", -4.0)
 	GameState.deck.append(id)
 	_to_map()
 

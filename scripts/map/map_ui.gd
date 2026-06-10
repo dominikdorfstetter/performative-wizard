@@ -74,6 +74,30 @@ func _build_nodes() -> void:
 	for r in rows.size():
 		for node in rows[r]:
 			_add_node_button(r, node)
+	_add_you_are_here()
+
+## A mini wizard bobbing beside the current node — the map had no presence marker.
+func _add_you_are_here() -> void:
+	if GameState.pos_row < 0:
+		return
+	var key := "%d_%d" % [GameState.pos_row, GameState.pos_col]
+	if not _pos.has(key):
+		return
+	var tex := SpriteBank.wizard_texture(GameState.wizard_id)
+	if tex == null:
+		return
+	var tr := TextureRect.new()
+	tr.texture = tex
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tr.position = _pos[key] + Vector2(20, -52)
+	tr.size = Vector2(40, 40)
+	add_child(tr)
+	var home_y := tr.position.y
+	var tw := tr.create_tween().set_loops()
+	tw.tween_property(tr, "position:y", home_y - 6, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(tr, "position:y", home_y, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _add_node_button(r: int, node: Dictionary) -> void:
 	var c: int = node.col
@@ -94,6 +118,10 @@ func _add_node_button(r: int, node: Dictionary) -> void:
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	if avail:
 		b.pressed.connect(_enter.bind(r, c, type))
+		# the legend says "tap a glowing node" — make them actually glow
+		var glow := b.create_tween().set_loops()
+		glow.tween_property(b, "modulate", Color(1.28, 1.22, 1.0), 0.7).set_trans(Tween.TRANS_SINE)
+		glow.tween_property(b, "modulate", Color.WHITE, 0.7).set_trans(Tween.TRANS_SINE)
 
 	var pix := SpriteBank.icon_texture(StringName(TYPE_PIX.get(type, "swirl")))
 	if pix != null:
@@ -255,6 +283,7 @@ func _show_deck() -> void:
 	add_child(overlay)
 
 func _enter(r: int, c: int, type: String) -> void:
+	Audio.play("click", -6.0)
 	GameState.enter(r, c)
 	Fader.change_scene(SCENE.get(type, "res://scenes/combat/combat.tscn"))
 
