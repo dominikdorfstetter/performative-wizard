@@ -95,8 +95,20 @@ builds/              exported macOS .app (gitignored)
 
 See [`RELEASE.md`](RELEASE.md) for the cut-a-build checklist (version bumps, ad-hoc
 signing verification, smoke test, itch upload) and [`docs/DEMO_RELEASE.md`](docs/DEMO_RELEASE.md)
-for the demo plan this build implements. `LICENSE` (all rights reserved) and
+for the demo plan this build implements. `LICENSE` (AGPL-3.0) and
 `THIRDPARTY.txt` (Godot + font notices) must ship with every build.
+
+## License & contributing
+
+Performative Wizard is **free software** under the
+[GNU AGPL-3.0](LICENSE) — you may play, study, modify, and redistribute it,
+provided derivatives (including network-hosted ones) stay AGPL and publish
+their source. Third-party components (Godot Engine, the bundled fonts) keep
+their own licenses — see [`THIRDPARTY.txt`](THIRDPARTY.txt).
+
+Want to help? Read [`CONTRIBUTING.md`](CONTRIBUTING.md) — it covers setup,
+the test suite, and the project's localization/font rules. Bugs and ideas go
+to [GitHub issues](https://github.com/dominikdorfstetter/performative-wizard/issues).
 
 ## Roadmap
 
