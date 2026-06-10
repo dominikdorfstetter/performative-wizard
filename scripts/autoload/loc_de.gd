@@ -404,7 +404,6 @@ const TABLE := {
 	"Sacrifice 3 Goons: deal 16 and gain 6 Aura.": "Opfere 3 Goons: mach 16 Schaden und erhalte 6 Aura.",
 	"Pose: gain 2 Aura.": "Pose: erhalte 2 Aura.",
 	"Power. Gain +1 Aura at the start of each turn.": "Power. +1 Aura zu Beginn jeder Runde.",
-	"Peek at your next 3 cards. Draw 1. manifest it.": "Spick deine nächsten 3 Karten. Zieh 1. manifestier es.",
 	"Shuffle your discard into your draw pile. Draw 1. +2 Aura — vintage is IN.": "Mische deine Ablage in den Nachziehstapel. Zieh 1. +2 Aura — Vintage ist IN.",
 	"Keep your unplayed hand this turn. +2 Aura. post it tomorrow.": "Behalte deine ungespielte Hand diese Runde. +2 Aura. poste es morgen.",
 	"Deal 3. Apply 1 Mid. devastating.": "Mach 3 Schaden. Verpasse 1 Mid. vernichtend.",
@@ -500,4 +499,9 @@ const TABLE := {
 	"peace. quiet. heal 8 HP.": "Ruhe. Frieden. heile 8 LP.",
 	"Devastating. Legendary. Someone airdrops you a %s in tribute.": "Verheerend. Legendär. Jemand airdroppt dir %s als Tribut.",
 	"You mute all 7 chats. The silence heals 8 HP. self-care undefeated.": "Du mutest alle 7 Chats. Die Stille heilt 8 LP. Self-Care undefeated.",
+	"Look at your next 3 cards — take one. manifest it.": "Sieh dir deine nächsten 3 Karten an — nimm eine. manifestier es.",
+	"your next %d cards — take one": "deine nächsten %d Karten — nimm eine",
+	"left is the top of the pile": "links liegt oben auf dem Stapel",
+	"you reach for %s": "du greifst nach %s",
+	"your hands are FULL — it stays in the pile": "deine Hände sind VOLL — sie bleibt im Stapel",
 }

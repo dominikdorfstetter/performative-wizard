@@ -44,6 +44,7 @@ const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't
 
 var cm: CombatManager
 var _popups: Control
+var _pick_layer: Control     # modal "take one of your next 3" picker (peek_pick op)
 var _draw_counter: Label     # bottom-left pile readout (count + contents tooltip)
 var _disc_counter: Label     # bottom-right pile readout
 var _draw_tip: TipIcon
@@ -183,6 +184,7 @@ func _start_fight() -> void:
 	cm.enemy_acting.connect(_on_enemy_acting)
 	cm.combat_ended.connect(_on_combat_ended)
 	cm.peeked.connect(_on_peeked)
+	cm.pick_requested.connect(_on_pick_requested)
 	_build_pile_counters()
 	cm.start_combat(player, encounter, deck, GameState.effective_drip(), false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
 	_build_player_widget(w)
@@ -420,6 +422,58 @@ func _on_peeked(titles: Array) -> void:
 	tw.tween_interval(2.2)
 	tw.tween_property(p, "modulate:a", 0.0, 0.4)
 	tw.tween_callback(p.queue_free)
+
+## "peek_pick" (Vision Board): a modal layer fans out the next cards face-up —
+## click one to take it into your hand. The dim rect blocks everything behind it.
+func _on_pick_requested(cards: Array) -> void:
+	if cards.is_empty() or not is_inside_tree():
+		return
+	_pick_layer = Control.new()
+	_pick_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_pick_layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0.04, 0.02, 0.07, 0.72)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_pick_layer.add_child(dim)
+	var title := Label.new()
+	title.text = Loc.t("your next %d cards — take one") % cards.size()
+	title.add_theme_font_override("font", NodeUI.DISPLAY_FONT)
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color(1.0, 0.55, 0.85))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(0, 128)
+	title.size = Vector2(1152, 40)
+	_pick_layer.add_child(title)
+	var hint := Label.new()
+	hint.text = Loc.t("left is the top of the pile")
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 14)
+	hint.add_theme_color_override("font_color", Color(0.62, 0.58, 0.72))
+	hint.position = Vector2(0, 172)
+	hint.size = Vector2(1152, 20)
+	_pick_layer.add_child(hint)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 26)
+	row.position = Vector2(0, 216)
+	row.size = Vector2(1152, 210)
+	_pick_layer.add_child(row)
+	for i in cards.size():
+		var cv := CardView.build(cards[i], true, _pick.bind(i))
+		cv.scale = Vector2(0.9, 0.9)
+		cv.modulate.a = 0.0
+		row.add_child(cv)
+		var tw := cv.create_tween()
+		tw.tween_interval(0.07 * i)   # quick fan-out deal
+		tw.tween_property(cv, "modulate:a", 1.0, 0.16)
+	Audio.play("card", -8.0)
+
+func _pick(i: int) -> void:
+	if _pick_layer != null and is_instance_valid(_pick_layer):
+		_pick_layer.queue_free()
+	_pick_layer = null
+	cm.resolve_pick(i)
 
 func _hud_icon(icon: StringName, pos: Vector2, sz: int) -> TipIcon:
 	var t := TipIcon.new()
@@ -1341,7 +1395,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				Fader.change_scene("res://scenes/hub/class_select.tscn"))
 		get_viewport().set_input_as_handled()
 	elif event.keycode == KEY_SPACE or event.keycode == KEY_ENTER:
-		if cm != null and cm.state == CombatManager.State.PLAYER_TURN and not is_instance_valid(_pause):
+		# the card picker is modal: no shortcut-ending the turn under it
+		if cm != null and cm.state == CombatManager.State.PLAYER_TURN \
+				and not is_instance_valid(_pause) and not is_instance_valid(_pick_layer):
 			cm.end_turn()
 			get_viewport().set_input_as_handled()
 

@@ -401,7 +401,6 @@ const TABLE := {
 	"Sacrifice 3 Goons: deal 16 and gain 6 Aura.": "Sacrifica 3 Goons: inflige 16 y gana 6 de Aura.",
 	"Pose: gain 2 Aura.": "Pose: gana 2 de Aura.",
 	"Power. Gain +1 Aura at the start of each turn.": "Power. +1 de Aura al inicio de cada turno.",
-	"Peek at your next 3 cards. Draw 1. manifest it.": "Mira tus próximas 3 cartas. Roba 1. manifiéstalo.",
 	"Shuffle your discard into your draw pile. Draw 1. +2 Aura — vintage is IN.": "Baraja tu descarte en el mazo de robo. Roba 1. +2 Aura — lo vintage está IN.",
 	"Keep your unplayed hand this turn. +2 Aura. post it tomorrow.": "Conserva tu mano sin jugar este turno. +2 Aura. publícalo mañana.",
 	"Deal 3. Apply 1 Mid. devastating.": "Inflige 3. Aplica 1 Mid. devastador.",
@@ -497,4 +496,9 @@ const TABLE := {
 	"peace. quiet. heal 8 HP.": "paz. silencio. cura 8 PV.",
 	"Devastating. Legendary. Someone airdrops you a %s in tribute.": "Devastador. Legendario. Alguien te manda %s por airdrop como tributo.",
 	"You mute all 7 chats. The silence heals 8 HP. self-care undefeated.": "Silencias los 7 chats. El silencio cura 8 PV. el autocuidado invicto.",
+	"Look at your next 3 cards — take one. manifest it.": "Mira tus próximas 3 cartas — toma una. manifiéstalo.",
+	"your next %d cards — take one": "tus próximas %d cartas — toma una",
+	"left is the top of the pile": "la izquierda es la parte de arriba del mazo",
+	"you reach for %s": "alcanzas %s",
+	"your hands are FULL — it stays in the pile": "tienes las manos LLENAS — se queda en el mazo",
 }

@@ -86,6 +86,10 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 			var cmp = ctx.get("combat")
 			if cmp != null:
 				cmp.peek_draw(amount)
+		"peek_pick":
+			var cmpp = ctx.get("combat")
+			if cmpp != null:
+				cmpp.request_pick(amount)
 		"shuffle_discard":
 			var cmsd = ctx.get("combat")
 			if cmsd != null:

@@ -986,6 +986,65 @@ func _ready() -> void:
 	cmpile.peek_draw(1)
 	_check("dry peek reshuffles the discard in", cmpile.draw_pile.size(), 3)
 	_check("dry peek leaves no discard behind", cmpile.discard_pile.size(), 0)
+	# peek_pick (Vision Board): headless auto-takes the top card == a plain draw
+	var cmvb := CombatManager.new()
+	var pvb := Combatant.new()
+	pvb.max_hp = 60
+	pvb.hp = 60
+	var vb_deck: Array[CardData] = []
+	for i in 8:
+		vb_deck.append(Database.get_card(&"ember"))
+	cmvb.start_combat(pvb, [Database.get_enemy(&"alley_cat")], vb_deck, 0, true)
+	cmvb.hand = [Database.get_card(&"vision_board")]   # 5 embers out, 3 in the pile
+	var vb_pile0: int = cmvb.draw_pile.size()
+	var vb_hand0: int = cmvb.hand.size()
+	cmvb.play_card(cmvb.hand[0])
+	_check("headless peek_pick takes the top card", cmvb.draw_pile.size(), vb_pile0 - 1)
+	_check("the taken card landed in hand", cmvb.hand.size(), vb_hand0)   # -1 played, +1 taken
+	_check("pick resolved, nothing pending", cmvb.pending_pick_n, 0)
+	# with a view attached the pick defers: the signal lays the cards out
+	# top-first and resolve_pick removes the exact position that was shown
+	var cmpk := CombatManager.new()
+	var ppk := Combatant.new()
+	ppk.max_hp = 60
+	ppk.hp = 60
+	cmpk.start_combat(ppk, [Database.get_enemy(&"alley_cat")], [] as Array[CardData], 0, true)
+	cmpk.step_delay = 0.45   # "view attached" — emit only, no await runs here
+	cmpk.draw_pile = [Database.get_card(&"ember"), Database.get_card(&"thrift_flip"), Database.get_card(&"side_eye")]
+	cmpk.hand.clear()
+	var laid_out: Array = []
+	cmpk.pick_requested.connect(func(cards): laid_out.append_array(cards))
+	cmpk.request_pick(3)
+	_check("pick lays out 3", laid_out.size(), 3)
+	_check("first laid-out card is the pile top", laid_out[0].id, &"side_eye")
+	_check("pick is pending under a view", cmpk.pending_pick_n, 3)
+	cmpk.resolve_pick(1)
+	_check("picked the middle card", cmpk.hand[0].id, &"thrift_flip")
+	_check("pile keeps its promised order", cmpk.draw_pile[cmpk.draw_pile.size() - 1].id, &"side_eye")
+	_check("pile shrank by one", cmpk.draw_pile.size(), 2)
+	# a turn can't end mid-pick: the default (top) card resolves first
+	cmpk.energy = 3
+	cmpk.request_pick(2)
+	_check("second pick pending", cmpk.pending_pick_n, 2)
+	cmpk.step_delay = 0.0   # keep end_turn fully synchronous for the test
+	cmpk.end_turn()
+	_check("end_turn auto-resolved the pick", cmpk.pending_pick_n, 0)
+	# a full hand refuses the pick and leaves the pile untouched
+	var cmfh := CombatManager.new()
+	var pfh := Combatant.new()
+	pfh.max_hp = 60
+	pfh.hp = 60
+	var fh_deck: Array[CardData] = []
+	for i in 13:
+		fh_deck.append(Database.get_card(&"ember"))
+	cmfh.start_combat(pfh, [Database.get_enemy(&"alley_cat")], fh_deck, 0, true)
+	cmfh.draw_cards(20)
+	_check("full-hand setup", cmfh.hand.size(), CombatManager.HAND_CAP)
+	var fh_pile: int = cmfh.draw_pile.size()
+	cmfh.request_pick(3)
+	_check("full hand refuses the pick", cmfh.hand.size(), CombatManager.HAND_CAP)
+	_check("refused pick leaves the pile alone", cmfh.draw_pile.size(), fh_pile)
+
 	# thrift_flip: its own discard joins the recycle, then draw 1
 	var cmflip := CombatManager.new()
 	var pflip := Combatant.new()
@@ -1123,6 +1182,8 @@ func _ready() -> void:
 		"fresh rotation — the discard shuffles back in",
 		"you keep the hand — it's all part of the plan",
 		"nothing left to peek — your piles are empty",
+		"your next %d cards — take one", "left is the top of the pile",
+		"you reach for %s", "your hands are FULL — it stays in the pile",
 	])
 	# blanket rule: EVERY card description ships in both languages — 10 archetype-PR
 	# cards had silently slipped the triple-edit rule before this assert existed
