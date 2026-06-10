@@ -28,9 +28,13 @@ const RIGHT := 1010.0
 const TOP := 116.0
 const BOT := 572.0
 const NODE := 50.0
+const MIN_GAP := 62.0   # node centres never get closer than this
 
 var _pos := {}
 var _info: Label
+var _marker: TextureRect   # the mini you-are-here wizard (walks on node entry)
+var _marker_bob: Tween
+var _walking := false
 
 func _ready() -> void:
 	if GameState.map.is_empty():           # standalone fallback
@@ -53,9 +57,26 @@ func _compute_positions() -> void:
 		var y: float = BOT - float(r) / float(n - 1) * (BOT - TOP)
 		var row: Array = rows[r]
 		var w := row.size()
+		# alternate rows shift phase so same-width rows never stack their nodes
+		# into vertical towers; per-node deterministic jitter keeps it organic
+		var phase := 0.16 * (1.0 if r % 2 == 1 else -1.0)
 		for c in w:
-			var x: float = LEFT + (float(c) + 0.5) / float(w) * (RIGHT - LEFT)
-			_pos["%d_%d" % [r, c]] = Vector2(x, y)
+			var jx := float((r * 31 + c * 17) % 13) - 6.0
+			var jy := float((r * 23 + c * 41) % 11) - 5.0
+			var x: float = LEFT + (float(c) + 0.5 + phase) / float(w) * (RIGHT - LEFT) + jx
+			_pos["%d_%d" % [r, c]] = Vector2(x, y + jy)
+	# relax pass: push any pair of nodes apart until they keep a minimum gap
+	var keys := _pos.keys()
+	for pass_i in 3:
+		for i in keys.size():
+			for j in range(i + 1, keys.size()):
+				var a: Vector2 = _pos[keys[i]]
+				var b: Vector2 = _pos[keys[j]]
+				var d := a.distance_to(b)
+				if d < MIN_GAP and d > 0.01:
+					var push := (b - a).normalized() * (MIN_GAP - d) * 0.5
+					_pos[keys[i]] = a - push
+					_pos[keys[j]] = b + push
 
 func _draw() -> void:
 	# act-tinted depth gradient: the road darkens and warms as the run deepens
@@ -135,8 +156,10 @@ func _add_you_are_here() -> void:
 	tr.position = _pos[key] + Vector2(20, -52)
 	tr.size = Vector2(40, 40)
 	add_child(tr)
+	_marker = tr
 	var home_y := tr.position.y
 	var tw := tr.create_tween().set_loops()
+	_marker_bob = tw
 	tw.tween_property(tr, "position:y", home_y - 6, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(tr, "position:y", home_y, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
@@ -334,9 +357,38 @@ func _show_deck() -> void:
 	add_child(overlay)
 
 func _enter(r: int, c: int, type: String) -> void:
+	if _walking:
+		return
+	_walking = true
 	Audio.play("click", -6.0)
-	GameState.enter(r, c)
-	Fader.change_scene(SCENE.get(type, "res://scenes/combat/combat.tscn"))
+	var go := func():
+		GameState.enter(r, c)
+		Fader.change_scene(SCENE.get(type, "res://scenes/combat/combat.tscn"))
+	var dest_key := "%d_%d" % [r, c]
+	if _marker == null or not is_instance_valid(_marker) or not _pos.has(dest_key):
+		go.call()   # first step of the run: no origin to walk from
+		return
+	# block further taps while the wizard makes the trip
+	var blocker := Control.new()
+	blocker.set_anchors_preset(Control.PRESET_FULL_RECT)
+	blocker.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(blocker)
+	if _marker_bob != null and _marker_bob.is_valid():
+		_marker_bob.kill()   # the idle bob would fight the walk tween
+	var dest: Vector2 = _pos[dest_key] + Vector2(20, -52)
+	var hops := 3
+	var from: Vector2 = _marker.position
+	var tw := create_tween()
+	for h in hops:
+		var t0 := float(h) / hops
+		var t1 := float(h + 1) / hops
+		var mid := from.lerp(dest, (t0 + t1) * 0.5) + Vector2(0, -14)
+		var end := from.lerp(dest, t1)
+		tw.tween_property(_marker, "position", mid, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_callback(func(): Audio.play("card", -16.0))
+		tw.tween_property(_marker, "position", end, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_interval(0.08)
+	tw.tween_callback(go)
 
 var _pause: Control
 
