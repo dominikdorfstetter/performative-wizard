@@ -642,6 +642,12 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 	w.add_child(stbox)
 	_fill_status(stbox, e)
 
+	# Display bulk (critic review item 2): bosses tower at 2x, bruisers loom,
+	# minions shrink — feet stay on the baseline, growth goes up and outward.
+	var bulk := 1.0
+	if e.data != null:
+		bulk = float(SpriteBank.DEF.get(e.data.id, {}).get("bulk", 1.0))
+
 	# ground shadow + monster sprite
 	var shadow := Panel.new()
 	var ss := StyleBoxFlat.new()
@@ -649,8 +655,8 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 	ss.set_corner_radius_all(14)
 	shadow.add_theme_stylebox_override("panel", ss)
 	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shadow.position = Vector2(40, 188)
-	shadow.size = Vector2(70, 12)
+	shadow.position = Vector2(75.0 - 35.0 * bulk, 188)
+	shadow.size = Vector2(70.0 * bulk, 12)
 	w.add_child(shadow)
 
 	var sprite := TextureRect.new()
@@ -659,8 +665,10 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sprite.position = Vector2(33, 100)
-	sprite.size = Vector2(84, 90)
+	var sw := 84.0 * bulk
+	var sh := 90.0 * bulk
+	sprite.position = Vector2(75.0 - sw / 2.0, 190.0 - sh)
+	sprite.size = Vector2(sw, sh)
 	if dead:
 		var skull := TextureRect.new()
 		skull.texture = SpriteBank.icon_texture(&"skull")
@@ -671,6 +679,9 @@ func _make_enemy_widget(e: Combatant, index: int, over: bool) -> Array:
 		skull.modulate = Color(1, 1, 1, 0.7)
 		sprite.add_child(skull)
 	w.add_child(sprite)
+	if bulk > 1.0:
+		# a towering sprite slides behind the name/bar chrome instead of covering it
+		w.move_child(sprite, 0)
 	if not dead:
 		_idle_bob(sprite, index * 0.3, 5.0)
 
