@@ -508,4 +508,6 @@ const TABLE := {
 	"for %s": "für %s",
 	"%d Clout": "%d Clout",
 	"%d cards — yeeting removes one copy": "%d Karten — geyeeted wird genau eine Kopie",
+	"elite loot: %s — %s": "Elite-Loot: %s — %s",
+	"Skip the cards": "Karten auslassen",
 }
