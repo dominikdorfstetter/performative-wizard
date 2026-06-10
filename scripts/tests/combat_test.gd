@@ -1151,6 +1151,66 @@ func _ready() -> void:
 	_check("menu never varies", Audio._variant_key("menu", 3), "menu")
 	_check("variant keys don't re-wrap", Audio._variant_key("combat@2", 3), "combat@2")
 
+	# --- map generation: structure guarantees hold across many seeds ----------
+	print("--- map generation ---")
+	var bad_cross: Array = []
+	var bad_reach: Array = []
+	var bad_consec: Array = []
+	var bad_rowdupe: Array = []
+	var bad_shop: Array = []
+	var bad_shape: Array = []
+	for seed_v in range(1, 41):
+		var mrows: Array = MapGenerator.generate(seed_v)
+		if mrows.size() != MapGenerator.ROWS or mrows[-1].size() != 1 or mrows[-1][0].type != "Boss":
+			bad_shape.append(seed_v)
+		for r in mrows.size() - 1:
+			var mrow: Array = mrows[r]
+			# edges never cross: for i < j, max(links_i) <= min(links_j)
+			for i in mrow.size():
+				for j in range(i + 1, mrow.size()):
+					if not mrow[i].links.is_empty() and not mrow[j].links.is_empty() \
+							and mrow[i].links.max() > mrow[j].links.min():
+						bad_cross.append(seed_v)
+			# every node has an exit, every next-row node an entrance
+			var incoming := {}
+			for i in mrow.size():
+				if mrow[i].links.is_empty():
+					bad_reach.append(seed_v)
+				for l in mrow[i].links:
+					incoming[l] = true
+			for k in mrows[r + 1].size():
+				if not incoming.has(k):
+					bad_reach.append(seed_v)
+			# no special repeats along an edge (the "two rests in a row" report)
+			for i in mrow.size():
+				var mt: String = mrow[i].type
+				if mt == "Combat" or mt == "Boss":
+					continue
+				for l in mrow[i].links:
+					if mrows[r + 1][l].type == mt:
+						bad_consec.append("%d:%s" % [seed_v, mt])
+		# at most one Rest/Shop/Chest per row (pre-boss rest row exempt by design)
+		for r in range(1, mrows.size() - 2):
+			var counts := {}
+			for node in mrows[r]:
+				counts[node.type] = int(counts.get(node.type, 0)) + 1
+			for t in ["Rest", "Shop", "Chest"]:
+				if int(counts.get(t, 0)) > 1:
+					bad_rowdupe.append("%d:%s" % [seed_v, t])
+		var has_shop := false
+		for r in range(1, mrows.size() - 1):
+			for node in mrows[r]:
+				if node.type == "Shop":
+					has_shop = true
+		if not has_shop:
+			bad_shop.append(seed_v)
+	_check("map: boss row shape holds (40 seeds)", bad_shape, [])
+	_check("map: edges never cross (40 seeds)", bad_cross, [])
+	_check("map: all nodes reachable with exits (40 seeds)", bad_reach, [])
+	_check("map: no same special twice in a row (40 seeds)", bad_consec, [])
+	_check("map: max one Rest/Shop/Chest per row (40 seeds)", bad_rowdupe, [])
+	_check("map: every act has a shop (40 seeds)", bad_shop, [])
+
 	# --- loc coverage: the teaching layer + key chrome exists in BOTH tables, so a
 	# string change can never silently regress DE/ES back to English again ---
 	print("--- loc coverage ---")
