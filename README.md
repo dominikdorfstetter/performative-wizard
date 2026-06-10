@@ -27,8 +27,8 @@ A README.txt with these steps ships inside the zip.
 **Feature-complete roguelite.** Full run: main menu → class-select → dressing room →
 **3-act branching map** (combat / elite / event / shop / rest / chest / boss) → ascension.
 
-- **Content:** 49 cards, 24 enemy types (incl. **The Critic** & **The Algorithm** bosses),
-  3 wizards, 19 outfits, 14 artifacts.
+- **Content:** 58 cards, 24 enemy types (incl. **The Critic** & **The Algorithm** bosses),
+  3 wizards, 19 outfits, 14 artifacts, 11 events.
 - **Wizards:** Vesper Vermillion (It Girl / fire), Morticia Graves (Goth Bestie / necro,
   summon-and-sacrifice), Chadwick Suave (the Rizzard / crit-on-Rizz).
 - **Builds:** vanilla StS-style starters + **two distinct archetypes per wizard** (Fire:
@@ -46,13 +46,14 @@ A README.txt with these steps ships inside the zip.
   (Aura×3, spread, lifedrain, and the **Encore** that scales with time held in the
   spotlight); **Commit to the Bit** (bank past 24 to build an Encore, get *booed* if
   knocked out of the spotlight); a **tax** enemy verb that punishes hoarding; the **Feed**
-  (a per-act Trend that re-prices Aura income); crit/luck, **Power** cards, and statuses —
+  (a per-act Trend that re-prices Aura income); crit/luck, **Power** cards, draw-pile/discard counters with peek/recycle/retain
+  manipulation cards, two-flavour card upgrades (cheaper OR harder-hitting), and statuses —
   Roasted (burn), Cooked (vulnerable), Mid (weak), Jinxed, Exposed (frail), Toxic (poison),
   Rizz (strength), Goons (undead). Enemies multi-hit, heal, drain/tax Aura, **enrage**, and
   **summon adds**.
 - **Presentation:** pixel battle scene with idle animation, projectiles, hit sparks,
   crits, screen shake, summoned-goon minions; 5 procedural biome backdrops; 5 synthesized
-  drum-backed music tracks (per-encounter) + SFX.
+  drum-backed music tracks (per-encounter, with per-act tempo/key variants) + SFX.
 - **Player-friendly demo build:** quit-safe **run saves** (checkpoint at every map
   entry, "Resume Run" on the menu), a one-time **first-fight tutorial**, Esc pause
   overlay with abandon-run, sequenced enemy turns with per-attacker telegraphs,
@@ -61,7 +62,7 @@ A README.txt with these steps ships inside the zip.
 - **Localization:** English / Deutsch / Español (auto-detected on first boot,
   switchable in Options) — keeps the international Gen-Z slang, translates the rest.
 - **Build:** macOS `.app` (ad-hoc signed) + itch-ready web export, both branded
-  (custom icon/boot splash) and versioned. Combat engine covered by **217 headless
+  (custom icon/boot splash) and versioned. Combat engine covered by **250 headless
   tests** (run on every push via GitHub Actions).
 
 ## Running
@@ -69,8 +70,8 @@ A README.txt with these steps ships inside the zip.
 1. Install **Godot 4.4+** (developed on 4.6.3, GDScript): https://godotengine.org/download
 2. Open this folder in Godot (import `project.godot`).
 3. Press **Play** (F5). The console should print
-   `[Database] loaded 49 cards, 19 outfits, 24 enemies, 3 wizards, 14 artifacts`.
-4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `217 passed, 0 failed`).
+   `[Database] loaded 58 cards, 19 outfits, 24 enemies, 3 wizards, 14 artifacts`.
+4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `250 passed, 0 failed`).
    Set `PW_NO_SAVE=1` when running tools/tests so they never touch your real save.
 
 ## Layout
@@ -85,7 +86,7 @@ scripts/
   combat/            Combatant · EffectResolver · CombatManager (pure logic) · combat_ui
   data/              CardData / OutfitData / EnemyData / WizardData / ArtifactData resources
   map/ run/ ui/      map generation, encounters, and all screen scripts
-  tests/             combat_test.gd (217 checks) · balance_sim.gd (headless balance bot)
+  tests/             combat_test.gd (250 checks) · balance_sim.gd (headless balance bot)
 data/
   cards/ enemies/ outfits/ wizards/ artifacts/   authored .tres content
 builds/              exported macOS .app (gitignored)

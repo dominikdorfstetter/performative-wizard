@@ -83,3 +83,56 @@ tier, not the totals.
 The 85+ path, in order: enemy visual pass (2), draw manipulation + pile
 visibility (1), Rizz pool + rare tier fill (3). All three are post-demo-v1
 sized — none should gate this release.
+
+---
+
+# Re-review (2026-06-10, after the fix pass)
+
+All seven items above were addressed in the same PR. What changed, scored
+against the same axes:
+
+1. **Depth ceiling:** draw/discard counters with contents tooltips, plus three
+   real manipulation verbs — peek (Vision Board), recycle (Thrift Flip),
+   retain (Saved to Drafts, with a 10-card hand cap). Banking a 5-card
+   mega-turn behind a retain is a genuinely new line of play that feeds the
+   Aura-hoarding identity. *Remaining gap:* no click-to-inspect pile overlay,
+   no choose-from-discard tutor — the peek is information, not selection.
+2. **Enemy presentation:** three new body grammars (wide / imp / floaty) break
+   the round cluster from 11 to 7, and display bulk finally makes bosses
+   tower (2x) and goons scuttle (0.8x). The cast reads as a cast now.
+   *Remaining gap:* features (ears/fangs/etc.) still share one placement grid.
+3. **Rizz pool:** 14 -> 23 (fire 24 / necro 25 with the neutrals), with AoE
+   access (Love Bomb, Crowd Work) so wide-S grades are reachable. Rare tier
+   5 -> 9 vs 11 Epics — no longer inverted enough to notice.
+4. **Top-end balance:** asc8 boss went from fire ~0 / necro ~2 / rizz 59 to
+   roughly **20 / 35 / 82** (K=200, +-5): the asc HP+dmg curves kink at 4,
+   Goons hit critical mass at 4+, fire got a class-wide lift (drip 3, hotter
+   roasts) and rizz_crit was shaved to 0.04. Honest caveat: parity is not
+   claimed — crit multiplication is structural — and the sim bot under-plays
+   burn lines a human would pilot.
+5. **Events:** 6 -> 11, and two of them finally touch the USP — bribing the
+   Critic with a matcha (guaranteed VIP) or roasting her latte order (50/50
+   VIP/heckler) is exactly the kind of decision this game should be made of.
+   Bonus: all 11 events now actually ship in DE/ES (the old six were silently
+   English-only).
+6. **Audio:** acts 2/3 transpose +2/+4 semitones at +6/+12 BPM. The loops are
+   still seven seconds long, but they no longer wear identically.
+7. **Upgrades:** Glow Up picks Sharper (cost-1) or Juicier (+2 amounts), and
+   zero-cost cards became upgradeable. Two-note, but the choice is real.
+
+## Re-scorecard
+
+| Axis | Was | Now | Why |
+|---|---|---|---|
+| Hook / identity | 18/20 | 18/20 | unchanged — still the best thing here |
+| Moment-to-moment combat | 14/20 | 17/20 | manipulation verbs + pile info; no selection UIs yet |
+| Progression & retention | 16/20 | 16/20 | unchanged |
+| Presentation | 16/20 | 18/20 | silhouette families + bulk scale |
+| Content breadth | 8/12 | 10/12 | 58 cards, 11 events, Rizz pool fixed |
+| Polish & UX | 7/8 | 7/8 | counters/tooltips fit the chrome; loc now truly complete |
+| **Total** | **79** | **86/100** | **above the 85 bar** |
+
+The path to 90: a click-to-open pile inspection overlay, 2-3 selection-based
+cards (true scry, discard tutor), per-enemy feature variety on top of the new
+shapes, longer music phrases, and — above all — human playtests to replace
+the sim's guesses about asc4+.

@@ -413,6 +413,7 @@ func _on_peeked(titles: Array) -> void:
 	var p := TipIcon.panel(Loc.t("up next"), " · ".join(disp))
 	p.position = Vector2(16, 540)
 	p.modulate.a = 0.0
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE   # a toast must never eat card clicks
 	_popups.add_child(p)
 	var tw := p.create_tween()
 	tw.tween_property(p, "modulate:a", 1.0, 0.15)
