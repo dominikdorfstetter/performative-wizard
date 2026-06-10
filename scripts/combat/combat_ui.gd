@@ -40,11 +40,23 @@ const STATUS_DESC := {
 	&"barrier": "Barrier — gain this much Block each turn.",
 }
 const PLAYER_LINES := ["aura farming fr", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy", "locked TF in", "we mogging rn"]
+# Hit barks (kept in English like all combat slang): enemies roast you when a
+# hit lands; your wizard claps back in their own voice when you connect.
+const HIT_ROASTS := ["that's gonna trend", "caught LACKING", "the audacity? punished", "free hit fr", "lights out bestie", "review THAT"]
+const WIZ_ROASTS := {
+	&"fire": ["you're SO last season", "roasted. literally.", "stay toasty bestie", "flames are couture", "the burn book says hi"],
+	&"necro": ["the void rates that", "rot with grace, bestie", "my goons said mid", "RIP bozo", "grave behaviour"],
+	&"rizz": ["caught you lacking", "rizz'd and dismissed", "smooth operator btw", "no aura detected", "L + you fell off"],
+}
 const ENEMY_TAUNTS := ["skill issue", "you're so cooked", "ratio + L", "couldn't be me", "cope harder", "down bad ngl", "you fell off", "0 aura detected", "this you?", "stay mad bestie"]
 
 var cm: CombatManager
 var _popups: Control
 var _pick_layer: Control     # modal "take one of your next 3" picker (peek_pick op)
+var _last_actor := 0         # enemy index that acted last (bark anchor)
+var _bark_turn := -1         # last turn the wizard barked (max one per turn)
+var _taunt_turn := -1        # last turn an enemy hit-roasted (max one per turn)
+var _player_accent := Color(1.0, 0.31, 0.70)
 var _draw_counter: Label     # bottom-left pile readout (count + contents tooltip)
 var _disc_counter: Label     # bottom-right pile readout
 var _draw_tip: TipIcon
@@ -190,6 +202,9 @@ func _start_fight() -> void:
 	_build_player_widget(w)
 	_build_fit_strip()
 	_build_artifact_strip()
+	# bubbles/floats live in _popups, created before this chrome — re-raise it so
+	# speech is never buried under the wizard's name label (owner-reported)
+	move_child(_popups, get_child_count() - 1)
 	_prev_enemy_hp = []
 	for e in cm.enemies:
 		_prev_enemy_hp.append(e.hp)
@@ -289,6 +304,7 @@ func _build_player_widget(w: WizardData) -> void:
 	nm.add_theme_font_size_override("font_size", 20)
 	nm.add_theme_color_override("font_color", w.accent.lightened(0.32))
 	add_child(nm)
+	_player_accent = w.accent
 
 	_player_sprite = TextureRect.new()
 	_player_sprite.texture = SpriteBank.wizard_texture(w.id, 1)
@@ -973,6 +989,7 @@ func _lunge(node: Control) -> void:
 ## The acting enemy winds up toward the wizard just before its intent resolves, so
 ## each attacker in the sequenced enemy turn reads as its own beat.
 func _on_enemy_acting(index: int, _intent: Dictionary) -> void:
+	_last_actor = index
 	if index < 0 or index >= _enemy_sprites.size():
 		return
 	var s: Control = _enemy_sprites[index]
@@ -1033,6 +1050,11 @@ func _emit_popups() -> void:
 					any_death = true
 	if enemy_hit:
 		Audio.play("hit")
+		# your wizard talks their talk when a hit connects (~1 in 4, once a turn)
+		if cm.state == CombatManager.State.PLAYER_TURN and cm.turn != _bark_turn and randf() < 0.28:
+			_bark_turn = cm.turn
+			var blines: Array = WIZ_ROASTS.get(GameState.wizard_id, PLAYER_LINES)
+			_say_bubble(Vector2(185, 114), Loc.t(blines[randi() % blines.size()]), _player_accent)
 	if any_death:
 		Audio.play("death", -3.0)
 	if _prev_player_hp >= 0 and cm.player.hp < _prev_player_hp:
@@ -1041,6 +1063,11 @@ func _emit_popups() -> void:
 		_hurt_flash()
 		_punch(_player_sprite)
 		Audio.play("hurt")
+		# the attacker rubs it in (~1 in 3, once a turn)
+		if cm.state == CombatManager.State.ENEMY_TURN and cm.turn != _taunt_turn and randf() < 0.34 \
+				and _last_actor >= 0 and _last_actor < cm.enemies.size() and not cm.enemies[_last_actor].is_dead():
+			_taunt_turn = cm.turn
+			_say_bubble(_enemy_center(_last_actor) + Vector2(0, -120), Loc.t(HIT_ROASTS[randi() % HIT_ROASTS.size()]), C_INTENT)
 	elif _prev_player_hp >= 0 and cm.player.hp > _prev_player_hp:
 		_float_text(Vector2(150, 250), "+%d" % (cm.player.hp - _prev_player_hp), Color(0.5, 0.95, 0.6))
 		Audio.play("heal", -4.0)
@@ -1074,13 +1101,13 @@ func _banter() -> void:
 		return
 	for thr in [12, 18]:
 		if _prev_swag < thr and cm.swag >= thr:
-			_say_bubble(Vector2(150, 130), Loc.t(PLAYER_LINES[randi() % PLAYER_LINES.size()]), C_SWAG)
+			_say_bubble(Vector2(165, 114), Loc.t(PLAYER_LINES[randi() % PLAYER_LINES.size()]), C_SWAG)
 			Audio.play("aura", -5.0)
 			break
 	_prev_swag = cm.swag
 	# Commit-to-the-Bit tells: the spotlight building, or the boo when it drops.
 	if cm.encore > _prev_encore and cm.encore > 0:
-		_say_bubble(Vector2(150, 130), Loc.t("ENCORE ×%d!") % cm.encore, C_GOLD)
+		_say_bubble(Vector2(165, 114), Loc.t("ENCORE ×%d!") % cm.encore, C_GOLD)
 		Audio.play("buff", -5.0)
 	_prev_encore = cm.encore
 	if cm.booed and not _prev_booed:

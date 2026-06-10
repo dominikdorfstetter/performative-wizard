@@ -170,7 +170,6 @@ const TABLE := {
 	"Trinket": "Amuleto",
 	"OWNED": "EN POSESIÓN",
 	"%s, the %s    —    pick your drip": "%s, la/el %s    —    elige tu drip",
-	"Spend Clout on permanent drip. You have %d Clout.": "Gasta Clout en drip permanente. Tienes %d Clout.",
 	"THE FIT": "EL OUTFIT",
 	"Aura income: +%d / turn": "Ingreso de Aura: +%d / turno",
 	"Cards added to deck: %d": "Cartas añadidas: %d",
@@ -501,4 +500,9 @@ const TABLE := {
 	"left is the top of the pile": "la izquierda es la parte de arriba del mazo",
 	"you reach for %s": "alcanzas %s",
 	"your hands are FULL — it stays in the pile": "tienes las manos LLENAS — se queda en el mazo",
+	"permanent drip — sorted by who can serve it": "drip permanente — ordenado según quién puede servirlo",
+	"for everyone": "para todo el mundo",
+	"for %s": "para %s",
+	"%d Clout": "%d Clout",
+	"%d cards — yeeting removes one copy": "%d cartas — el yeet elimina una sola copia",
 }

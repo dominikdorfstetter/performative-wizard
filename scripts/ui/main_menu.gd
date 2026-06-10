@@ -119,8 +119,10 @@ func _portraits() -> void:
 		_bob(_fire_tr, 0.0)
 	if _necro_tr:
 		_bob(_necro_tr, 0.5)
-	_fire_bubble = _make_bubble(Vector2(108, 206))
-	_necro_bubble = _make_bubble(Vector2(814, 206))
+	# bubbles sit so their tails actually touch the speakers' hats (they used to
+	# float ~20px adrift), and each wears its wizard's accent
+	_fire_bubble = _make_bubble(Vector2(108, 224), _accent_of(&"fire"))
+	_necro_bubble = _make_bubble(Vector2(814, 224), _accent_of(&"necro"))
 	_setup_talk()
 
 func _sprite(id: StringName, pos: Vector2, look := 0) -> TextureRect:
@@ -139,7 +141,11 @@ func _sprite(id: StringName, pos: Vector2, look := 0) -> TextureRect:
 
 # --- banter & animation --------------------------------------------------
 
-func _make_bubble(pos: Vector2) -> Control:
+func _accent_of(wid: StringName) -> Color:
+	var w := Database.get_wizard(wid)
+	return w.accent if w != null else Color(0.85, 0.45, 0.72)
+
+func _make_bubble(pos: Vector2, accent: Color) -> Control:
 	var w := 236.0
 	var h := 62.0
 	var c := Control.new()
@@ -148,17 +154,23 @@ func _make_bubble(pos: Vector2) -> Control:
 	c.visible = false
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var tail := Polygon2D.new()
-	tail.polygon = PackedVector2Array([Vector2(w * 0.5 - 11, h - 2), Vector2(w * 0.5 + 11, h - 2), Vector2(w * 0.5, h + 16)])
+	tail.polygon = PackedVector2Array([Vector2(w * 0.5 - 13, h - 2), Vector2(w * 0.5 + 13, h - 2), Vector2(w * 0.5, h + 20)])
 	tail.color = Color(0.96, 0.95, 0.98)
 	c.add_child(tail)
+	# accent-coloured tail outline so the pointer reads against the dark bg
+	var tline := Line2D.new()
+	tline.points = PackedVector2Array([Vector2(w * 0.5 - 13, h - 1), Vector2(w * 0.5, h + 20), Vector2(w * 0.5 + 13, h - 1)])
+	tline.width = 2.0
+	tline.default_color = accent
+	c.add_child(tline)
 	var panel := Panel.new()
 	panel.size = Vector2(w, h)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.96, 0.95, 0.98)
-	sb.set_corner_radius_all(14)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(0.85, 0.45, 0.72)
+	sb.set_corner_radius_all(6)   # squarer: matches the pixel chrome
+	sb.set_border_width_all(3)
+	sb.border_color = accent
 	panel.add_theme_stylebox_override("panel", sb)
 	c.add_child(panel)
 	var lbl := Label.new()
