@@ -40,6 +40,7 @@ func _ready() -> void:
 	if GameState.map.is_empty():           # standalone fallback
 		GameState.start_run(GameState.wizard_id)
 		GameState.finalize_loadout()
+	GameState.save_run()                   # quit-safe checkpoint: the run resumes from here
 	Audio.play_music("menu")
 	_compute_positions()
 	_build_info()

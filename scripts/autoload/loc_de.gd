@@ -211,6 +211,7 @@ const TABLE := {
 	"%d gold": "%d Gold",
 	"SOLD": "VERKAUFT",
 	"BLOCKED %d": "GEBLOCKT %d",
+	"↻   Resume Run   (Act %d)": "↻   Run fortsetzen   (Akt %d)",
 	# --- combat log lines (slang/keywords kept; connective text translated) ---
 	"the opps pulled up: %s": "die Opps sind aufgetaucht: %s",
 	"you're Toxic'd for %d": "du bist Toxic'd für %d",

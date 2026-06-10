@@ -926,6 +926,43 @@ func _ready() -> void:
 	_check("enemy_acting fired once per living attacker", seq_acts, [0, 1])
 	_check("both sequenced attackers landed their hits", cmsq.player.hp < hp_before_seq, true)
 
+	# --- run snapshot: JSON round-trip restores the run exactly (no disk I/O here —
+	# save_run/save_meta write user://save.json, which tests must never touch) ---
+	print("--- run snapshot ---")
+	GameState.start_run(&"fire")
+	GameState.finalize_loadout()
+	GameState.gold = 123
+	GameState.player_hp = 17
+	GameState.act = 2
+	GameState.run_artifacts = [&"ember_pin"] as Array[StringName]
+	GameState.card_upgrades = {&"ember": true}
+	GameState.pending_critic = "S"
+	GameState.pending_freshness = 1.0
+	GameState.critic_fatigue = {&"hoard": 2}
+	var first_col: int = GameState.map[0][0].col
+	GameState.enter(0, first_col)   # consumes pending_critic into a VIP node mutation
+	var snap_rows: int = GameState.map.size()
+	var snap_deck: int = GameState.deck.size()
+	var snap: Variant = JSON.parse_string(JSON.stringify(GameState._run_to_dict()))
+	_check("snapshot serializes to a dictionary", typeof(snap), TYPE_DICTIONARY)
+	GameState.start_run(&"fire")    # scramble the live run
+	GameState.finalize_loadout()
+	GameState.gold = 0
+	_check("snapshot restores after the scramble", GameState._run_from_dict(snap), true)
+	_check("restored gold", GameState.gold, 123)
+	_check("restored hp", GameState.player_hp, 17)
+	_check("restored act", GameState.act, 2)
+	_check("restored deck size", GameState.deck.size(), snap_deck)
+	_check("restored map rows", GameState.map.size(), snap_rows)
+	_check("restored position", [GameState.pos_row, GameState.pos_col], [0, first_col])
+	_check("restored artifacts", GameState.run_artifacts, [&"ember_pin"] as Array[StringName])
+	_check("restored upgrade flag", GameState.is_upgraded(&"ember"), true)
+	_check("restored critic fatigue", int(GameState.critic_fatigue.get(&"hoard", 0)), 2)
+	_check("restored critic mutation on the entered node", String(GameState.node_at(0, first_col).get("critic_note", "")), "vip")
+	_check("map cols re-typed to int after JSON round-trip", typeof(GameState.map[0][0].col), TYPE_INT)
+	var bad_snap := {"wizard_id": "nope", "map": [], "deck": []}
+	_check("invalid snapshot rejected", GameState._run_from_dict(bad_snap), false)
+
 	# --- rarity ladder: every card is a known tier with a colour (no silent grey gems) ---
 	print("--- rarity ladder ---")
 	var ladder := ["Common", "Rare", "Epic", "Legendary"]

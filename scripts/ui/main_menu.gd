@@ -223,6 +223,8 @@ func _react(tr: TextureRect) -> void:
 	tw.tween_property(tr, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 func _continue_label() -> String:
+	if GameState.has_run_save():
+		return Loc.t("↻   Resume Run   (Act %d)") % GameState.run_save_act()
 	if GameState.has_save():
 		return Loc.t("↻   Continue   (✦ %d)") % GameState.clout
 	return Loc.t("↻   Continue")
@@ -259,7 +261,12 @@ func _confirm_new_game() -> void:
 	vb.add_child(NodeUI.menu_button("← Cancel", _build, Color(0.5, 0.55, 0.7)))
 
 func _continue() -> void:
-	_to_class_select()
+	# A saved run resumes straight onto its map; otherwise Continue keeps meta
+	# progression and heads to the wizard select as before.
+	if GameState.has_run_save() and GameState.resume_run():
+		get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+	else:
+		_to_class_select()
 
 func _options() -> void:
 	get_tree().change_scene_to_file("res://scenes/hub/options.tscn")

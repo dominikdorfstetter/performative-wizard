@@ -3,6 +3,7 @@ extends Node
 ## meta progression (unlocked wardrobe + Clout), persisted to user://save.json.
 
 const SAVE_PATH := "user://save.json"
+const SAVE_VERSION := 1
 
 const SLOTS: Array[String] = ["Hat", "Robe", "Staff", "Boots", "Trinket"]
 
@@ -77,6 +78,10 @@ var trend: StringName = &""
 
 var message := ""
 
+# The serialized run-in-progress (snapshotted at each map entry, cleared when the run
+# ends). Lives inside save.json next to the meta keys.
+var _run_snapshot: Dictionary = {}
+
 func _ready() -> void:
 	load_meta()
 	_ensure_defaults()
@@ -117,6 +122,7 @@ func new_game() -> void:
 	critic_score = 0
 	run_artifacts = []
 	map = []
+	_run_snapshot = {}
 	save_meta()
 
 func has_save() -> bool:
@@ -483,6 +489,7 @@ func finish_run(victory: bool) -> void:
 	var unlocked := _wizards_unlocked_between(before, clout_earned)
 	if not unlocked.is_empty():
 		message += "\n✦ NEW FIT UNLOCKED: %s!" % ", ".join(unlocked)
+	_run_snapshot = {}   # the run is over; Resume must not bring it back
 	save_meta()
 
 ## Names of wizards whose unlock threshold falls in (lo, hi] — i.e. just unlocked.
@@ -506,6 +513,159 @@ func advance_act() -> bool:
 	pos_col = -1
 	message = "✦ ACT %d ✦  the gauntlet escalates." % act
 	return true
+
+# --- run snapshot (quit-safe resume) ---------------------------------------
+# The run is snapshotted whenever the player stands ON THE MAP (map_ui calls
+# save_run). Combat state is deliberately never serialized: resuming after a
+# mid-fight quit costs that one fight, not the run.
+
+func has_run_save() -> bool:
+	return not _run_snapshot.is_empty()
+
+func run_save_act() -> int:
+	return int(_run_snapshot.get("act", 1))
+
+func save_run() -> void:
+	_run_snapshot = _run_to_dict()
+	save_meta()
+
+## Restore the saved run into the live fields. Returns false (and drops the
+## snapshot) if it fails validation, so callers can fall back to the hub.
+func resume_run() -> bool:
+	if _run_snapshot.is_empty():
+		return false
+	if not _run_from_dict(_run_snapshot):
+		push_warning("[GameState] run snapshot failed validation — discarding it")
+		_run_snapshot = {}
+		save_meta()
+		return false
+	return true
+
+func _run_to_dict() -> Dictionary:
+	var rows: Array = []
+	for row in map:
+		var r: Array = []
+		for n in row:
+			r.append(_node_to_dict(n))
+		rows.append(r)
+	var dk: Array = []
+	for id in deck:
+		dk.append(String(id))
+	var arts: Array = []
+	for id in run_artifacts:
+		arts.append(String(id))
+	var pas: Array = []
+	for p in passives:
+		pas.append(String(p))
+	var ups := {}
+	for k in card_upgrades:
+		ups[String(k)] = true
+	var fat := {}
+	for k in critic_fatigue:
+		fat[String(k)] = int(critic_fatigue[k])
+	return {
+		"wizard_id": String(wizard_id), "deck": dk, "passives": pas,
+		"player_max_hp": player_max_hp, "player_hp": player_hp, "drip": drip,
+		"gold": gold, "act": act, "asc_level": asc_level, "artifacts": arts,
+		"card_upgrades": ups, "map": rows, "pos_row": pos_row, "pos_col": pos_col,
+		"critic_last_rating": critic_last_rating,
+		"critic_last_signature": String(critic_last_signature),
+		"critic_last_freshness": critic_last_freshness,
+		"pending_critic": pending_critic, "pending_freshness": pending_freshness,
+		"critic_fatigue": fat, "trend": String(trend),
+	}
+
+func _node_to_dict(n: Dictionary) -> Dictionary:
+	var ens: Array = []
+	for e in n.get("enemies", []):
+		ens.append(String(e))
+	var links: Array = []
+	for l in n.get("links", []):
+		links.append(int(l))
+	var nd := {
+		"type": String(n.get("type", "Combat")), "row": int(n.get("row", 0)),
+		"col": int(n.get("col", 0)), "links": links, "enemies": ens,
+		"visited": bool(n.get("visited", false)),
+	}
+	if n.has("critic_bonus_gold"):
+		nd["critic_bonus_gold"] = int(n["critic_bonus_gold"])
+	if n.has("critic_note"):
+		nd["critic_note"] = String(n["critic_note"])
+	return nd
+
+## Apply a (JSON-round-tripped, so numbers may be floats) snapshot. Every field is
+## re-typed explicitly; validation failures leave meta untouched and return false.
+func _run_from_dict(d: Dictionary) -> bool:
+	var wid := StringName(String(d.get("wizard_id", "")))
+	if Database.get_wizard(wid) == null:
+		return false
+	var rows_in: Array = d.get("map", [])
+	var deck_in: Array = d.get("deck", [])
+	if rows_in.is_empty() or deck_in.is_empty():
+		return false
+	wizard_id = wid
+	deck = []
+	for id in deck_in:
+		deck.append(StringName(String(id)))
+	passives = []
+	for p in d.get("passives", []):
+		passives.append(StringName(String(p)))
+	player_max_hp = max(1, int(d.get("player_max_hp", 1)))
+	player_hp = clampi(int(d.get("player_hp", 1)), 1, player_max_hp)
+	drip = int(d.get("drip", 0))
+	gold = max(0, int(d.get("gold", 0)))
+	act = clampi(int(d.get("act", 1)), 1, MAX_ACTS)
+	asc_level = max(0, int(d.get("asc_level", 0)))
+	run_artifacts = []
+	for a in d.get("artifacts", []):
+		run_artifacts.append(StringName(String(a)))
+	card_upgrades = {}
+	for k in d.get("card_upgrades", {}):
+		card_upgrades[StringName(String(k))] = true
+	map = []
+	for row_in in rows_in:
+		if typeof(row_in) != TYPE_ARRAY:
+			return false
+		var row_out: Array = []
+		for n in row_in:
+			if typeof(n) != TYPE_DICTIONARY:
+				return false
+			row_out.append(_node_from_dict(n))
+		map.append(row_out)
+	pos_row = int(d.get("pos_row", -1))
+	pos_col = int(d.get("pos_col", -1))
+	critic_last_rating = String(d.get("critic_last_rating", ""))
+	critic_last_signature = StringName(String(d.get("critic_last_signature", "")))
+	critic_last_freshness = float(d.get("critic_last_freshness", 1.0))
+	pending_critic = String(d.get("pending_critic", ""))
+	pending_freshness = float(d.get("pending_freshness", 1.0))
+	critic_fatigue = {}
+	var fat_in: Dictionary = d.get("critic_fatigue", {})
+	for k in fat_in:
+		critic_fatigue[StringName(String(k))] = int(fat_in[k])
+	trend = StringName(String(d.get("trend", "")))
+	if trend == &"":
+		_roll_trend()
+	message = ""
+	return true
+
+func _node_from_dict(n: Dictionary) -> Dictionary:
+	var ens: Array = []
+	for e in n.get("enemies", []):
+		ens.append(StringName(String(e)))
+	var links: Array = []
+	for l in n.get("links", []):
+		links.append(int(l))
+	var nd := {
+		"type": String(n.get("type", "Combat")), "row": int(n.get("row", 0)),
+		"col": int(n.get("col", 0)), "links": links, "enemies": ens,
+		"visited": bool(n.get("visited", false)),
+	}
+	if n.has("critic_bonus_gold"):
+		nd["critic_bonus_gold"] = int(n["critic_bonus_gold"])
+	if n.has("critic_note"):
+		nd["critic_note"] = String(n["critic_note"])
+	return nd
 
 # --- meta save -----------------------------------------------------------
 
@@ -546,6 +706,8 @@ func load_meta() -> void:
 	sfx_on = bool(data.get("sfx_on", true))
 	music_on = bool(data.get("music_on", true))
 	locale = String(data.get("locale", "en"))
+	var run: Variant = data.get("run", {})
+	_run_snapshot = run if typeof(run) == TYPE_DICTIONARY else {}
 
 func save_meta() -> void:
 	var owned: Array[String] = []
@@ -558,4 +720,7 @@ func save_meta() -> void:
 	if f == null:
 		push_warning("[GameState] could not open save file for writing")
 		return
-	f.store_string(JSON.stringify({"unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale}, "\t"))
+	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale}
+	if not _run_snapshot.is_empty():
+		payload["run"] = _run_snapshot
+	f.store_string(JSON.stringify(payload, "\t"))
