@@ -9,6 +9,16 @@ var _next := 0
 const MUSIC_DB := -17.0
 var _music: AudioStreamPlayer
 var _music_tw: Tween
+var _music_off_db := 0.0
+var _sfx_off_db := 0.0
+
+func set_music_volume(v: float) -> void:
+	_music_off_db = linear_to_db(maxf(v, 0.01))
+	if _music != null and (_music_tw == null or not _music_tw.is_valid()):
+		_music.volume_db = MUSIC_DB + _music_off_db
+
+func set_sfx_volume(v: float) -> void:
+	_sfx_off_db = linear_to_db(maxf(v, 0.01))
 var _sfx := {}
 var _tracks := {}
 var _current_track := "menu"
@@ -35,7 +45,7 @@ func play(name: String, vol_db := -7.0) -> void:
 	var p := _players[_next]
 	_next = (_next + 1) % _players.size()
 	p.stream = s
-	p.volume_db = vol_db
+	p.volume_db = vol_db + _sfx_off_db
 	p.play()
 
 ## Switch to a named track (menu/combat/combat2/elite/boss). Re-calling with the
@@ -61,9 +71,9 @@ func play_music(track := "") -> void:
 		_music_tw.tween_callback(func():
 			_music.stream = s
 			_music.play())
-		_music_tw.tween_property(_music, "volume_db", MUSIC_DB, 0.35)
+		_music_tw.tween_property(_music, "volume_db", MUSIC_DB + _music_off_db, 0.35)
 	else:
-		_music.volume_db = MUSIC_DB
+		_music.volume_db = MUSIC_DB + _music_off_db
 		_music.stream = s
 		_music.play()
 

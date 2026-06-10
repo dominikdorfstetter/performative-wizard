@@ -374,4 +374,7 @@ const TABLE := {
 	"Abandon Run": "Abandonar partida",
 	"Abandon — sure?": "Abandonar — ¿seguro?",
 	"Cmd+Ctrl+F toggles fullscreen": "Cmd+Ctrl+F cambia a pantalla completa",
+	"SFX volume": "Volumen de efectos",
+	"Music volume": "Volumen de música",
+	"Screen shake & flashes:   %s": "Vibración y destellos:   %s",
 }

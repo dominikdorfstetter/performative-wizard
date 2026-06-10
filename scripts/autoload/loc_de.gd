@@ -377,4 +377,7 @@ const TABLE := {
 	"Abandon Run": "Run aufgeben",
 	"Abandon — sure?": "Aufgeben — sicher?",
 	"Cmd+Ctrl+F toggles fullscreen": "Cmd+Ctrl+F schaltet Vollbild um",
+	"SFX volume": "Effekt-Lautstärke",
+	"Music volume": "Musik-Lautstärke",
+	"Screen shake & flashes:   %s": "Bildschirmwackeln & Blitze:   %s",
 }

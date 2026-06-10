@@ -774,6 +774,8 @@ func _death_poof(pos: Vector2) -> void:
 	get_tree().create_timer(1.2).timeout.connect(p.queue_free)
 
 func _shake(amount: float) -> void:
+	if not GameState.effects_on:
+		return
 	var tw := create_tween()
 	for i in 5:
 		tw.tween_property(self, "position", Vector2(randf_range(-amount, amount), randf_range(-amount, amount)), 0.04)
@@ -854,6 +856,8 @@ func _punch(node: Control) -> void:
 
 func _block_flash() -> void:
 	_float_text(Vector2(150, 250), Loc.t("+Block"), Color(0.45, 0.7, 1.0))
+	if not GameState.effects_on:
+		return
 	var fl := ColorRect.new()
 	fl.color = Color(0.3, 0.55, 1.0, 0.0)
 	fl.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -947,6 +951,8 @@ func _banter() -> void:
 	_prev_state = cm.state
 
 func _hurt_flash() -> void:
+	if not GameState.effects_on:
+		return
 	var fl := ColorRect.new()
 	fl.color = Color(0.9, 0.12, 0.12, 0.0)
 	fl.set_anchors_preset(Control.PRESET_FULL_RECT)

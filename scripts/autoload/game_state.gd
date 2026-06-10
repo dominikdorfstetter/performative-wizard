@@ -52,6 +52,9 @@ var music_on := true
 var locale := "en"
 var seen_tutorial := false                   # the first-fight teaching beats fire once
 var fullscreen_on := false                   # persisted; ignored on web (browser-controlled)
+var effects_on := true                       # screen shake + full-screen hit flashes (a11y)
+var music_vol := 1.0
+var sfx_vol := 1.0
 
 const MAX_ACTS := 3
 
@@ -103,6 +106,8 @@ func _ready() -> void:
 			locale = sys
 	Audio.set_sfx_muted(not sfx_on)
 	Audio.set_music_muted(not music_on)
+	Audio.set_music_volume(music_vol)
+	Audio.set_sfx_volume(sfx_vol)
 	Loc.set_locale(locale)
 	if fullscreen_on and not OS.has_feature("web"):
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
@@ -775,6 +780,9 @@ func load_meta() -> void:
 	locale = String(data.get("locale", "en"))
 	seen_tutorial = bool(data.get("seen_tutorial", false))
 	fullscreen_on = bool(data.get("fullscreen_on", false))
+	effects_on = bool(data.get("effects_on", true))
+	music_vol = clampf(float(data.get("music_vol", 1.0)), 0.0, 1.0)
+	sfx_vol = clampf(float(data.get("sfx_vol", 1.0)), 0.0, 1.0)
 	var run: Variant = data.get("run", {})
 	_run_snapshot = run if typeof(run) == TYPE_DICTIONARY else {}
 
@@ -791,7 +799,7 @@ func save_meta() -> void:
 	if f == null:
 		push_warning("[GameState] could not open save file for writing")
 		return
-	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale, "seen_tutorial": seen_tutorial, "fullscreen_on": fullscreen_on}
+	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale, "seen_tutorial": seen_tutorial, "fullscreen_on": fullscreen_on, "effects_on": effects_on, "music_vol": music_vol, "sfx_vol": sfx_vol}
 	if not _run_snapshot.is_empty():
 		payload["run"] = _run_snapshot
 	f.store_string(JSON.stringify(payload, "\t"))
