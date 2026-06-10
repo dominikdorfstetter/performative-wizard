@@ -1099,7 +1099,8 @@ func _ready() -> void:
 			missing_cards.append(nid)
 	_check("all nine new cards load", missing_cards, [])
 	var rizz_pool: Array = Database.get_wizard(&"rizz").reward_pool
-	_check("rizz pool grew to 23", rizz_pool.size(), 23)
+	_check("rizz pool grew to 25", rizz_pool.size(), 25)
+	_check("necro pool grew to 29", Database.get_wizard(&"necro").reward_pool.size(), 29)
 	_check("rizz pool has the new commons", &"side_eye" in rizz_pool and &"love_bomb" in rizz_pool and &"glow_check" in rizz_pool, true)
 	var fire_pool: Array = Database.get_wizard(&"fire").reward_pool
 	_check("neutral utilities reach fire too", &"vision_board" in fire_pool and &"saved_drafts" in fire_pool, true)
@@ -1150,6 +1151,106 @@ func _ready() -> void:
 	_check("act 1 stays the base track", Audio._variant_key("combat", 1), "combat")
 	_check("menu never varies", Audio._variant_key("menu", 3), "menu")
 	_check("variant keys don't re-wrap", Audio._variant_key("combat@2", 3), "combat@2")
+
+	# --- the Goon squad: targeting, command cards, wardrobe hooks --------------
+	print("--- goon squad ---")
+	var cmgs := CombatManager.new()
+	var pgs := Combatant.new()
+	pgs.max_hp = 60
+	pgs.hp = 60
+	cmgs.start_combat(pgs, [Database.get_enemy(&"alley_cat")], [Database.get_card(&"sic_em")], 0, true)
+	cmgs.player.add_status(&"undead", 3)
+	var gs_hp0: int = cmgs.enemies[0].hp
+	cmgs.energy = 3
+	_check("sic_em plays", cmgs.play_card(cmgs.hand[0]), true)
+	_check("commanded goons dealt 3x2", gs_hp0 - cmgs.enemies[0].hp, 6)
+	_check("the squad survives the command", cmgs.player.status(&"undead"), 3)
+	# critical mass applies to commanded strikes too
+	cmgs.player.add_status(&"undead", 2)   # now 5
+	var gs_hp1: int = cmgs.enemies[0].hp
+	cmgs.goon_strike()
+	_check("critical mass: 5 goons hit for 15", gs_hp1 - cmgs.enemies[0].hp, 15)
+	# targeting: weakest / strongest via wardrobe + relic hooks
+	var cmgt := CombatManager.new()
+	var pgt := Combatant.new()
+	pgt.max_hp = 60
+	pgt.hp = 60
+	cmgt.start_combat(pgt, [Database.get_enemy(&"vending_machine"), Database.get_enemy(&"alley_cat")], [] as Array[CardData], 0, true, [&"goons_target_weakest"])
+	cmgt.enemies[1].hp = 5   # the runt
+	cmgt.player.add_status(&"undead", 2)
+	cmgt.goon_strike()
+	_check("weakest-targeting jumps the runt", cmgt.enemies[1].hp, 1)
+	var cmgt2 := CombatManager.new()
+	var pgt2 := Combatant.new()
+	pgt2.max_hp = 60
+	pgt2.hp = 60
+	cmgt2.start_combat(pgt2, [Database.get_enemy(&"vending_machine"), Database.get_enemy(&"alley_cat")], [] as Array[CardData], 0, true, [&"goons_target_strongest"])
+	var big_hp0: int = cmgt2.enemies[0].hp
+	cmgt2.player.add_status(&"undead", 2)
+	cmgt2.goon_strike()
+	_check("strongest-targeting jumps the big one", big_hp0 - cmgt2.enemies[0].hp, 4)
+	# fight-start hooks: Shroud of the Squad + Mourning Veil
+	var cmsh := CombatManager.new()
+	var psh := Combatant.new()
+	psh.max_hp = 60
+	psh.hp = 60
+	cmsh.start_combat(psh, [Database.get_enemy(&"alley_cat")], [] as Array[CardData], 0, true, [&"undead_start_2", &"poison_start_2"])
+	_check("Shroud: start with 2 Goons", cmsh.player.status(&"undead"), 2)
+	_check("Veil: enemies enter with 2 Toxic", cmsh.enemies[0].status(&"poison"), 2)
+	# Snakeskin Jacket: crits refund 1 Energy (crit_100 forces the roll)
+	var cmcr2 := CombatManager.new()
+	var pcr2 := Combatant.new()
+	pcr2.max_hp = 60
+	pcr2.hp = 60
+	cmcr2.start_combat(pcr2, [Database.get_enemy(&"vending_machine")], [Database.get_card(&"ember")], 0, true, [&"crit_100", &"crit_refund_energy"])
+	cmcr2.hand = [Database.get_card(&"ember")]
+	cmcr2.energy = 3
+	cmcr2.set_target(0)
+	cmcr2.play_card(cmcr2.hand[0])
+	_check("crit happened", cmcr2.last_crit, true)
+	_check("crit refunded the energy", cmcr2.energy, 3)
+	# Post the Receipts: damage scales on Toxic
+	var cmpr := CombatManager.new()
+	var ppr := Combatant.new()
+	ppr.max_hp = 60
+	ppr.hp = 60
+	cmpr.start_combat(ppr, [Database.get_enemy(&"vending_machine")], [Database.get_card(&"post_receipts")], 0, true)
+	cmpr.enemies[0].add_status(&"poison", 4)
+	cmpr.hand = [Database.get_card(&"post_receipts")]
+	cmpr.energy = 3
+	cmpr.set_target(0)
+	var pr_hp0: int = cmpr.enemies[0].hp
+	cmpr.play_card(cmpr.hand[0])
+	_check("receipts deal 2x Toxic", pr_hp0 - cmpr.enemies[0].hp, 8)
+	# Morticia's starter finally teaches HER loop
+	var nstart: Array = Database.get_wizard(&"necro").starter_deck
+	_check("necro starter still 10 cards", nstart.size(), 10)
+	_check("necro starter commands the squad", &"sic_em" in nstart, true)
+	_check("necro starter raises 3", nstart.count(&"raise_dead"), 3)
+	# re-elemented pieces can't stay equipped on the wrong wizard
+	var saved_eq: Dictionary = GameState.equipped.duplicate()
+	var saved_unlocked: Array = GameState.unlocked_outfits.duplicate()
+	if &"diva_heels" not in GameState.unlocked_outfits:
+		GameState.unlocked_outfits.append(&"diva_heels")
+	GameState.equipped["Boots"] = &"diva_heels"
+	GameState.start_run(&"fire")
+	_check("rizz-only heels revert on a fire run", GameState.equipped_id("Boots") != &"diva_heels", true)
+	GameState.equipped = saved_eq
+	GameState.unlocked_outfits.assign(saved_unlocked)
+	# the new content all loads
+	var missing_new: Array = []
+	for nid2 in [&"sic_em", &"mosh_pit", &"post_receipts", &"group_project", &"shoot_your_shot", &"paparazzi"]:
+		if Database.get_card(nid2) == null:
+			missing_new.append(nid2)
+	for oid2 in [&"mourning_veil", &"shroud_squad", &"pallbearer_boots", &"mirror_shades", &"snakeskin_jacket", &"selfie_stick"]:
+		if Database.get_outfit(oid2) == null:
+			missing_new.append(oid2)
+	for aid2 in [&"ouija_board", &"hype_reel"]:
+		if Database.get_artifact(aid2) == null:
+			missing_new.append(aid2)
+	_check("all new wardrobe content loads", missing_new, [])
+	_check("boutique stocks 20 pieces", GameState.BOUTIQUE.size(), 20)
+	_check("ghoul sprites render", SpriteBank.ghoul_texture(0) != null and SpriteBank.ghoul_texture(2) != null, true)
 
 	# --- map generation: structure guarantees hold across many seeds ----------
 	print("--- map generation ---")

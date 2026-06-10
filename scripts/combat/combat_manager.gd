@@ -16,6 +16,9 @@ signal peeked(titles: Array)
 ## with the next cards (top-of-pile first); the view shows a modal picker and
 ## answers with resolve_pick(index). Headless runs auto-take the top card.
 signal pick_requested(cards: Array)
+## Fired when the Goon squad lands a hit (end of turn, or commanded by a card)
+## so the view can lunge the crowd at its victim.
+signal goons_attacked(enemy_index: int, dmg: int)
 
 enum State { PLAYER_TURN, ENEMY_TURN, WIN, LOSE }
 
@@ -156,6 +159,13 @@ func _apply_combat_start_passives() -> void:
 	if has_passive(&"enemies_start_vulnerable"):
 		for e in enemies:
 			e.add_status(&"vulnerable", 1)
+	for pas in passives:
+		var ps := String(pas)
+		if ps.begins_with("undead_start_"):
+			player.add_status(&"undead", int(ps.substr(13)))
+		elif ps.begins_with("poison_start_"):
+			for e in enemies:
+				e.add_status(&"poison", int(ps.substr(13)))
 
 # --- targeting -----------------------------------------------------------
 
@@ -347,6 +357,8 @@ func play_card(card: CardData) -> bool:
 	var tburn1 := tgt.status(&"burn") if tgt != null else 0
 	if last_crit:
 		_say(Loc.t("CRIT! that's lethal rizz"))
+		if has_passive(&"crit_refund_energy"):
+			energy = mini(max_energy, energy + 1)
 		# The Rizzard's crit IS its flex: a clean crit serves Aura (active, not drip),
 		# welding the crit kit to the Critic's grade so Rizz engages the USP. (Pass #2.5)
 		if has_passive(&"swag_on_crit"):
@@ -518,20 +530,49 @@ func end_turn() -> void:
 	else:
 		discard_pile.append_array(hand)
 		hand.clear()
-	var undead := player.status(&"undead")
-	if undead > 0:
-		var tgt := target()
-		if tgt != null:
-			# critical mass (pass #4): a real mob (4+) hits for 3 each, not 2 —
-			# the Swarm engine now actually scales into long high-asc fights
-			var goon_dmg := undead * (3 if undead >= 4 else 2)
-			tgt.take_damage(goon_dmg)
-			_say(Loc.t("your %d Goons threw hands for %d") % [undead, goon_dmg])
-			if all_dead():
-				_finish(true)
-				return
+	goon_strike()
+	if state == State.WIN:
+		return
 	_decay(player)
 	_enemy_turn()
+
+## Who the squad jumps: random by default; wardrobe/relics can teach them to
+## pick on the weakest (cleanup kills) or gang up on the biggest threat.
+func goon_target() -> Combatant:
+	var alive := living_enemies()
+	if alive.is_empty():
+		return null
+	if has_passive(&"goons_target_weakest"):
+		var weakest: Combatant = alive[0]
+		for e in alive:
+			if e.hp < weakest.hp:
+				weakest = e
+		return weakest
+	if has_passive(&"goons_target_strongest"):
+		var strongest: Combatant = alive[0]
+		for e in alive:
+			if e.hp > strongest.hp:
+				strongest = e
+		return strongest
+	return alive[randi() % alive.size()]
+
+## The squad throws hands: end of every turn, or early when a card commands it.
+## Critical mass (pass #4): a real mob (4+) hits for 3 each, not 2.
+func goon_strike() -> int:
+	var undead := player.status(&"undead")
+	if undead <= 0 or state != State.PLAYER_TURN:
+		return 0
+	var tgt := goon_target()
+	if tgt == null:
+		return 0
+	var dmg := undead * (3 if undead >= 4 else 2)
+	tgt.take_damage(dmg)
+	_say(Loc.t("your %d Goons threw hands for %d") % [undead, dmg])
+	goons_attacked.emit(enemies.find(tgt), dmg)
+	if all_dead():
+		_finish(true)
+	_emit()
+	return dmg
 
 func _enemy_turn() -> void:
 	state = State.ENEMY_TURN

@@ -98,6 +98,14 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 			var cmr = ctx.get("combat")
 			if cmr != null:
 				cmr.retain_hand = true
+		"goon_strike":
+			var cmg = ctx.get("combat")
+			if cmg != null:
+				cmg.goon_strike()
+		"damage_x_status":
+			if target != null:
+				var sdmg := target.status(StringName(e.get("status", &""))) * int(e.get("mult", 2))
+				target.take_damage(compute_damage(sdmg + bonus, source, target) * crit, pierce)
 		"sacrifice_strike":
 			_sacrifice_strike(e, ctx, source, target, bonus, pierce)
 		_:

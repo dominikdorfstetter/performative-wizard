@@ -194,7 +194,7 @@ const ICON := {
 }
 
 # Outfit item icons, one silhouette per slot, drawn in 3 shades of the element colour.
-const ELEM_BASE := {"Fire": "e07a2c", "Necro": "5fa84a", "Neutral": "8a90a6"}
+const ELEM_BASE := {"Fire": "e07a2c", "Necro": "5fa84a", "Rizz": "ff5ab0", "Neutral": "8a90a6"}
 # Per-outfit signature tint so pieces sharing a slot silhouette still look distinct.
 const ITEM_TINT := {
 	&"apprentice_hat": "6a78c0", &"drip_robe": "3aa0a0", &"plain_wand": "b89a6a",
@@ -203,6 +203,8 @@ const ITEM_TINT := {
 	&"robe_of_excess": "e0b040", &"crowd_pleaser": "ff6aa0", &"influencer_ring": "40c0d0",
 	&"lucky_cap": "8fd96b", &"catwalk_heels": "d04a9a", &"showstopper_hat": "ff4f8a",
 	&"phoenix_gown": "f2792a", &"diva_heels": "8a3ad0",
+	&"mourning_veil": "6a5a86", &"shroud_squad": "4a6850", &"pallbearer_boots": "7a7468",
+	&"mirror_shades": "58c8e8", &"snakeskin_jacket": "c8a23c", &"selfie_stick": "ff7ab8",
 }
 # Per-artefact tint for their charm icon.
 const ARTI := {
@@ -211,6 +213,7 @@ const ARTI := {
 	"iron_corset": "9aa0a8", "vigor_idol": "e07a4c", "vampire_fang": "c0405a",
 	"prophets_lens": "5fb0d8", "coin_purse": "ffcf4a", "loaded_dice": "ffd24a",
 	"venom_vial": "6ad06a", "spotlight": "ffe089",
+	"ouija_board": "b08ad8", "hype_reel": "ff5ab0",
 }
 const ITEM := {
 	"Hat": [
@@ -423,6 +426,48 @@ func _blot(img: Image, x: int, y: int, w: int, h: int, c: Color) -> void:
 		for xx in range(x, x + w):
 			if xx >= 0 and xx < SIZE and yy >= 0 and yy < SIZE:
 				img.set_pixel(xx, yy, c)
+
+## Morticia's Goons: hunched little ghouls with hollow eyes and trailing wisps —
+## a dedicated silhouette so the squad never reads as "more enemies".
+func ghoul_texture(variant: int) -> Texture2D:
+	var key := "ghoul_%d" % (variant % 3)
+	if _cache.has(key):
+		return _cache[key]
+	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var v := variant % 3
+	var body := Color("8fae7c") if v == 0 else (Color("7c9c8e") if v == 1 else Color("9aa687"))
+	var top := body.lightened(0.15)
+	var bot := body.darkened(0.22)
+	var htop := 5 - v % 2          # hunch height varies per variant
+	for y in range(htop, 13):
+		# hunched dome: narrow at the top, slumping right shoulder
+		var half := 2 + (y - htop) if y - htop < 3 else 4
+		half = mini(half, 4)
+		var cx := 7 + (1 if y < 8 and v == 1 else 0)
+		for x in range(cx - half, cx + half + 1):
+			if x >= 1 and x <= 14:
+				img.set_pixel(x, y, top if y < 8 else (bot if y > 10 else body))
+	# trailing wisps instead of feet — they float
+	for x in range(3, 13):
+		if (x + v) % 3 != 0:
+			img.set_pixel(x, 13, bot)
+		if (x + v) % 4 == 1:
+			img.set_pixel(x, 14, Color(bot, 0.6))
+	# hollow eye sockets (no iris — that's the point)
+	var ey := 7 if v != 2 else 8
+	img.set_pixel(5, ey, Color("1a1420"))
+	img.set_pixel(6, ey, Color("1a1420"))
+	img.set_pixel(9, ey, Color("1a1420"))
+	img.set_pixel(10, ey, Color("1a1420"))
+	# tiny mouth gap on variant 0 (the talker)
+	if v == 0:
+		img.set_pixel(7, 10, Color("1a1420"))
+		img.set_pixel(8, 10, Color("1a1420"))
+	_outline(img)
+	var tex := ImageTexture.create_from_image(img)
+	_cache[key] = tex
+	return tex
 
 func item_texture(id: StringName) -> Texture2D:
 	var key := "item_" + String(id)
