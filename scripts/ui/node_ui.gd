@@ -161,6 +161,60 @@ static func hbox(parent: Control, y: float, sep := 30) -> HBoxContainer:
 	parent.add_child(h)
 	return h
 
+## The Esc pause overlay (map + combat): resume, quick audio/fullscreen toggles,
+## and a confirmed abandon-run path — force-quitting used to be the only exit.
+static func pause_overlay(parent: Control, on_abandon: Callable) -> Control:
+	var overlay := Control.new()
+	overlay.name = "PauseOverlay"
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.01, 0.04, 0.72)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(dim)
+	var panel := Panel.new()
+	panel.position = Vector2(396, 130)
+	panel.size = Vector2(360, 400)
+	panel.add_theme_stylebox_override("panel", box(Color(0.10, 0.08, 0.14, 0.98), Color(0.28, 0.24, 0.36)))
+	overlay.add_child(panel)
+	var t := Label.new()
+	t.text = Loc.t("PAUSED")
+	t.add_theme_font_override("font", DISPLAY_FONT)
+	t.add_theme_font_size_override("font_size", 30)
+	t.add_theme_color_override("font_color", PINK)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.position = Vector2(0, 22)
+	t.size = Vector2(360, 40)
+	panel.add_child(t)
+	var vb := VBoxContainer.new()
+	vb.position = Vector2(40, 86)
+	vb.add_theme_constant_override("separation", 12)
+	panel.add_child(vb)
+	vb.add_child(menu_button(Loc.t("Resume"), overlay.queue_free, Color(0.45, 0.82, 0.55), 280.0))
+	var sfx_btn := menu_button("", Callable(), Color(0.5, 0.62, 0.85), 280.0)
+	sfx_btn.text = Loc.t("Sound FX:   %s") % Loc.t("On" if GameState.sfx_on else "Off")
+	sfx_btn.pressed.connect(func():
+		GameState.set_audio(not GameState.sfx_on, GameState.music_on)
+		sfx_btn.text = Loc.t("Sound FX:   %s") % Loc.t("On" if GameState.sfx_on else "Off"))
+	vb.add_child(sfx_btn)
+	var mus_btn := menu_button("", Callable(), Color(0.5, 0.62, 0.85), 280.0)
+	mus_btn.text = Loc.t("Music:   %s") % Loc.t("On" if GameState.music_on else "Off")
+	mus_btn.pressed.connect(func():
+		GameState.set_audio(GameState.sfx_on, not GameState.music_on)
+		mus_btn.text = Loc.t("Music:   %s") % Loc.t("On" if GameState.music_on else "Off"))
+	vb.add_child(mus_btn)
+	if not OS.has_feature("web"):
+		vb.add_child(menu_button(Loc.t("Toggle Fullscreen"), GameState.toggle_fullscreen, Color(0.5, 0.62, 0.85), 280.0))
+	var abandon := menu_button(Loc.t("Abandon Run"), Callable(), Color(0.9, 0.4, 0.42), 280.0)
+	abandon.pressed.connect(func():
+		if abandon.get_meta("armed", false):
+			on_abandon.call()
+		else:
+			abandon.set_meta("armed", true)
+			abandon.text = Loc.t("Abandon — sure?"))
+	vb.add_child(abandon)
+	parent.add_child(overlay)
+	return overlay
+
 static func box(bg: Color, border: Color, bw := 3) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg

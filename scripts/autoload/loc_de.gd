@@ -371,4 +371,10 @@ const TABLE := {
 	"onward — Act %d": "weiter — Akt %d",
 	"scroll for more": "scrollen für mehr",
 	"Skip": "Überspringen",
+	"PAUSED": "PAUSE",
+	"Resume": "Weiterspielen",
+	"Toggle Fullscreen": "Vollbild umschalten",
+	"Abandon Run": "Run aufgeben",
+	"Abandon — sure?": "Aufgeben — sicher?",
+	"Cmd+Ctrl+F toggles fullscreen": "Cmd+Ctrl+F schaltet Vollbild um",
 }

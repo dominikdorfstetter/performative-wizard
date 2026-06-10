@@ -368,4 +368,10 @@ const TABLE := {
 	"onward — Act %d": "adelante — Acto %d",
 	"scroll for more": "desplázate para ver más",
 	"Skip": "Saltar",
+	"PAUSED": "PAUSA",
+	"Resume": "Reanudar",
+	"Toggle Fullscreen": "Alternar pantalla completa",
+	"Abandon Run": "Abandonar partida",
+	"Abandon — sure?": "Abandonar — ¿seguro?",
+	"Cmd+Ctrl+F toggles fullscreen": "Cmd+Ctrl+F cambia a pantalla completa",
 }

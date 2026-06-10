@@ -81,7 +81,12 @@ func _build() -> void:
 	if not OS.has_feature("web"):   # quitting an itch.io iframe is a dead end
 		vb.add_child(NodeUI.menu_button("Exit Game", _exit, Color(0.55, 0.5, 0.58)))
 	var ver := str(ProjectSettings.get_setting("application/config/version", ""))
-	_footer("v%s   ·   %s" % [ver, Loc.t("F11 toggles fullscreen")])
+	if OS.has_feature("web"):
+		_footer("v%s" % ver)
+	elif OS.get_name() == "macOS":
+		_footer("v%s   ·   %s" % [ver, Loc.t("Cmd+Ctrl+F toggles fullscreen")])
+	else:
+		_footer("v%s   ·   %s" % [ver, Loc.t("F11 toggles fullscreen")])
 
 func _title() -> void:
 	var t := Label.new()
@@ -299,8 +304,4 @@ func _clear() -> void:
 		if not (c is TextureRect and c.texture is GradientTexture2D):
 			c.queue_free()
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11:
-		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-		DisplayServer.window_set_mode(
-			DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
+# Fullscreen shortcuts are handled globally in GameState._unhandled_input.

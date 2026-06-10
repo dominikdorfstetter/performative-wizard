@@ -258,6 +258,18 @@ func _enter(r: int, c: int, type: String) -> void:
 	GameState.enter(r, c)
 	get_tree().change_scene_to_file(SCENE.get(type, "res://scenes/combat/combat.tscn"))
 
+var _pause: Control
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+		if is_instance_valid(_pause):
+			_pause.queue_free()
+		else:
+			_pause = NodeUI.pause_overlay(self, func():
+				GameState.abandon_run()
+				get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
+		get_viewport().set_input_as_handled()
+
 func _circle(bg: Color, border: Color, bw: int) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg

@@ -1229,12 +1229,23 @@ func _style_bar(bar: ProgressBar, fill: Color, track: Color) -> void:
 
 # --- input & flow --------------------------------------------------------
 
+var _pause: Control
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11:
-		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-		DisplayServer.window_set_mode(
-			DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
+	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	if event.keycode == KEY_ESCAPE:
+		if is_instance_valid(_pause):
+			_pause.queue_free()
+		else:
+			_pause = NodeUI.pause_overlay(self, func():
+				GameState.abandon_run()
+				get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"))
 		get_viewport().set_input_as_handled()
+	elif event.keycode == KEY_SPACE or event.keycode == KEY_ENTER:
+		if cm != null and cm.state == CombatManager.State.PLAYER_TURN and not is_instance_valid(_pause):
+			cm.end_turn()
+			get_viewport().set_input_as_handled()
 
 func _on_end_turn() -> void:
 	cm.end_turn()

@@ -51,6 +51,7 @@ var sfx_on := true
 var music_on := true
 var locale := "en"
 var seen_tutorial := false                   # the first-fight teaching beats fire once
+var fullscreen_on := false                   # persisted; ignored on web (browser-controlled)
 
 const MAX_ACTS := 3
 
@@ -91,11 +92,42 @@ var message := ""
 var _run_snapshot: Dictionary = {}
 
 func _ready() -> void:
+	var fresh := not FileAccess.file_exists(SAVE_PATH)
 	load_meta()
 	_ensure_defaults()
+	if fresh:
+		# first boot ever: greet DE/ES players in their OS language (README sells
+		# EN/DE/ES, but nothing ever consulted the locale before)
+		var sys := OS.get_locale_language()
+		if sys in Loc.LOCALES:
+			locale = sys
 	Audio.set_sfx_muted(not sfx_on)
 	Audio.set_music_muted(not music_on)
 	Loc.set_locale(locale)
+	if fullscreen_on and not OS.has_feature("web"):
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+## One global fullscreen handler (F11, or Cmd+Ctrl+F for the macOS convention) —
+## it used to be copy-pasted onto exactly 2 of ~10 screens while the menu footer
+## advertised it everywhere.
+func _unhandled_input(event: InputEvent) -> void:
+	if OS.has_feature("web"):
+		return   # the browser owns fullscreen
+	if event is InputEventKey and event.pressed and not event.echo:
+		var combo: bool = event.keycode == KEY_F and event.ctrl_pressed and event.meta_pressed
+		if event.keycode == KEY_F11 or combo:
+			toggle_fullscreen()
+			get_viewport().set_input_as_handled()
+
+func toggle_fullscreen() -> void:
+	var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
+	fullscreen_on = not fs
+	save_meta()
+
+## Abandoning mid-run counts as a loss: Clout still banks, the snapshot clears.
+func abandon_run() -> void:
+	finish_run(false)
 
 func set_language(l: String) -> void:
 	locale = l
@@ -742,6 +774,7 @@ func load_meta() -> void:
 	music_on = bool(data.get("music_on", true))
 	locale = String(data.get("locale", "en"))
 	seen_tutorial = bool(data.get("seen_tutorial", false))
+	fullscreen_on = bool(data.get("fullscreen_on", false))
 	var run: Variant = data.get("run", {})
 	_run_snapshot = run if typeof(run) == TYPE_DICTIONARY else {}
 
@@ -758,7 +791,7 @@ func save_meta() -> void:
 	if f == null:
 		push_warning("[GameState] could not open save file for writing")
 		return
-	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale, "seen_tutorial": seen_tutorial}
+	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale, "seen_tutorial": seen_tutorial, "fullscreen_on": fullscreen_on}
 	if not _run_snapshot.is_empty():
 		payload["run"] = _run_snapshot
 	f.store_string(JSON.stringify(payload, "\t"))
