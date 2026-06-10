@@ -79,18 +79,7 @@ func _therapist_menu() -> void:
 		if not (c is ColorRect or c is TextureRect):
 			c.queue_free()
 	NodeUI.title(self, "release which card?", Color(0.5, 0.85, 0.6))
-	var grid := GridContainer.new()
-	grid.columns = 6
-	grid.position = Vector2(80, 160)
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
-	add_child(grid)
-	for id in GameState.deck:
-		var card := Database.get_card(id)
-		if card != null:
-			var b := NodeUI.small_button(card.title, _therapist_remove.bind(id))
-			b.custom_minimum_size = Vector2(150, 46)
-			grid.add_child(b)
+	NodeUI.card_picker(self, GameState.deck, _therapist_remove)
 
 func _therapist_remove(id: StringName) -> void:
 	GameState.deck.erase(id)

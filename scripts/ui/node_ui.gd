@@ -285,3 +285,42 @@ static func _label(parent: Control, text: String, pos: Vector2, sz: Vector2, fs:
 	l.add_theme_font_size_override("font_size", fs)
 	l.add_theme_color_override("font_color", color)
 	parent.add_child(l)
+
+## A scrollable deck grid for every pick-a-card screen (remove / upgrade /
+## therapy). Big decks used to overflow the 648px window with no scrollbar.
+## Duplicates collapse into ONE card wearing a ×N badge; picking acts on one copy.
+static func card_picker(parent: Control, ids: Array, on_pick: Callable) -> ScrollContainer:
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(78, 150)
+	scroll.custom_minimum_size = Vector2(996, 400)
+	scroll.size = Vector2(996, 400)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	parent.add_child(scroll)
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 16)
+	scroll.add_child(grid)
+	var counts := {}
+	var order: Array = []
+	for id in ids:
+		if not counts.has(id):
+			order.append(id)
+			counts[id] = 0
+		counts[id] += 1
+	for id in order:
+		var card := Database.get_card(id)
+		if card == null:
+			continue
+		var cv := CardView.build(card, true, on_pick.bind(id))
+		if counts[id] > 1:
+			var n := Label.new()
+			n.text = "×%d" % counts[id]
+			n.position = Vector2(104, 168)
+			n.size = Vector2(40, 24)
+			n.add_theme_font_size_override("font_size", 16)
+			n.add_theme_color_override("font_color", GOLD)
+			n.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			cv.add_child(n)
+		grid.add_child(cv)
+	return scroll

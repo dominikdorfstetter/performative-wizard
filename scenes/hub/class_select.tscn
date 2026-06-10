@@ -28,7 +28,7 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 42
-text = "PERFORMATIVE WIZARD"
+text = "PERFORMATIVE WIZARDS"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="Margin/Col"]

@@ -507,4 +507,5 @@ const TABLE := {
 	"for everyone": "für alle",
 	"for %s": "für %s",
 	"%d Clout": "%d Clout",
+	"%d cards — yeeting removes one copy": "%d Karten — geyeeted wird genau eine Kopie",
 }

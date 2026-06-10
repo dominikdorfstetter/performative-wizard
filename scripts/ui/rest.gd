@@ -22,8 +22,9 @@ func _heal(n: int) -> void:
 
 func _remove_menu() -> void:
 	_clear()
-	NodeUI.title(self, "yeet which card?", Color(0.4, 0.7, 0.9))
-	_deck_grid(_do_remove)
+	NodeUI.title(self, "Yeet which card?", Color(0.4, 0.7, 0.9))
+	NodeUI.sub(self, Loc.t("%d cards — yeeting removes one copy") % GameState.deck.size())
+	NodeUI.card_picker(self, GameState.deck, _do_remove)
 	var back := NodeUI.small_button("Cancel", _menu)
 	back.position = Vector2(486, 604)
 	add_child(back)
@@ -52,18 +53,11 @@ func _has_value_target(c: CardData) -> bool:
 func _upgrade_menu() -> void:
 	_clear()
 	NodeUI.title(self, "glow up which card?", Color(1.0, 0.55, 0.85))
-	var grid := GridContainer.new()
-	grid.columns = 7
-	grid.position = Vector2(70, 140)
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
-	add_child(grid)
-	var seen := {}
+	var ups: Array = []
 	for id in GameState.deck:
-		var card := Database.get_card(id)
-		if _can_upgrade(card) and not seen.has(id):
-			seen[id] = true
-			grid.add_child(CardView.build(card, true, _pick_flavour.bind(id)))
+		if _can_upgrade(Database.get_card(id)):
+			ups.append(id)
+	NodeUI.card_picker(self, ups, _pick_flavour)
 	var back := NodeUI.small_button("Cancel", _menu)
 	back.position = Vector2(486, 604)
 	add_child(back)
@@ -90,18 +84,6 @@ func _do_upgrade(id: StringName, mode: String) -> void:
 	GameState.upgrade_card(id, mode)
 	Audio.play("buff", -3.0)
 	_to_map()
-
-func _deck_grid(on_pick: Callable) -> void:
-	var grid := GridContainer.new()
-	grid.columns = 7
-	grid.position = Vector2(70, 140)
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
-	add_child(grid)
-	for id in GameState.deck:
-		var card := Database.get_card(id)
-		if card != null:
-			grid.add_child(CardView.build(card, true, on_pick.bind(id)))
 
 func _clear() -> void:
 	for c in get_children():

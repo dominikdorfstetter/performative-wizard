@@ -32,3 +32,9 @@ var _ES: Dictionary = {}
 func _ready() -> void:
 	_DE = _DE_SRC.TABLE
 	_ES = _ES_SRC.TABLE
+	# Belt-and-braces for the bundled UI font: gui/theme/custom_font covers the
+	# theme, but forcing the engine-wide fallback too means no platform (web
+	# included) can ever quietly drop back to the stock Godot font.
+	var f: Font = load("res://assets/fonts/jersey20.ttf")
+	if f != null:
+		ThemeDB.fallback_font = f
