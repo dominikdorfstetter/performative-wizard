@@ -98,9 +98,7 @@ func _ready() -> void:
 	_end_turn.text = Loc.t("End Turn")
 	_end_turn.add_theme_stylebox_override("normal", _panel_box(Color(0.16, 0.36, 0.22), Color(0.36, 0.70, 0.45)))
 	_end_turn.add_theme_stylebox_override("hover", _panel_box(Color(0.20, 0.46, 0.28), Color(0.45, 0.85, 0.55)))
-	_result_panel.add_theme_stylebox_override("panel", _panel_box(Color(0.13, 0.11, 0.17), C_PANEL_BORDER))
-	$ResultPanel/RestartButton.pressed.connect(_to_menu)
-	_result_panel.visible = false
+	_result_panel.visible = false   # superseded by the run-end overlay (_run_end_panel)
 	set_process_unhandled_input(true)
 	_popups = Control.new()
 	_popups.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1253,20 +1251,136 @@ func _on_combat_ended(victory: bool) -> void:
 		GameState.record_show_rating(cm.compute_show_rating())   # The Critic reviews the fight
 		var node := GameState.current_node()
 		if node.get("type") == "Boss":
+			var cleared := GameState.act
 			if GameState.advance_act():
-				# act cleared, but the run continues — push into the next act's map
-				get_tree().change_scene_to_file("res://scenes/map/map.tscn")
+				# act cleared, but the run continues — give the moment a beat (and the
+				# one-time follow CTA the audit placed exactly here) before the new map
+				_act_clear_panel(cleared)
 			else:
+				var before := GameState.clout_earned
 				GameState.finish_run(true)
-				get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn")
+				_run_end_panel(true, GameState.clout_earned - before, before)
 		else:
 			get_tree().change_scene_to_file("res://scenes/reward.tscn")
 		return
+	var before_l := GameState.clout_earned
 	GameState.finish_run(false)
-	_result_label.text = Loc.t("BIG L.")
-	_result_label.add_theme_color_override("font_color", C_HP)
-	_result_panel.visible = true
+	_run_end_panel(false, GameState.clout_earned - before_l, before_l)
 	_refresh()
 
-func _to_menu() -> void:
-	get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn")
+# --- run-end & act-clear ceremony -----------------------------------------
+# Death is how most demo sessions end and victory is the best conversion moment;
+# both used to be a bare label. Now they pay out: Clout banked, unlock progress,
+# the Critic's last word, and the follow/feedback funnel.
+
+func _end_overlay() -> Control:
+	var overlay := Control.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var dim := ColorRect.new()
+	dim.color = Color(0.03, 0.02, 0.05, 0.78)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(dim)
+	var panel := Panel.new()
+	panel.position = Vector2(286, 96)
+	panel.size = Vector2(580, 470)
+	panel.add_theme_stylebox_override("panel", _panel_box(Color(0.10, 0.08, 0.14, 0.98), C_PANEL_BORDER, 3))
+	overlay.add_child(panel)
+	add_child(overlay)
+	overlay.set_meta("panel", panel)
+	return overlay
+
+func _end_label(panel: Panel, text: String, y: float, fs: int, color: Color, display := false) -> Label:
+	var l := Label.new()
+	l.text = text
+	if display:
+		l.add_theme_font_override("font", NodeUI.DISPLAY_FONT)
+	l.add_theme_font_size_override("font_size", fs)
+	l.add_theme_color_override("font_color", color)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD
+	l.position = Vector2(20, y)
+	l.size = Vector2(540, 60)
+	panel.add_child(l)
+	return l
+
+func _cta_row(panel: Panel, y: float) -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 14)
+	row.position = Vector2(20, y)
+	row.size = Vector2(540, 40)
+	panel.add_child(row)
+	var links := [
+		[Loc.t("follow on itch.io"), GameState.LINK_ITCH, Color(0.95, 0.45, 0.55)],
+		[Loc.t("join the Discord"), GameState.LINK_DISCORD, Color(0.55, 0.6, 0.95)],
+		[Loc.t("report a bug"), GameState.LINK_ISSUES, Color(0.5, 0.62, 0.7)],
+	]
+	for link in links:
+		if String(link[1]) == "":
+			continue
+		var b := NodeUI.small_button(String(link[0]), func(): OS.shell_open(String(link[1])), link[2])
+		b.custom_minimum_size = Vector2(160, 36)
+		b.add_theme_font_size_override("font_size", 14)
+		row.add_child(b)
+
+func _run_end_panel(victory: bool, earned: int, lifetime_before: int) -> void:
+	var overlay := _end_overlay()
+	var panel: Panel = overlay.get_meta("panel")
+	if victory:
+		_end_label(panel, Loc.t("BIG W — TOUR COMPLETE"), 22, 40, C_GOLD, true)
+		_end_label(panel, Loc.t("all 3 acts served. the city is talking about you."), 74, 17, Color(0.85, 0.85, 0.9))
+	else:
+		_end_label(panel, Loc.t("BIG L."), 22, 40, C_HP, true)
+		_end_label(panel, Loc.t("the run ends here — but Clout is forever."), 74, 17, Color(0.85, 0.85, 0.9))
+	if GameState.critic_last_rating != "":
+		_end_label(panel, Loc.t("THE CRITIC:  ") + GameState.critic_quip(GameState.critic_last_rating), 108, 16, Color(0.95, 0.7, 0.85))
+	_end_label(panel, Loc.t("+%d Clout earned   (lifetime %d)") % [earned, GameState.clout_earned], 156, 22, C_GOLD)
+	var fresh := GameState.unlocks_between(lifetime_before, GameState.clout_earned)
+	if not fresh.is_empty():
+		_end_label(panel, Loc.t("NEW UNLOCKS: %s") % ", ".join(fresh), 196, 16, Color(0.6, 0.95, 0.7))
+	var nxt := GameState.next_wizard_unlock()
+	if not nxt.is_empty():
+		_end_label(panel, Loc.t("%s unlocks at %d Clout — you have %d") % [nxt.name, int(nxt.need), GameState.clout_earned], 240, 15, Color(0.8, 0.8, 0.88))
+		var bar := ProgressBar.new()
+		bar.show_percentage = false
+		bar.max_value = int(nxt.need)
+		bar.value = GameState.clout_earned
+		bar.position = Vector2(120, 274)
+		bar.size = Vector2(340, 14)
+		_style_bar(bar, C_GOLD, Color(0.2, 0.17, 0.13))
+		panel.add_child(bar)
+	var again := NodeUI.menu_button(Loc.t("Run it back"), func(): get_tree().change_scene_to_file("res://scenes/hub/class_select.tscn"), Color(0.45, 0.82, 0.55), 250.0)
+	again.position = Vector2(40, 320)
+	panel.add_child(again)
+	var menu := NodeUI.menu_button(Loc.t("Main Menu"), func(): get_tree().change_scene_to_file("res://scenes/hub/main_menu.tscn"), Color(0.5, 0.55, 0.7), 250.0)
+	menu.position = Vector2(300, 320)
+	panel.add_child(menu)
+	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 388, 14, Color(0.6, 0.6, 0.68))
+	_cta_row(panel, 414)
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2(0.7, 0.7)
+	panel.modulate.a = 0.0
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(panel, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(panel, "modulate:a", 1.0, 0.2)
+
+func _act_clear_panel(cleared_act: int) -> void:
+	var overlay := _end_overlay()
+	var panel: Panel = overlay.get_meta("panel")
+	_end_label(panel, Loc.t("ACT %d CLEARED") % cleared_act, 30, 38, C_GOLD, true)
+	if GameState.critic_last_rating != "":
+		_end_label(panel, Loc.t("THE CRITIC:  ") + GameState.critic_quip(GameState.critic_last_rating), 96, 16, Color(0.95, 0.7, 0.85))
+	_end_label(panel, Loc.t("the gauntlet escalates — deck, HP and relics carry over."), 140, 16, Color(0.85, 0.85, 0.9))
+	var cont := NodeUI.menu_button(Loc.t("onward — Act %d") % GameState.act, func(): get_tree().change_scene_to_file("res://scenes/map/map.tscn"), Color(0.45, 0.82, 0.55), 280.0)
+	cont.position = Vector2(150, 230)
+	panel.add_child(cont)
+	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 330, 14, Color(0.6, 0.6, 0.68))
+	_cta_row(panel, 358)
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2(0.7, 0.7)
+	panel.modulate.a = 0.0
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(panel, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(panel, "modulate:a", 1.0, 0.2)

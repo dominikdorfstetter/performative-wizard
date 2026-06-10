@@ -5,6 +5,12 @@ extends Node
 const SAVE_PATH := "user://save.json"
 const SAVE_VERSION := 1
 
+# The demo's conversion funnel — shown on run-end screens and the act interstitial.
+# An empty string hides its button (set the Discord invite before launch).
+const LINK_ITCH := "https://dominikdorfstetter.itch.io/performative-wizard"
+const LINK_DISCORD := ""
+const LINK_ISSUES := "https://github.com/dominikdorfstetter/performative-wizard/issues"
+
 const SLOTS: Array[String] = ["Hat", "Robe", "Staff", "Boots", "Trinket"]
 
 # The bare wardrobe a fresh run starts with — one basic piece per slot.
@@ -503,6 +509,32 @@ func _wizards_unlocked_between(lo: int, hi: int) -> Array:
 		if w != null and w.unlock_clout > lo and w.unlock_clout <= hi:
 			names.append(w.pname)
 	return names
+
+## EVERYTHING that unlocked when lifetime Clout moved (lo, hi] — wizards, cards,
+## relics. The game computed these forever but never announced them anywhere.
+func unlocks_between(lo: int, hi: int) -> Array[String]:
+	var out: Array[String] = []
+	out.append_array(_wizards_unlocked_between(lo, hi))
+	for cid in Database.cards:
+		var c: CardData = Database.cards[cid]
+		if c.unlock_clout > lo and c.unlock_clout <= hi:
+			out.append(Loc.t(c.title))
+	for aid in Database.artifacts:
+		var a: ArtifactData = Database.artifacts[aid]
+		if a.unlock_clout > lo and a.unlock_clout <= hi:
+			out.append(Loc.t(a.title))
+	return out
+
+## The closest still-locked wizard: {name, need} or {} when everything's unlocked.
+## Powers the 'one more run' progress bar on the run-end screen.
+func next_wizard_unlock() -> Dictionary:
+	var best := {}
+	for wid in [&"necro", &"rizz"]:
+		var w := Database.get_wizard(wid)
+		if w != null and clout_earned < w.unlock_clout:
+			if best.is_empty() or w.unlock_clout < int(best.need):
+				best = {"name": w.pname, "need": w.unlock_clout}
+	return best
 
 ## Called when a boss dies. Returns true if the run continues into a new act.
 func advance_act() -> bool:
