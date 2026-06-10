@@ -21,7 +21,7 @@ func _ready() -> void:
 
 func _build() -> void:
 	_clear()
-	NodeUI.title(self, "The Plug", NodeUI.GOLD, SpriteBank.icon_texture(&"coin"))
+	NodeUI.title(self, "The Pop-Up", NodeUI.GOLD, SpriteBank.icon_texture(&"coin"))
 	NodeUI.sub(self, Loc.t("%d gold  ·  treat yourself") % GameState.gold)
 
 	# cards for sale

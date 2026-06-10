@@ -31,6 +31,14 @@ func _ready() -> void:
 	menu.size = Vector2(120, 38)
 	menu.pressed.connect(func(): Fader.change_scene("res://scenes/hub/main_menu.tscn"))
 	add_child(menu)
+	var coll := Button.new()
+	coll.text = Loc.t("Collection")
+	coll.add_theme_font_size_override("font_size", 16)
+	_style_btn(coll)
+	coll.position = Vector2(24, 70)
+	coll.size = Vector2(120, 38)
+	coll.pressed.connect(func(): Fader.change_scene("res://scenes/hub/collection.tscn"))
+	add_child(coll)
 
 func _make_wizard_button(w: WizardData) -> Button:
 	var locked := not GameState.wizard_unlocked(w.id)

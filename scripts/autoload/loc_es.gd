@@ -43,7 +43,7 @@ const TABLE := {
 	"Ascension %d / %d  —  +%d%% enemy HP, +%d%% dmg, +%d Clout": "Ascensión %d / %d  —  +%d%% PV enemigos, +%d%% daño, +%d Clout",
 	"Boutique  (spend Clout)": "Boutique  (gastar Clout)",
 	# --- wizards ---
-	"Hot Girl": "Hot Girl",
+	"It Girl": "It Girl",
 	"Goth Bestie": "Goth Bestie",
 	"Rizzard": "Rizzard",
 	"manifests heat, roasts the opps, serves looks for Aura. lowkey a menace": "manifiesta calor, roastea a los opps, sirve looks por Aura. lowkey un peligro",
@@ -381,4 +381,14 @@ const TABLE := {
 	"+passive": "+pasiva",
 	"WORN": "PUESTO",
 	"Adds %d cards to your deck.": "Añade %d cartas a tu mazo.",
+	"The Pop-Up": "El Pop-Up",
+	"Sketchy Merch Stand": "Puesto de Merch Sospechoso",
+	"Collection": "Colección",
+	"lifetime Clout %d   ·   to spend %d   ·   Critic score %d   ·   Ascension %d": "Clout total %d   ·   para gastar %d   ·   Puntuación de la Crítica %d   ·   Ascensión %d",
+	"Cards unlocked: %d / %d": "Cartas desbloqueadas: %d / %d",
+	"Fits owned: %d / %d": "Outfits en el armario: %d / %d",
+	"Relic pool unlocked: %d / %d": "Reliquias desbloqueadas: %d / %d",
+	"next unlock at %d lifetime Clout: %s": "próximo desbloqueo con %d Clout total: %s",
+	"everything is unlocked — full drip achieved.": "todo desbloqueado — drip máximo conseguido.",
+	"ready to serve": "lista para servir",
 }

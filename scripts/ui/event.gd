@@ -38,7 +38,7 @@ func _mannequin_try() -> void:
 		_outcome("The mannequin BIT you! Lost 8 HP.")
 
 func _merchant() -> void:
-	NodeUI.title(self, "Sketchy Plug", Color(0.95, 0.8, 0.3), SpriteBank.icon_texture(&"quest"))
+	NodeUI.title(self, "Sketchy Merch Stand", Color(0.95, 0.8, 0.3), SpriteBank.icon_texture(&"quest"))
 	NodeUI.sub(self, "a hooded figure's got mystery cards. trust the process?")
 	var h := NodeUI.hbox(self, 250)
 	h.add_child(NodeUI.choice("Cop one (20g)", "pay 20 gold for a random card.", NodeUI.GOLD, _merchant_buy, GameState.gold >= 20, "", SpriteBank.icon_texture(&"dice")))

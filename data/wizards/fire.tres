@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"fire"
-title = "Hot Girl"
+title = "It Girl"
 pname = "Vesper Vermillion"
 element = "Fire"
 emoji = "🔥"

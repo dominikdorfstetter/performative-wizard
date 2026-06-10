@@ -29,7 +29,7 @@ A README.txt with these steps ships inside the zip.
 
 - **Content:** 49 cards, 24 enemy types (incl. **The Critic** & **The Algorithm** bosses),
   3 wizards, 19 outfits, 14 artifacts.
-- **Wizards:** Vesper Vermillion (Hot Girl / fire), Morticia Graves (Goth Bestie / necro,
+- **Wizards:** Vesper Vermillion (It Girl / fire), Morticia Graves (Goth Bestie / necro,
   summon-and-sacrifice), Chadwick Suave (the Rizzard / crit-on-Rizz).
 - **Builds:** vanilla StS-style starters + **two distinct archetypes per wizard** (Fire:
   Slow Roast / Go Viral · Necro: Sacrifice / Swarm · Rizz: Crit Storm / Rizz Ramp), with a
