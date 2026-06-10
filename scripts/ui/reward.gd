@@ -53,10 +53,31 @@ func _ready() -> void:
 		if aid != &"":
 			GameState.add_artifact(aid)
 			var a := Database.get_artifact(aid)
-			(%Banner as Label).text = Loc.t("elite loot:")
-			(%Banner as Label).add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
-			# the canonical item panel (left, mirroring the grade stamp on the right)
-			NodeUI.item_reveal(self, SpriteBank.artifact_texture(aid), a.title, [a.description], Vector2(28, 120))
+			# compact in-flow loot row — the old 340px floating panel sat ON TOP
+			# of the first card offer (owner-reported)
+			var col: Container = (%Banner as Label).get_parent()
+			var loot := HBoxContainer.new()
+			loot.alignment = BoxContainer.ALIGNMENT_CENTER
+			loot.add_theme_constant_override("separation", 10)
+			var itex := TextureRect.new()
+			itex.texture = SpriteBank.artifact_texture(aid)
+			itex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			itex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			itex.custom_minimum_size = Vector2(34, 34)
+			loot.add_child(itex)
+			var ltxt := Label.new()
+			ltxt.text = Loc.t("elite loot: %s — %s") % [Loc.t(a.title), Loc.t(a.description)]
+			ltxt.add_theme_font_size_override("font_size", 17)
+			ltxt.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
+			loot.add_child(ltxt)
+			col.add_child(loot)
+			col.move_child(loot, (%Banner as Label).get_index() + 1)
+			# the row glints in with the same fanfare the panel had
+			loot.modulate.a = 0.0
+			var lt := create_tween()
+			lt.tween_interval(0.25)
+			lt.tween_callback(func(): Audio.play("buff", -6.0))
+			lt.tween_property(loot, "modulate:a", 1.0, 0.3)
 
 	var deal_i := 0
 	for id in GameState.reward_offer(3):
@@ -74,11 +95,15 @@ func _ready() -> void:
 	var skip := %Skip as Button
 	skip.pressed.connect(_to_map)
 	skip.pressed.connect(Audio.play.bind("click", -7.0))
-	skip.add_theme_stylebox_override("normal", NodeUI.box(Color(0.15, 0.13, 0.2), Color(0.45, 0.5, 0.62), 2))
-	skip.add_theme_stylebox_override("hover", NodeUI.box(Color(0.22, 0.19, 0.3), Color(0.6, 0.66, 0.78), 2))
-	skip.add_theme_stylebox_override("pressed", NodeUI.box(Color(0.2, 0.17, 0.27), Color(0.45, 0.5, 0.62), 2))
+	skip.custom_minimum_size = Vector2(260, 50)
+	skip.add_theme_font_size_override("font_size", 18)
+	skip.add_theme_color_override("font_color", Color(0.9, 0.62, 0.62))
+	skip.add_theme_color_override("font_hover_color", Color(1.0, 0.74, 0.74))
+	skip.add_theme_stylebox_override("normal", NodeUI.box(Color(0.16, 0.11, 0.14), Color(0.62, 0.38, 0.42), 2))
+	skip.add_theme_stylebox_override("hover", NodeUI.box(Color(0.24, 0.15, 0.19), Color(0.85, 0.5, 0.55), 2))
+	skip.add_theme_stylebox_override("pressed", NodeUI.box(Color(0.2, 0.13, 0.17), Color(0.62, 0.38, 0.42), 2))
 	skip.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	skip.text = Loc.t("Skip")
+	skip.text = Loc.t("Skip the cards")
 
 ## The letter-grade stamp: her verdict slams onto the screen with a sting — the
 ## review is the USP and used to be an unnoticed text line.
@@ -108,14 +133,22 @@ func _stamp_grade(letter: String) -> void:
 	ring.add_theme_stylebox_override("panel", sb)
 	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stamp.add_child(ring)
+	stamp.rotation = deg_to_rad(-24)
 	var tw := create_tween()
+	tw.tween_interval(0.45)   # a beat of anticipation before the verdict lands
+	tw.tween_callback(func():
+		Audio.play("crowd" if letter == "S" or letter == "A" else "debuff", -3.0 if letter == "S" or letter == "A" else -4.0))
 	tw.set_parallel(true)
-	tw.tween_property(stamp, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(stamp, "modulate:a", 1.0, 0.16)
-	if letter == "S" or letter == "A":
-		Audio.play("crowd", -3.0)
-	else:
-		Audio.play("debuff", -4.0)
+	tw.tween_property(stamp, "scale", Vector2.ONE, 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(stamp, "modulate:a", 1.0, 0.12)
+	tw.tween_property(stamp, "rotation", deg_to_rad(-8), 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# ...and it never goes fully still: a slow confident sway keeps the verdict alive
+	tw.chain().tween_callback(func():
+		var sway := stamp.create_tween().set_loops()
+		sway.tween_property(stamp, "rotation", deg_to_rad(-5.5), 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		sway.parallel().tween_property(stamp, "scale", Vector2(1.04, 1.04), 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		sway.chain().tween_property(stamp, "rotation", deg_to_rad(-8), 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		sway.parallel().tween_property(stamp, "scale", Vector2.ONE, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT))
 
 # scale cards up and box them so they spread across the screen instead of clustering
 func _big_card(card: CardData, id: StringName) -> Control:
