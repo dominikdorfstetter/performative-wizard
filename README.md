@@ -37,7 +37,7 @@ A README.txt with these steps ships inside the zip.
   summon-and-sacrifice), Chadwick Suave (the Rizzard / crit-on-Rizz).
 - **Builds:** vanilla StS-style starters + **two distinct archetypes per wizard** (Fire:
   Slow Roast / Go Viral · Necro: Sacrifice / Swarm · Rizz: Crit Storm / Rizz Ramp), with a
-  **Common / Rare / Epic / Legendary** ladder and **per-wizard progressive unlocks**; reward
+  **Common / Rare / Epic / Legendary** ladder and **per-wizard progressive unlocks** (each pool opens by *playing* its wizard); reward
   offers bias toward your emerging build. See [`docs/ARCHETYPES.md`](docs/ARCHETYPES.md).
 - **The Critic (USP):** a named rival grades every fight S/A/B/C — computed primarily from
   your Aura play (peak reached, thresholds lit, a clean finisher cash-out) — shown **live**
@@ -66,7 +66,7 @@ A README.txt with these steps ships inside the zip.
 - **Localization:** English / Deutsch / Español (auto-detected on first boot,
   switchable in Options) — keeps the international Gen-Z slang, translates the rest.
 - **Build:** macOS `.app` (ad-hoc signed) + itch-ready web export, both branded
-  (custom icon/boot splash) and versioned. Combat engine covered by **359 headless
+  (custom icon/boot splash) and versioned. Combat engine covered by **372 headless
   tests** (run on every push via GitHub Actions).
 
 ## Running
@@ -75,7 +75,7 @@ A README.txt with these steps ships inside the zip.
 2. Open this folder in Godot (import `project.godot`).
 3. Press **Play** (F5). The console should print
    `[Database] loaded 76 cards, 25 outfits, 34 enemies, 3 wizards, 30 artifacts`.
-4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `359 passed, 0 failed`).
+4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `372 passed, 0 failed`).
    Set `PW_NO_SAVE=1` when running tools/tests so they never touch your real save.
 
 ## Layout
@@ -90,7 +90,7 @@ scripts/
   combat/            Combatant · EffectResolver · CombatManager (pure logic) · combat_ui
   data/              CardData / OutfitData / EnemyData / WizardData / ArtifactData resources
   map/ run/ ui/      map generation, encounters, and all screen scripts
-  tests/             combat_test.gd (359 checks) · balance_sim.gd (headless balance bot)
+  tests/             combat_test.gd (372 checks) · balance_sim.gd (headless balance bot)
 data/
   cards/ enemies/ outfits/ wizards/ artifacts/   authored .tres content
 builds/              exported macOS .app (gitignored)

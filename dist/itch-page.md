@@ -1,4 +1,4 @@
-# itch.io page kit — Performative Wizards (demo v1.2.0)
+# itch.io page kit — Performative Wizards (demo v1.2.2)
 
 The page converts at ~1% CTR — the kit below is built to fix that: a cover
 with TEXT on it, a hook-first description, and fresh screenshots.
@@ -53,7 +53,9 @@ you played.
   and a finale against The Algorithm or **The Talent Agent**, who books
   weaker versions of every other boss.
 - **3 acts + ascension, 30–45 min runs.** Quit-safe: runs checkpoint at the
-  map, meta unlocks (Clout, wardrobe, cards) always persist.
+  map, meta unlocks (Clout, wardrobe, cards) always persist — and every
+  wizard earns their OWN card pool by being played, so each one is a fresh
+  progression ladder.
 - **EN / Deutsch / Español** — auto-detected. Every pixel and bleep generated
   by code.
 

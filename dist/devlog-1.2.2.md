@@ -1,4 +1,4 @@
-# Devlog: v1.2.0 — three floors, thirty-card pools, and The IRS
+# Devlog: v1.2.2 — three floors, thirty-card pools, and The IRS
 
 Paste into a new devlog on https://dorfid.itch.io/performative-wizards
 (devlogs ping followers AND get a fresh-content bump in itch's feeds —
@@ -40,6 +40,12 @@ the Critic becomes literally Parasocial about you.
 **The dressing room got a rack.** The wardrobe UI now scales to any amount
 of drip — per-slot rack sections + a pinned "fit" rail. Item sprites got real
 silhouettes too: veils, heels, selfie sticks, a flash cannon.
+
+**And the patch lap (v1.2.1–1.2.2):** enemy Block actually blocks now (it
+never did — you were all too polite to notice), Toxic never fades anymore
+(cleanse it or outlive it — it's no longer a slower Roast), unlock pacing got
+a real ladder, and every wizard now earns their own card unlocks by being
+played.
 
 All of it free, in the browser, 30–45 min runs, EN/DE/ES. If you played an
 older build: your unlocks carried over. The Critic is waiting. She has
