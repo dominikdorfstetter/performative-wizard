@@ -73,7 +73,7 @@ func _wizard_column(w: WizardData) -> Control:
 
 	# cards: how much of this wizard's reward pool the meta has opened up
 	var pool: Array = w.reward_pool
-	var open_cards: int = GameState.unlocked_cards(pool).size()
+	var open_cards: int = GameState.unlocked_cards(pool, w.id).size()
 	_lbl(panel, Loc.t("Cards unlocked: %d / %d") % [open_cards, pool.size()], 168, 16, Color(0.85, 0.85, 0.9))
 	panel.add_child(_bar(open_cards, pool.size(), 196, w.accent))
 
@@ -94,27 +94,35 @@ func _wizard_column(w: WizardData) -> Control:
 	return panel
 
 ## The single next thing lifetime Clout will open — keeps "one more run" concrete.
+## The single next thing on the unlock ladder — measured in "Clout to go" so the
+## per-wizard card gates and the account-wide wizard/relic gates compare fairly.
 func _next_unlock_teaser() -> String:
-	var best_need := -1
+	var best_gap := -1
 	var best_name := ""
 	for wid in Database.wizards:
 		var w: WizardData = Database.wizards[wid]
-		if w.unlock_clout > GameState.clout_earned and (best_need < 0 or w.unlock_clout < best_need):
-			best_need = w.unlock_clout
+		var wgap := w.unlock_clout - GameState.clout_earned
+		if wgap > 0 and (best_gap < 0 or wgap < best_gap):
+			best_gap = wgap
 			best_name = w.pname
-	for cid in Database.cards:
-		var c: CardData = Database.cards[cid]
-		if c.unlock_clout > GameState.clout_earned and (best_need < 0 or c.unlock_clout < best_need):
-			best_need = c.unlock_clout
-			best_name = Loc.t(c.title)
+		var wc := GameState.wizard_clout(wid)
+		for cid in w.reward_pool:
+			var c := Database.get_card(cid)
+			if c == null:
+				continue
+			var gap := c.unlock_clout - wc
+			if gap > 0 and (best_gap < 0 or gap < best_gap):
+				best_gap = gap
+				best_name = Loc.t("%s (%s)") % [Loc.t(c.title), w.pname]
 	for aid in Database.artifacts:
 		var a: ArtifactData = Database.artifacts[aid]
-		if a.unlock_clout > GameState.clout_earned and (best_need < 0 or a.unlock_clout < best_need):
-			best_need = a.unlock_clout
+		var agap := a.unlock_clout - GameState.clout_earned
+		if agap > 0 and (best_gap < 0 or agap < best_gap):
+			best_gap = agap
 			best_name = Loc.t(a.title)
-	if best_need < 0:
+	if best_gap < 0:
 		return Loc.t("everything is unlocked — full drip achieved.")
-	return Loc.t("next unlock at %d lifetime Clout: %s") % [best_need, best_name]
+	return Loc.t("next unlock: %s — %d more Clout") % [best_name, best_gap]
 
 func _bar(value: int, total: int, y: float, color: Color) -> ProgressBar:
 	var bar := ProgressBar.new()

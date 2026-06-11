@@ -343,13 +343,18 @@ func _ready() -> void:
 	GameState.clout_earned = 320
 	_check("rizz unlocks at 320", GameState.wizard_unlocked(&"rizz"), true)
 	GameState.clout_earned = 0
-	_check("ember always unlocked", GameState.card_unlocked(&"ember"), true)
-	_check("inferno locked at 0", GameState.card_unlocked(&"inferno"), false)
-	GameState.clout_earned = 150
-	_check("inferno unlocks (120<=150)", GameState.card_unlocked(&"inferno"), true)
-	_check("combust still locked (270>150)", GameState.card_unlocked(&"combust"), false)
-	var fpool: Array = GameState.unlocked_cards([&"ember", &"inferno", &"combust"])
+	GameState.clout_by_wizard = {&"fire": 0}
+	_check("ember always unlocked", GameState.card_unlocked(&"ember", &"fire"), true)
+	_check("inferno locked at 0", GameState.card_unlocked(&"inferno", &"fire"), false)
+	GameState.clout_by_wizard = {&"fire": 150}
+	_check("inferno unlocks (120<=150)", GameState.card_unlocked(&"inferno", &"fire"), true)
+	_check("combust still locked (270>150)", GameState.card_unlocked(&"combust", &"fire"), false)
+	var fpool: Array = GameState.unlocked_cards([&"ember", &"inferno", &"combust"], &"fire")
 	_check("pool filters to unlocked", fpool.size(), 2)
+	# unlocks are PER WIZARD: Vesper's grind opens nothing on Morticia's rack
+	_check("fire clout does not unlock necro cards", GameState.card_unlocked(&"gravecall", &"necro"), false)
+	GameState.clout_by_wizard[&"necro"] = 150
+	_check("necro clout unlocks necro cards", GameState.card_unlocked(&"gravecall", &"necro"), true)
 	# card upgrade: Glow Up makes a card cost 1 less
 	var infc := Database.get_card(&"inferno")
 	_check("base cost 2", GameState.card_cost(infc), 2)
@@ -766,12 +771,12 @@ func _ready() -> void:
 	_check("smoulder aura engine ticks +1", cmsm.swag >= sw0 + 1, true)
 
 	# unlock gate respects the new cards
-	var saved_ce2: int = GameState.clout_earned
-	GameState.clout_earned = 0
-	_check("double_tap locked at 0 clout", GameState.card_unlocked(&"double_tap"), false)
-	GameState.clout_earned = 60
-	_check("double_tap unlocks by 60 clout", GameState.card_unlocked(&"double_tap"), true)
-	GameState.clout_earned = saved_ce2
+	var saved_cbw2: Dictionary = GameState.clout_by_wizard.duplicate()
+	GameState.clout_by_wizard = {&"rizz": 0}
+	_check("double_tap locked at 0 clout", GameState.card_unlocked(&"double_tap", &"rizz"), false)
+	GameState.clout_by_wizard = {&"rizz": 60}
+	_check("double_tap unlocks by 60 clout", GameState.card_unlocked(&"double_tap", &"rizz"), true)
+	GameState.clout_by_wizard = saved_cbw2
 
 	# --- archetypes slice 3: vanilla starters + draft bias ---
 	print("--- starters + draft bias ---")
@@ -868,12 +873,12 @@ func _ready() -> void:
 	_check("flashpoint then applies 3 Roast (4->7)", cmfp.enemies[0].status(&"burn"), 7)
 	# Legendary rarity + 150 unlock gate
 	_check("flashpoint is Legendary", Database.get_card(&"flashpoint").rarity, "Legendary")
-	var saved_ce4: int = GameState.clout_earned
-	GameState.clout_earned = 300
-	_check("Legendary locked at 300 clout", GameState.card_unlocked(&"flashpoint"), false)
-	GameState.clout_earned = 450
-	_check("Legendary unlocks at 450 clout", GameState.card_unlocked(&"flashpoint"), true)
-	GameState.clout_earned = saved_ce4
+	var saved_cbw4: Dictionary = GameState.clout_by_wizard.duplicate()
+	GameState.clout_by_wizard = {&"fire": 300}
+	_check("Legendary locked at 300 clout", GameState.card_unlocked(&"flashpoint", &"fire"), false)
+	GameState.clout_by_wizard = {&"fire": 450}
+	_check("Legendary unlocks at 450 clout", GameState.card_unlocked(&"flashpoint", &"fire"), true)
+	GameState.clout_by_wizard = saved_cbw4
 
 	# --- archetypes slice 5: wide-S path + Necro swarm fingerprint ---
 	print("--- wide-S + swarm fingerprint ---")
@@ -1824,6 +1829,23 @@ func _ready() -> void:
 	bcm2.hand = [Database.get_card(&"touch_grass")]
 	bcm2.play_card(bcm2.hand[0])
 	_check("cleanse cures Toxic", bp2.status(&"poison"), 0)
+
+	print("--- per-wizard unlock persistence ---")
+	var sv_cbw: Dictionary = GameState.clout_by_wizard.duplicate()
+	var sv_ce10: int = GameState.clout_earned
+	GameState.clout_by_wizard = {&"fire": 120, &"necro": 45}
+	var meta := GameState._meta_to_dict()
+	GameState.clout_by_wizard = {}
+	GameState._meta_from_dict(meta)
+	_check("per-wizard clout survives the save round-trip", [GameState.wizard_clout(&"fire"), GameState.wizard_clout(&"necro")], [120, 45])
+	var legacy := GameState._meta_to_dict()
+	legacy.erase("clout_by_wizard")
+	legacy["clout_earned"] = 200
+	GameState._meta_from_dict(legacy)
+	_check("legacy saves credit the starter wizard", GameState.wizard_clout(&"fire"), 200)
+	_check("legacy saves do not credit the others", GameState.wizard_clout(&"necro"), 0)
+	GameState.clout_by_wizard = sv_cbw
+	GameState.clout_earned = sv_ce10
 
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)
