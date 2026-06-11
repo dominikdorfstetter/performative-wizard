@@ -1,4 +1,4 @@
-# itch.io page kit — Performative Wizards (demo v1.1.1)
+# itch.io page kit — Performative Wizards (demo v1.2.0)
 
 The page converts at ~1% CTR — the kit below is built to fix that: a cover
 with TEXT on it, a hook-first description, and fresh screenshots.
@@ -11,8 +11,11 @@ with TEXT on it, a hook-first description, and fresh screenshots.
 - **Banner (theme → banner):** `dist/itch-banner.png` (960×300).
 - **Pricing:** "No payments" for the demo (a $0.99 suggested-donation dialog
   adds a click between browse and play — pure funnel loss at this stage).
-- **Screenshots** (fresh, 1152×648, in `dist/screenshots/`): combat (goon
-  crowd + speech bubble), map, reward (S-stamp), boutique, dress, collection.
+- **Screenshots** (fresh, 1152×648, in `dist/screenshots/`), in this order:
+  `agent.png` (Talent Agent + his roster), `irs.png` (The IRS mid-audit),
+  `bouncer.png` (the neon door), `scene-fight.png` (disco ball strobe),
+  `dress.png` (the full-unlock rack), `reward.png` (S-stamp), `map.png`,
+  `boutique.png`.
 - Remove `performative-wizards-web.zip` from the *downloads* list — it's the
   embedded game; offering it as a download splits the stats.
 - Kind: HTML, viewport **1152×648**, fullscreen ON, SharedArrayBuffer **OFF**.
@@ -38,11 +41,17 @@ you played.
   Your funeral.
 - **All your power is the outfit.** Three wizards with real identities:
   Vesper burns the room down, Morticia raises a **crowd of ghouls and sics
-  them on command**, Chadwick crits so hard the Energy comes back. 25 fits
-  that reshape your build, **64 cards, 16 relics, 11 events**, two archetypes
-  per wizard.
-- **Very ordinary enemies turned hostile.** An Angry Toaster. A Gym Rat.
-  The Algorithm itself.
+  them on command**, Chadwick crits so hard the Energy comes back — and can
+  now **Ghost** entire turns (dodge hits = your Rizz). 25 fits that reshape
+  your build, **30 cards per wizard, 30 relics from Common to Legendary**,
+  11 events, two archetypes per wizard.
+- **Three floors, each with its own cast.** Act 1: your hexed neighborhood
+  (an Angry Toaster, a Possessed Wardrobe). Act 2: the venue turns on you —
+  cursed mirrors, a strobing disco ball, and **The Bouncer** checking your
+  fit at the door. Act 3: the Feed — NPC Streamers, Reply Guys, **The IRS**
+  (it garnishes 25% of your gold and FLEES — kill it first for the refund),
+  and a finale against The Algorithm or **The Talent Agent**, who books
+  weaker versions of every other boss.
 - **3 acts + ascension, 30–45 min runs.** Quit-safe: runs checkpoint at the
   map, meta unlocks (Clout, wardrobe, cards) always persist.
 - **EN / Deutsch / Español** — auto-detected. Every pixel and bleep generated
