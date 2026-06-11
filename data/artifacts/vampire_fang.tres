@@ -12,4 +12,4 @@ description = "Heal 3 at the start of each turn."
 passive_id = &"heal_3_per_turn"
 gold_per_combat = 0
 
-unlock_clout = 80
+unlock_clout = 240

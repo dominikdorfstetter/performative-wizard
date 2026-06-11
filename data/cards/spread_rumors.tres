@@ -13,5 +13,5 @@ rarity = "Rare"
 archetype = &"swarm"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 50
+unlock_clout = 150
 effects = [{ "op": "apply_status", "status": "poison", "amount": 4, "target": "enemy" }]

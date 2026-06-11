@@ -12,5 +12,5 @@ type = "Skill"
 rarity = "Rare"
 swag_gain = 2
 swag_cost = 0
-unlock_clout = 50
+unlock_clout = 150
 effects = [{ "op": "retain" }]

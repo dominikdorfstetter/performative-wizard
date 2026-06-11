@@ -13,5 +13,5 @@ rarity = "Rare"
 archetype = &"storm"
 swag_gain = 2
 swag_cost = 0
-unlock_clout = 90
+unlock_clout = 270
 effects = [{ "op": "damage_all", "amount": 5 }]

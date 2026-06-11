@@ -13,5 +13,5 @@ rarity = "Common"
 archetype = &"viral"
 swag_gain = 1
 swag_cost = 0
-unlock_clout = 30
+unlock_clout = 90
 effects = [{ "op": "apply_status_all", "status": "vulnerable", "amount": 1 }]

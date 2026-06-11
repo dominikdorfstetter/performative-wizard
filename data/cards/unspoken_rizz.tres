@@ -13,5 +13,5 @@ rarity = "Epic"
 archetype = &"ramp"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 90
+unlock_clout = 270
 effects = [{ "op": "damage_x_status", "status": "strength", "mult": 2, "of": "self", "target": "enemy" }]

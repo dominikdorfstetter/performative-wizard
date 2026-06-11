@@ -14,4 +14,4 @@ swag_gain = 0
 swag_cost = 0
 effects = [{ "op": "finisher_encore", "target": "enemy" }]
 
-unlock_clout = 80
+unlock_clout = 240

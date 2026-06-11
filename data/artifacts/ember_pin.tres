@@ -9,5 +9,6 @@ title = "Ember Pin"
 emoji = "🔥"
 rarity = "Common"
 description = "Your Roast applies +1 stack."
+wizards = Array[StringName]([&"fire"])
 passive_id = &"burn_plus_1"
 gold_per_combat = 0
