@@ -1546,6 +1546,14 @@ func _end_label(panel: Panel, text: String, y: float, fs: int, color: Color, dis
 	panel.add_child(l)
 	return l
 
+## The line above the CTA row: a fresh S/A is the moment a player actually
+## rates, so the ask names the grade while it still feels earned.
+func _cta_lead_in() -> String:
+	var r := GameState.critic_last_rating
+	if r == "S" or r == "A":
+		return Loc.t("the Critic gave you an %s — agree? a rating helps a solo dev:") % r
+	return Loc.t("enjoying the demo? every rating helps a solo dev:")
+
 func _cta_row(panel: Panel, y: float) -> void:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1554,7 +1562,7 @@ func _cta_row(panel: Panel, y: float) -> void:
 	row.size = Vector2(540, 40)
 	panel.add_child(row)
 	var links := [
-		[Loc.t("follow on itch.io"), GameState.LINK_ITCH, Color(0.95, 0.45, 0.55)],
+		[Loc.t("rate it on itch ★"), GameState.LINK_ITCH + "/rate", Color(0.95, 0.45, 0.55)],
 		[Loc.t("join the Discord"), GameState.LINK_DISCORD, Color(0.55, 0.6, 0.95)],
 		[Loc.t("report a bug"), GameState.LINK_ISSUES, Color(0.5, 0.62, 0.7)],
 	]
@@ -1598,7 +1606,7 @@ func _run_end_panel(victory: bool, earned: int, lifetime_before: int) -> void:
 	var menu := NodeUI.menu_button(Loc.t("Main Menu"), func(): Fader.change_scene("res://scenes/hub/main_menu.tscn"), Color(0.5, 0.55, 0.7), 250.0)
 	menu.position = Vector2(300, 320)
 	panel.add_child(menu)
-	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 388, 14, Color(0.6, 0.6, 0.68))
+	_end_label(panel, _cta_lead_in(), 388, 14, Color(0.6, 0.6, 0.68))
 	_cta_row(panel, 414)
 	panel.pivot_offset = panel.size * 0.5
 	panel.scale = Vector2(0.7, 0.7)
@@ -1618,7 +1626,7 @@ func _act_clear_panel(cleared_act: int) -> void:
 	var cont := NodeUI.menu_button(Loc.t("onward — Act %d") % GameState.act, func(): Fader.change_scene("res://scenes/map/map.tscn"), Color(0.45, 0.82, 0.55), 280.0)
 	cont.position = Vector2(150, 230)
 	panel.add_child(cont)
-	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 330, 14, Color(0.6, 0.6, 0.68))
+	_end_label(panel, _cta_lead_in(), 330, 14, Color(0.6, 0.6, 0.68))
 	_cta_row(panel, 358)
 	panel.pivot_offset = panel.size * 0.5
 	panel.scale = Vector2(0.7, 0.7)

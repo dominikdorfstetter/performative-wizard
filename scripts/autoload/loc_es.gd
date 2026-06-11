@@ -146,6 +146,9 @@ const TABLE := {
 	"%s files your case and DIPS with %d gold!": "¡%s archiva tu caso y SE PIRA con %d de oro!",
 	"%s files your case and dips.": "%s archiva tu caso y se pira.",
 	"your refund came through: +%d gold": "llegó tu reembolso: +%d de oro",
+	"rate it on itch ★": "valóralo en itch ★",
+	"the Critic gave you an %s — agree? a rating helps a solo dev:": "la Crítica te dio una %s — ¿de acuerdo? una valoración ayuda a un dev en solitario:",
+	"enjoying the demo? every rating helps a solo dev:": "¿te gusta la demo? cada valoración ayuda a un dev en solitario:",
 	"%s makes a call... no one picks up.": "%s hace una llamada... nadie contesta.",
 	# --- artifacts ---
 	"Bone Charm": "Amuleto de Hueso",
