@@ -149,6 +149,8 @@ const TABLE := {
 	"%s files your case and DIPS with %d gold!": "%s schließt deine Akte und HAUT AB mit %d Gold!",
 	"%s files your case and dips.": "%s schließt deine Akte und verduftet.",
 	"your refund came through: +%d gold": "deine Rückerstattung ist da: +%d Gold",
+	"next unlock: %s — %d more Clout": "nächster Unlock: %s — noch %d Clout",
+	"%s (%s)": "%s (%s)",
 	"Toxic — takes this much at turn start (ignores Block). Never fades: cleanse it or outlive it.": "Toxic — kassiert so viel zu Zugbeginn (ignoriert Block). Verblasst nie: reinigen oder überleben.",
 	"Roasted — takes this much at the start of its turn, then burns DOWN 1. Ignores Block — detonate it while it's hot.": "Roasted — kassiert so viel zu Zugbeginn, brennt dann um 1 RUNTER. Ignoriert Block — zünde es, solange es heiß ist.",
 	"Apply 3 Toxic. it never dies down. rumors are forever.": "Gib 3 Toxic. es klingt nie ab. Gerüchte sind für immer.",

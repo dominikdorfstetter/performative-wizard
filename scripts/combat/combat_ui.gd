@@ -1586,7 +1586,7 @@ func _run_end_panel(victory: bool, earned: int, lifetime_before: int) -> void:
 	if GameState.critic_last_rating != "":
 		_end_label(panel, Loc.t("THE CRITIC:  ") + GameState.critic_quip(GameState.critic_last_rating), 108, 16, Color(0.95, 0.7, 0.85))
 	_end_label(panel, Loc.t("+%d Clout earned   (lifetime %d)") % [earned, GameState.clout_earned], 156, 22, C_GOLD)
-	var fresh := GameState.unlocks_between(lifetime_before, GameState.clout_earned)
+	var fresh := GameState.unlocks_between(lifetime_before, GameState.clout_earned, GameState.wizard_id, GameState.wizard_clout(GameState.wizard_id) - (GameState.clout_earned - lifetime_before), GameState.wizard_clout(GameState.wizard_id))
 	if not fresh.is_empty():
 		_end_label(panel, Loc.t("NEW UNLOCKS: %s") % ", ".join(fresh), 196, 16, Color(0.6, 0.95, 0.7))
 	var nxt := GameState.next_wizard_unlock()
