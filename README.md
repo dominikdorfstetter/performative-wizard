@@ -11,7 +11,7 @@ rooms; flop → hecklers). Don't just win. **Win the room.** (See [`docs/USP.md`
 
 ## ⬇️ Play the demo
 
-**Web (itch.io):** plays in the browser — link goes live with the demo release.
+**Web (itch.io):** [play free in the browser](https://dorfid.itch.io/performative-wizards).
 **macOS:** **[latest release](https://github.com/dominikdorfstetter/performative-wizard/releases)**
 (universal arm64 + Intel zip).
 
@@ -27,13 +27,17 @@ A README.txt with these steps ships inside the zip.
 **Feature-complete roguelite.** Full run: main menu → class-select → dressing room →
 **3-act branching map** (combat / elite / event / shop / rest / chest / boss) → ascension.
 
-- **Content:** 76 cards (30 per wizard), 34 enemy types (incl. **The Critic** & **The Algorithm** bosses),
-  3 wizards, 25 outfits, 30 artifacts (Common → Legendary), 11 events.
+- **Content:** 76 cards (30 per wizard), 34 enemy types across **three themed floors** —
+  Act 1 *the Block* (your hexed neighborhood), Act 2 *the Scene* (the venue turns on you),
+  Act 3 *the Feed* (terminally online) — with four bosses (**The Critic**, **The Bouncer**,
+  **The Algorithm**, **The Talent Agent**, who books weaker versions of the other three) and
+  **The IRS**, which garnishes 25% of your gold and flees with it unless you kill it first.
+  3 wizards, 25 outfits, 30 relics (Common → Legendary, weighted drops), 11 events.
 - **Wizards:** Vesper Vermillion (It Girl / fire), Morticia Graves (Goth Bestie / necro,
   summon-and-sacrifice), Chadwick Suave (the Rizzard / crit-on-Rizz).
 - **Builds:** vanilla StS-style starters + **two distinct archetypes per wizard** (Fire:
   Slow Roast / Go Viral · Necro: Sacrifice / Swarm · Rizz: Crit Storm / Rizz Ramp), with a
-  **Common / Rare / Epic / Legendary** ladder and **per-wizard progressive unlocks**; reward
+  **Common / Rare / Epic / Legendary** ladder and **per-wizard progressive unlocks** (each pool opens by *playing* its wizard); reward
   offers bias toward your emerging build. See [`docs/ARCHETYPES.md`](docs/ARCHETYPES.md).
 - **The Critic (USP):** a named rival grades every fight S/A/B/C — computed primarily from
   your Aura play (peak reached, thresholds lit, a clean finisher cash-out) — shown **live**
@@ -62,7 +66,7 @@ A README.txt with these steps ships inside the zip.
 - **Localization:** English / Deutsch / Español (auto-detected on first boot,
   switchable in Options) — keeps the international Gen-Z slang, translates the rest.
 - **Build:** macOS `.app` (ad-hoc signed) + itch-ready web export, both branded
-  (custom icon/boot splash) and versioned. Combat engine covered by **356 headless
+  (custom icon/boot splash) and versioned. Combat engine covered by **372 headless
   tests** (run on every push via GitHub Actions).
 
 ## Running
@@ -71,7 +75,7 @@ A README.txt with these steps ships inside the zip.
 2. Open this folder in Godot (import `project.godot`).
 3. Press **Play** (F5). The console should print
    `[Database] loaded 76 cards, 25 outfits, 34 enemies, 3 wizards, 30 artifacts`.
-4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `356 passed, 0 failed`).
+4. Run the tests headless: `godot --headless scenes/test_combat.tscn` (expect `372 passed, 0 failed`).
    Set `PW_NO_SAVE=1` when running tools/tests so they never touch your real save.
 
 ## Layout
@@ -86,7 +90,7 @@ scripts/
   combat/            Combatant · EffectResolver · CombatManager (pure logic) · combat_ui
   data/              CardData / OutfitData / EnemyData / WizardData / ArtifactData resources
   map/ run/ ui/      map generation, encounters, and all screen scripts
-  tests/             combat_test.gd (356 checks) · balance_sim.gd (headless balance bot)
+  tests/             combat_test.gd (372 checks) · balance_sim.gd (headless balance bot)
 data/
   cards/ enemies/ outfits/ wizards/ artifacts/   authored .tres content
 builds/              exported macOS .app (gitignored)
