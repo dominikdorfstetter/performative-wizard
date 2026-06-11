@@ -7,5 +7,5 @@ script = ExtResource("1")
 id = &"bouncer_jr"
 title = "Off-Duty Bouncer"
 emoji = "🧱"
-max_hp = 32
-intents = [{ "op": "block", "amount": 8 }, { "op": "attack", "amount": 8 }]
+max_hp = 20
+intents = [{ "op": "block", "amount": 8 }, { "op": "attack", "amount": 6 }]

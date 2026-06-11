@@ -7,5 +7,5 @@ script = ExtResource("1")
 id = &"algo_jr"
 title = "Beta Algorithm"
 emoji = "📟"
-max_hp = 30
+max_hp = 19
 intents = [{ "op": "tax", "amount": 4, "threshold": 12 }, { "op": "attack", "amount": 4, "hits": 2 }]

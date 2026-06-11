@@ -28,14 +28,20 @@ func _is_block(card: CardData) -> bool:
 
 func _est_damage(card: CardData, cm: CombatManager) -> int:
 	var d := 0
+	var alive := cm.living_enemies().size()
 	for e in card.effects:
 		var op := String(e.get("op", ""))
-		if op == "damage" or op == "damage_all":
+		if op == "damage":
 			d += int(e.get("amount", 0))
+		elif op == "damage_all":
+			# wide plays are worth their amount on EVERY living opp — without this the
+			# bot never plays AoE into a swarm and misreads every summoner fight
+			d += int(e.get("amount", 0)) * alive
 		elif op == "damage_if_status":
 			d += int(e.get("amount", 0)) + int(e.get("bonus", 0)) / 2
 		elif op == "damage_x_burn":
-			d += 5
+			var tgt := cm.target()
+			d += (tgt.status(&"burn") if tgt != null else 2) * int(e.get("mult", 2))
 	if d > 0:
 		d += cm.swag_damage_bonus()
 	return d

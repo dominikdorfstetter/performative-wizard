@@ -1756,5 +1756,19 @@ func _ready() -> void:
 	GameState.trend = sv_trend
 	GameState.publicist_used = sv_pub
 
+	print("--- talent agent: once-only bookings ---")
+	var tap := Combatant.new()
+	tap.max_hp = 80
+	tap.hp = 80
+	var tadeck: Array[CardData] = [Database.get_card(&"ember")]
+	var tacm := CombatManager.new()
+	tacm.start_combat(tap, [Database.get_enemy(&"the_talent_agent")], tadeck, 0, true)
+	tacm._resolve_intent(tacm.enemies[0], {"op": "summon_ally", "enemy": "critic_jr", "once": true})
+	_check("first booking lands", tacm.enemies.size(), 2)
+	tacm._resolve_intent(tacm.enemies[0], {"op": "summon_ally", "enemy": "critic_jr", "once": true})
+	_check("a dead client stays gone (once)", tacm.enemies.size(), 2)
+	tacm._resolve_intent(tacm.enemies[0], {"op": "summon_ally", "enemy": "algo_jr", "once": true})
+	_check("a different client still answers", tacm.enemies.size(), 3)
+
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

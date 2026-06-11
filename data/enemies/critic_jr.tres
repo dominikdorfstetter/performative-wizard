@@ -7,5 +7,5 @@ script = ExtResource("1")
 id = &"critic_jr"
 title = "The Critic's Intern"
 emoji = "📝"
-max_hp = 28
+max_hp = 18
 intents = [{ "op": "drain_swag", "amount": 3 }, { "op": "attack", "amount": 6 }]
