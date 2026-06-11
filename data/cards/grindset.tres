@@ -12,5 +12,5 @@ type = "Power"
 rarity = "Rare"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 40
+unlock_clout = 120
 effects = [{ "op": "self_status", "status": "barrier", "amount": 3 }]

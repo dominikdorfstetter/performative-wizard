@@ -11,4 +11,4 @@ description = "The Feed adores you — a Trend never LOWERS your Aura income. fl
 rarity = "Common"
 passive_id = &""
 gold_per_combat = 0
-unlock_clout = 30
+unlock_clout = 90

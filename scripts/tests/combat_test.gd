@@ -345,9 +345,9 @@ func _ready() -> void:
 	GameState.clout_earned = 0
 	_check("ember always unlocked", GameState.card_unlocked(&"ember"), true)
 	_check("inferno locked at 0", GameState.card_unlocked(&"inferno"), false)
-	GameState.clout_earned = 50
-	_check("inferno unlocks (40<=50)", GameState.card_unlocked(&"inferno"), true)
-	_check("combust still locked (90>50)", GameState.card_unlocked(&"combust"), false)
+	GameState.clout_earned = 150
+	_check("inferno unlocks (120<=150)", GameState.card_unlocked(&"inferno"), true)
+	_check("combust still locked (270>150)", GameState.card_unlocked(&"combust"), false)
 	var fpool: Array = GameState.unlocked_cards([&"ember", &"inferno", &"combust"])
 	_check("pool filters to unlocked", fpool.size(), 2)
 	# card upgrade: Glow Up makes a card cost 1 less
@@ -769,8 +769,8 @@ func _ready() -> void:
 	var saved_ce2: int = GameState.clout_earned
 	GameState.clout_earned = 0
 	_check("double_tap locked at 0 clout", GameState.card_unlocked(&"double_tap"), false)
-	GameState.clout_earned = 30
-	_check("double_tap unlocks by 30 clout", GameState.card_unlocked(&"double_tap"), true)
+	GameState.clout_earned = 60
+	_check("double_tap unlocks by 60 clout", GameState.card_unlocked(&"double_tap"), true)
 	GameState.clout_earned = saved_ce2
 
 	# --- archetypes slice 3: vanilla starters + draft bias ---
@@ -869,10 +869,10 @@ func _ready() -> void:
 	# Legendary rarity + 150 unlock gate
 	_check("flashpoint is Legendary", Database.get_card(&"flashpoint").rarity, "Legendary")
 	var saved_ce4: int = GameState.clout_earned
-	GameState.clout_earned = 100
-	_check("Legendary locked at 100 clout", GameState.card_unlocked(&"flashpoint"), false)
-	GameState.clout_earned = 150
-	_check("Legendary unlocks at 150 clout", GameState.card_unlocked(&"flashpoint"), true)
+	GameState.clout_earned = 300
+	_check("Legendary locked at 300 clout", GameState.card_unlocked(&"flashpoint"), false)
+	GameState.clout_earned = 450
+	_check("Legendary unlocks at 450 clout", GameState.card_unlocked(&"flashpoint"), true)
 	GameState.clout_earned = saved_ce4
 
 	# --- archetypes slice 5: wide-S path + Necro swarm fingerprint ---
@@ -1769,6 +1769,34 @@ func _ready() -> void:
 	_check("a dead client stays gone (once)", tacm.enemies.size(), 2)
 	tacm._resolve_intent(tacm.enemies[0], {"op": "summon_ally", "enemy": "algo_jr", "once": true})
 	_check("a different client still answers", tacm.enemies.size(), 3)
+
+	print("--- relic class-gating + unlock pacing ---")
+	var sv_wid: StringName = GameState.wizard_id
+	var sv_ce9: int = GameState.clout_earned
+	var sv_arts9: Array[StringName] = GameState.run_artifacts.duplicate()
+	GameState.clout_earned = 9999
+	GameState.run_artifacts = []
+	GameState.wizard_id = &"fire"
+	var fire_hits := 0
+	for i in 60:
+		var pick := GameState.random_unowned_artifact()
+		if pick in [&"bone_charm", &"ouija_board", &"celebration_of_life", &"fan_behavior", &"venom_vial"]:
+			fire_hits += 1
+	_check("fire is never offered necro-kit relics", fire_hits, 0)
+	GameState.wizard_id = &"necro"
+	var necro_ember := 0
+	for i in 60:
+		if GameState.random_unowned_artifact() == &"ember_pin":
+			necro_ember += 1
+	_check("necro is never offered the fire pin", necro_ember, 0)
+	var open_gates := 0
+	for aid in Database.artifacts:
+		if (Database.artifacts[aid] as ArtifactData).wizards.is_empty():
+			open_gates += 1
+	_check("most relics stay open to everyone", open_gates, 24)
+	GameState.wizard_id = sv_wid
+	GameState.clout_earned = sv_ce9
+	GameState.run_artifacts = sv_arts9
 
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

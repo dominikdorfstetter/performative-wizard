@@ -11,4 +11,4 @@ rarity = "Rare"
 description = "Every enemy starts combat Cooked (Vulnerable 1)."
 passive_id = &"enemies_start_vulnerable"
 gold_per_combat = 0
-unlock_clout = 60
+unlock_clout = 180

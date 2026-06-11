@@ -11,4 +11,4 @@ rarity = "Rare"
 description = "Your crits serve +1 Aura."
 passive_id = &"swag_on_crit"
 gold_per_combat = 0
-unlock_clout = 90
+unlock_clout = 270

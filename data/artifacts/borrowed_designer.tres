@@ -11,4 +11,4 @@ description = "Start every combat with +12 Aura but Exposed 2 — the fit is bor
 rarity = "Legendary"
 passive_id = &"borrowed_drip"
 gold_per_combat = 0
-unlock_clout = 150
+unlock_clout = 450

@@ -13,5 +13,5 @@ rarity = "Common"
 archetype = &"roast"
 swag_gain = 1
 swag_cost = 0
-unlock_clout = 20
+unlock_clout = 60
 effects = [{ "op": "apply_status_all", "status": "burn", "amount": 3 }]

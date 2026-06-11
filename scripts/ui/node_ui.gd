@@ -197,10 +197,13 @@ static func item_reveal(parent: Control, icon_tex: Texture2D, item_title: String
 	for line in lines:
 		var l := Label.new()
 		l.text = Loc.t(String(line))
+		# autowrap BEFORE size: size assignments clamp to the label's minimum, and
+		# without wrap the minimum is the full unwrapped text width (long relic
+		# descriptions used to spill clean out of the panel).
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.position = Vector2(12, y)
 		l.size = Vector2(316, 40)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD
 		l.add_theme_font_size_override("font_size", FS_BODY)
 		l.add_theme_color_override("font_color", Color(0.86, 0.86, 0.9))
 		l.mouse_filter = Control.MOUSE_FILTER_IGNORE

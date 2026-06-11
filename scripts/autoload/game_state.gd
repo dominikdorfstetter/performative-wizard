@@ -401,6 +401,8 @@ func random_unowned_artifact(weights: Dictionary = RELIC_WEIGHTS_NORMAL) -> Stri
 		if aid in run_artifacts or not artifact_unlocked(aid):
 			continue
 		var a: ArtifactData = Database.artifacts[aid]
+		if not a.wizards.is_empty() and wizard_id not in a.wizards:
+			continue   # class-kit relic — dead weight on this wizard's run
 		if not buckets.has(a.rarity):
 			buckets[a.rarity] = []
 		buckets[a.rarity].append(aid)

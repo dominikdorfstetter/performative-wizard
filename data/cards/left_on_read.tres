@@ -13,5 +13,5 @@ rarity = "Rare"
 archetype = &"ramp"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 70
+unlock_clout = 210
 effects = [{ "op": "self_status_x_self", "status": "evade", "from": "strength", "mult": 1.0, "cap": 4 }]

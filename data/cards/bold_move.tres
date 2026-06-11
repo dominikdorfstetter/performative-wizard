@@ -13,5 +13,5 @@ rarity = "Rare"
 archetype = &"storm"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 60
+unlock_clout = 180
 effects = [{ "op": "damage_if_status", "amount": 4, "status": "weak", "bonus": 4, "target": "enemy" }]

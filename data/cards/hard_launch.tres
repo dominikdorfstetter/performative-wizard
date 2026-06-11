@@ -13,5 +13,5 @@ rarity = "Rare"
 archetype = &"viral"
 swag_gain = 0
 swag_cost = 8
-unlock_clout = 70
+unlock_clout = 210
 effects = [{ "op": "damage", "amount": 18, "target": "enemy" }]
