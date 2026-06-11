@@ -7,6 +7,7 @@ script = ExtResource("1")
 id = &"loaded_dice"
 title = "Loaded Dice"
 emoji = "🎲"
+rarity = "Epic"
 description = "Your attacks crit 15% of the time (x2 damage)."
 passive_id = &"crit_15"
 gold_per_combat = 0

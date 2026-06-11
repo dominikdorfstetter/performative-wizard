@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"burn_book"
+title = "Burn Book"
+description = "ALL opps take 2× their own Roast. Then Roast ALL for 2. every page is about you."
+cost = 2
+type = "Attack"
+rarity = "Legendary"
+archetype = &"roast"
+swag_gain = 0
+swag_cost = 0
+unlock_clout = 150
+effects = [{ "op": "damage_x_status", "status": "burn", "mult": 2, "all": true }, { "op": "apply_status_all", "status": "burn", "amount": 2 }]

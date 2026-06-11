@@ -17,6 +17,16 @@ static func apply(effects: Array, ctx: Dictionary) -> void:
 static func _has(ctx: Dictionary, passive: StringName) -> bool:
 	return passive in ctx.get("passives", [])
 
+## Relic boosts on applied debuffs (ember_pin / venom_vial), shared by the single-
+## target and room-wide apply ops.
+static func _adjusted_stacks(sid: StringName, amount: int, ctx: Dictionary) -> int:
+	var stacks := amount
+	if sid == &"burn" and _has(ctx, &"burn_plus_1"):
+		stacks += 1
+	if sid == &"poison" and _has(ctx, &"poison_plus_1"):
+		stacks += 1
+	return stacks
+
 static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 	var op: String = e.get("op", "")
 	var amount: int = int(e.get("amount", 0))
@@ -55,12 +65,13 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 		"apply_status":
 			if target != null:
 				var sid := StringName(e.get("status", &""))
-				var stacks := amount
-				if sid == &"burn" and _has(ctx, &"burn_plus_1"):
-					stacks += 1
-				if sid == &"poison" and _has(ctx, &"poison_plus_1"):
-					stacks += 1
-				target.add_status(sid, stacks)
+				target.add_status(sid, _adjusted_stacks(sid, amount, ctx))
+		"apply_status_all":
+			# Room-wide status. Relic boosts (ember_pin/venom_vial) apply PER ENEMY.
+			var sid_all := StringName(e.get("status", &""))
+			for en in ctx.get("enemies", []):
+				if not en.is_dead():
+					en.add_status(sid_all, _adjusted_stacks(sid_all, amount, ctx))
 		"self_status":
 			if source != null:
 				source.add_status(StringName(e.get("status", &"")), amount)
@@ -103,9 +114,44 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 			if cmg != null:
 				cmg.goon_strike()
 		"damage_x_status":
-			if target != null:
-				var sdmg := target.status(StringName(e.get("status", &""))) * int(e.get("mult", 2))
-				target.take_damage(compute_damage(sdmg + bonus, source, target) * crit, pierce)
+			# Optional keys: of: "self"|"target" (whose stacks scale it; default target),
+			# all: bool (hit every living enemy — each reads its OWN stacks unless
+			# of=="self"), amount (flat base, default 0). One crit roll covers all hits,
+			# matching damage_all. NOTE: when status == "strength", compute_damage adds
+			# the source's strength AGAIN — effective scaling is (mult+1)×Rizz.
+			var xsid := StringName(e.get("status", &""))
+			var xmult := int(e.get("mult", 2))
+			var read_self: bool = String(e.get("of", "target")) == "self"
+			if bool(e.get("all", false)):
+				for en in ctx.get("enemies", []):
+					if not en.is_dead():
+						var st: int = source.status(xsid) if read_self else en.status(xsid)
+						en.take_damage(compute_damage(amount + st * xmult + bonus, source, en) * crit, pierce)
+			elif target != null:
+				var st2: int = source.status(xsid) if read_self else target.status(xsid)
+				target.take_damage(compute_damage(amount + st2 * xmult + bonus, source, target) * crit, pierce)
+		"block_x_status":
+			# Block scaled by someone's stacks (of: "self" e.g. your Goons; "target" e.g.
+			# their Roasted). Exposed (frail) softens the SCALED part, same as the block op.
+			if source != null:
+				var bsid := StringName(e.get("status", &""))
+				var reader: Combatant = source if String(e.get("of", "target")) == "self" else target
+				var bstacks: int = reader.status(bsid) if reader != null else 0
+				var blk2 := amount + bstacks * int(e.get("mult", 2))
+				if source.status(&"frail") > 0:
+					blk2 = int(blk2 * 0.75)
+				source.block += blk2
+		"self_status_x_self":
+			# Gain N of status X where N = your stacks of status Y × mult (floored),
+			# optionally capped. Reads at resolve time — earlier ops in the same effects
+			# array (e.g. a Rizz gain) are already applied.
+			if source != null:
+				var grant := int(floor(source.status(StringName(e.get("from", &""))) * float(e.get("mult", 1.0))))
+				var gcap := int(e.get("cap", 0))
+				if gcap > 0:
+					grant = mini(grant, gcap)
+				if grant > 0:
+					source.add_status(StringName(e.get("status", &"")), grant)
 		"sacrifice_strike":
 			_sacrifice_strike(e, ctx, source, target, bonus, pierce)
 		_:
@@ -125,6 +171,13 @@ static func _sacrifice_strike(e: Dictionary, ctx: Dictionary, source: Combatant,
 		var cm = ctx.get("combat")
 		if cm != null:
 			cm.gain_swag(int(e["swag"]))
+	# celebration_of_life relic: every sacrificed Goon tips +1 Aura on the way out.
+	# Counts as pose_swag — the sendoff is a performance, and the Critic credits it.
+	if _has(ctx, &"sac_swag_1"):
+		var cms = ctx.get("combat")
+		if cms != null:
+			cms.gain_swag(sac)
+			cms.pose_swag += sac
 
 ## Strength (source) and Vulnerable (target) modifiers. Block handled in take_damage.
 static func compute_damage(amount: int, source: Combatant, target: Combatant) -> int:

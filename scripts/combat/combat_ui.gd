@@ -21,8 +21,8 @@ const GOON_X0 := 226.0
 const GOON_STEP := 30.0   # tight overlap: a crowd, not a queue
 const GOON_SIZE := 50.0
 
-const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed", &"poison": "Toxic", &"ritual": "Locked In", &"aura_engine": "Aura Farm", &"hive_mind": "Hive", &"barrier": "Barrier"}
-const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl", &"frail": "crack", &"poison": "drop", &"ritual": "crown", &"aura_engine": "star", &"hive_mind": "bones", &"barrier": "shield"}
+const STATUS_NAME := {&"strength": "Rizz", &"vulnerable": "Cooked", &"weak": "Mid", &"burn": "Roasted", &"undead": "Goons", &"jinx": "Jinxed", &"frail": "Exposed", &"poison": "Toxic", &"ritual": "Locked In", &"aura_engine": "Aura Farm", &"hive_mind": "Hive", &"barrier": "Barrier", &"evade": "Ghosted"}
+const STATUS_ICON := {&"block": "shield", &"burn": "fire", &"undead": "bones", &"strength": "rizz", &"vulnerable": "cooked", &"weak": "mid", &"jinx": "swirl", &"frail": "crack", &"poison": "drop", &"ritual": "crown", &"aura_engine": "star", &"hive_mind": "bones", &"barrier": "shield", &"evade": "swirl"}
 # One-line help shown in the hover tooltip so players know what's affecting them.
 const STATUS_DESC := {
 	&"block": "Absorbs incoming damage; resets at the start of your next turn.",
@@ -38,6 +38,7 @@ const STATUS_DESC := {
 	&"aura_engine": "Aura Farm — gain this much Aura at the start of each turn.",
 	&"hive_mind": "Hive — summon this many Goons each turn.",
 	&"barrier": "Barrier — gain this much Block each turn.",
+	&"evade": "Ghosted — dodges the next N attack hits against you. Gone at the start of your next turn.",
 }
 const PLAYER_LINES := ["aura farming fr", "I'm so BACK", "the aura is auraing", "+1000 aura", "main character energy", "locked TF in", "we mogging rn"]
 # Hit barks (kept in English like all combat slang): enemies roast you when a
@@ -1348,7 +1349,7 @@ func _update_swag_meter() -> void:
 	var tiers := [
 		[CombatManager.THRESHOLD_DAMAGE, Loc.t("+2DMG")],
 		[CombatManager.THRESHOLD_DRAW, Loc.t("DRAW")],
-		[CombatManager.THRESHOLD_PIERCE, Loc.t("PIERCE")],
+		[cm.effective_pierce_line(), Loc.t("PIERCE")],   # backstage_pass moves this to 12
 	]
 	var parts: Array[String] = []
 	var lit := 0

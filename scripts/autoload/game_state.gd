@@ -87,6 +87,7 @@ var critic_last_details: Dictionary = {}     # full rating dict — the reward s
 var critic_last_signature: StringName = &""
 var critic_last_freshness := 1.0
 var pending_critic := ""
+var publicist_used := false                  # publicist relic: one C→B spin per act
 var pending_freshness := 1.0
 # P2 anti-solve: how tired she is of each style you keep serving (run-scoped).
 var critic_fatigue: Dictionary = {}
@@ -229,6 +230,7 @@ func start_run(wid: StringName) -> void:
 	critic_fatigue = {}
 	pending_critic = ""
 	pending_freshness = 1.0
+	publicist_used = false
 	critic_last_rating = ""
 	_roll_trend()
 	map = MapGenerator.generate(randi())
@@ -386,6 +388,40 @@ func add_artifact(id: StringName) -> bool:
 func has_artifact(id: StringName) -> bool:
 	return id in run_artifacts
 
+# Relic drop odds by rarity. Elites roll a richer table than chests/events/shops.
+const RELIC_WEIGHTS_NORMAL := {"Common": 50, "Rare": 30, "Epic": 14, "Legendary": 6}
+const RELIC_WEIGHTS_ELITE := {"Common": 25, "Rare": 40, "Epic": 25, "Legendary": 10}
+
+## The one relic picker every drop source shares: unowned + unlocked, weighted by
+## rarity. An empty tier's weight redistributes by only rolling among non-empty
+## tiers. Returns &"" when the player owns everything available.
+func random_unowned_artifact(weights: Dictionary = RELIC_WEIGHTS_NORMAL) -> StringName:
+	var buckets := {}
+	for aid in Database.artifacts:
+		if aid in run_artifacts or not artifact_unlocked(aid):
+			continue
+		var a: ArtifactData = Database.artifacts[aid]
+		if not buckets.has(a.rarity):
+			buckets[a.rarity] = []
+		buckets[a.rarity].append(aid)
+	if buckets.is_empty():
+		return &""
+	var total := 0
+	for r in buckets:
+		total += int(weights.get(r, 0))
+	if total <= 0:   # rarities missing from the table — degrade to uniform
+		var all: Array = []
+		for r in buckets:
+			all.append_array(buckets[r])
+		return all[randi() % all.size()]
+	var roll := randi() % total
+	for r in buckets:
+		roll -= int(weights.get(r, 0))
+		if roll < 0:
+			var tier: Array = buckets[r]
+			return tier[randi() % tier.size()]
+	return &""
+
 # --- map navigation ------------------------------------------------------
 
 func node_at(row: int, col: int) -> Dictionary:
@@ -465,18 +501,29 @@ const CRITIC_LINES := {
 func record_show_rating(r: Dictionary) -> void:
 	var rating := String(r.get("rating", "B"))
 	var sig: StringName = r.get("signature", &"grind")
+	# publicist relic: once per act, a C is spun into a B before anything banks on it
+	# (score, room mutation, the reward screen's "because" — all see the B).
+	if rating == "C" and has_artifact(&"publicist") and not publicist_used:
+		publicist_used = true
+		rating = "B"
+		message = Loc.t("The Publicist spun the review: C → B. no heckler, no flop era.")
 	var fat := int(critic_fatigue.get(sig, 0))
+	# parasocial relic: she never tires of you — every style is forever fresh.
+	if has_artifact(&"parasocial"):
+		fat = 0
 	critic_last_rating = rating
 	critic_last_details = r.duplicate()
+	critic_last_details["rating"] = rating
 	critic_last_signature = sig
 	critic_last_freshness = maxf(0.0, 1.0 - 0.34 * fat)
 	pending_critic = rating
 	pending_freshness = critic_last_freshness
 	critic_score += {"S": 3, "A": 2, "B": 1, "C": 0}.get(rating, 0)
 	# drift: every style cools by 1, then the style just served heats by 2 (net +1)
-	for k in critic_fatigue.keys():
-		critic_fatigue[k] = max(0, int(critic_fatigue[k]) - 1)
-	critic_fatigue[sig] = min(3, fat + 2)
+	if not has_artifact(&"parasocial"):
+		for k in critic_fatigue.keys():
+			critic_fatigue[k] = max(0, int(critic_fatigue[k]) - 1)
+		critic_fatigue[sig] = min(3, fat + 2)
 	save_meta()
 
 ## Her review rewrites the room ahead. An S opens a VIP room (richer reward) — but
@@ -530,13 +577,21 @@ func _roll_trend() -> void:
 	trend = TRENDS[(act - 1) % TRENDS.size()]
 
 func trend_drip_mod() -> int:
-	return int(TREND_MOD.get(trend, 0))
+	var mod := int(TREND_MOD.get(trend, 0))
+	# trendsetter relic: the Feed adores you — a Trend never LOWERS your income.
+	if mod < 0 and has_artifact(&"trendsetter"):
+		return 0
+	return mod
 
 ## Aura income with the current Trend priced in (floored at 0 — never negative).
 func effective_drip() -> int:
 	return max(0, drip + trend_drip_mod())
 
 func trend_label() -> String:
+	# trendsetter relic: a floored negative trend must not announce a penalty it
+	# no longer applies.
+	if int(TREND_MOD.get(trend, 0)) < 0 and trend_drip_mod() == 0:
+		return Loc.t("TREND: flop era  (Trendsetter: not YOUR era — 0 Aura/turn)")
 	return Loc.t(String(TREND_LABEL.get(trend, "")))
 
 func finish_run(victory: bool) -> void:
@@ -596,6 +651,7 @@ func advance_act() -> bool:
 		return false
 	act += 1
 	gold += 15
+	publicist_used = false   # the Publicist takes one call per act
 	_roll_trend()
 	map = MapGenerator.generate(randi())
 	pos_row = -1
@@ -662,6 +718,7 @@ func _run_to_dict() -> Dictionary:
 		"critic_last_freshness": critic_last_freshness,
 		"pending_critic": pending_critic, "pending_freshness": pending_freshness,
 		"critic_fatigue": fat, "trend": String(trend),
+		"publicist_used": publicist_used,
 	}
 
 func _node_to_dict(n: Dictionary) -> Dictionary:
@@ -736,6 +793,7 @@ func _run_from_dict(d: Dictionary) -> bool:
 	trend = StringName(String(d.get("trend", "")))
 	if trend == &"":
 		_roll_trend()
+	publicist_used = bool(d.get("publicist_used", false))
 	message = ""
 	return true
 

@@ -68,7 +68,7 @@ func _ready() -> void:
 			var ltxt := Label.new()
 			ltxt.text = Loc.t("elite loot: %s — %s") % [Loc.t(a.title), Loc.t(a.description)]
 			ltxt.add_theme_font_size_override("font_size", 17)
-			ltxt.add_theme_color_override("font_color", Color(1.0, 0.82, 0.29))
+			ltxt.add_theme_color_override("font_color", CardView.rarity_color(a.rarity))
 			loot.add_child(ltxt)
 			col.add_child(loot)
 			col.move_child(loot, (%Banner as Label).get_index() + 1)
@@ -80,7 +80,9 @@ func _ready() -> void:
 			lt.tween_property(loot, "modulate:a", 1.0, 0.3)
 
 	var deal_i := 0
-	for id in GameState.reward_offer(3):
+	# for_you_page relic: the algorithm serves a fourth option.
+	var offer_n := 4 if GameState.has_artifact(&"for_you_page") else 3
+	for id in GameState.reward_offer(offer_n):
 		var card := Database.get_card(id)
 		if card != null:
 			var holder := _big_card(card, id)
@@ -162,12 +164,8 @@ func _big_card(card: CardData, id: StringName) -> Control:
 	return holder
 
 func _random_unowned_artifact() -> StringName:
-	var all := Database.all_artifact_ids().duplicate()
-	all.shuffle()
-	for aid in all:
-		if not GameState.has_artifact(aid) and GameState.artifact_unlocked(aid):
-			return aid
-	return &""
+	# Elites roll the richer rarity table — beating one should feel like it.
+	return GameState.random_unowned_artifact(GameState.RELIC_WEIGHTS_ELITE)
 
 func _take(id: StringName) -> void:
 	Audio.play("card", -4.0)

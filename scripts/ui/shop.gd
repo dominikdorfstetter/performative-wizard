@@ -13,10 +13,11 @@ func _ready() -> void:
 	pool.shuffle()
 	for id in pool.slice(0, min(3, pool.size())):
 		var c := Database.get_card(id)
-		_card_stock.append({"id": id, "price": {"Common": 40, "Rare": 60, "Epic": 90, "Legendary": 140}.get(c.rarity, 40), "sold": false})
+		_card_stock.append({"id": id, "price": _girl_math({"Common": 40, "Rare": 60, "Epic": 90, "Legendary": 140}.get(c.rarity, 40)), "sold": false})
 	var aid := _unowned()
 	if aid != &"":
-		_art_stock = {"id": aid, "price": 75, "sold": false}
+		var art := Database.get_artifact(aid)
+		_art_stock = {"id": aid, "price": _girl_math({"Common": 55, "Rare": 75, "Epic": 100, "Legendary": 145}.get(art.rarity, 75)), "sold": false}
 	_build()
 
 func _build() -> void:
@@ -39,7 +40,7 @@ func _build() -> void:
 		var a := Database.get_artifact(_art_stock.id)
 		var afford: bool = not _art_stock.sold and GameState.gold >= _art_stock.price
 		var label := Loc.t("SOLD") if _art_stock.sold else Loc.t(a.description)
-		var ab := NodeUI.choice(a.title, label, Color(0.85, 0.4, 0.95), _buy_artifact, afford, "", SpriteBank.artifact_texture(_art_stock.id))
+		var ab := NodeUI.choice(a.title, label, CardView.rarity_color(a.rarity), _buy_artifact, afford, "", SpriteBank.artifact_texture(_art_stock.id))
 		ab.position = Vector2(800, 150)
 		add_child(ab)
 		if not _art_stock.sold:
@@ -120,12 +121,12 @@ func _do_remove(id: StringName) -> void:
 	_build()
 
 func _unowned() -> StringName:
-	var all := Database.all_artifact_ids().duplicate()
-	all.shuffle()
-	for aid in all:
-		if not GameState.has_artifact(aid) and GameState.artifact_unlocked(aid):
-			return aid
-	return &""
+	return GameState.random_unowned_artifact()
+
+## girl_math relic: Pop-Up prices are 20% off (card removal stays full price —
+## decluttering is a service, not a sale).
+func _girl_math(price: int) -> int:
+	return int(round(price * 0.8)) if GameState.has_artifact(&"girl_math") else price
 
 func _clear() -> void:
 	for c in get_children():

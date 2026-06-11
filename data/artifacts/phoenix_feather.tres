@@ -7,6 +7,7 @@ script = ExtResource("1")
 id = &"phoenix_feather"
 title = "Phoenix Feather"
 emoji = "🪶"
+rarity = "Rare"
 description = "Your first spell each turn deals +3."
 passive_id = &"first_spell_plus_3"
 gold_per_combat = 0

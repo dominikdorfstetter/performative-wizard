@@ -4,10 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"coin_purse"
-title = "Designer Purse"
-emoji = "👛"
+id = &"for_you_page"
+title = "For You Page"
+emoji = "📱"
+description = "Card rewards offer 4 picks instead of 3. the algorithm KNOWS you."
 rarity = "Common"
-description = "Gain 8 gold after each combat."
 passive_id = &""
-gold_per_combat = 8
+gold_per_combat = 0
+unlock_clout = 20

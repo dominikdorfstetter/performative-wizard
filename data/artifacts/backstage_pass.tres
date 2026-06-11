@@ -4,11 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"hype_reel"
-title = "Hype Reel"
-emoji = ""
-rarity = "Rare"
-description = "Your crits serve +1 Aura."
-passive_id = &"swag_on_crit"
+id = &"backstage_pass"
+title = "Backstage Pass"
+emoji = "🎫"
+description = "Your attacks pierce Block from 12 Aura instead of 18. walk right past security."
+rarity = "Epic"
+passive_id = &"pierce_at_12"
 gold_per_combat = 0
 unlock_clout = 90

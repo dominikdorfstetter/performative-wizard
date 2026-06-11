@@ -16,6 +16,8 @@ const ICON_BY_ID := {
 	&"macabre_bow": "arrow", &"touch_grass": "drop", &"shroud": "wing", &"hot_streak": "bolt",
 	&"soul_siphon": "heart", &"drain": "heart",
 	&"slow_burn": "fire", &"hive_mind": "bones", &"grindset": "fist", &"spread_rumors": "flask",
+	&"caught_in_4k": "eye", &"its_giving_mid": "mid", &"unspoken_rizz": "rizz",
+	&"w_rizz": "fist", &"hard_launch": "bolt", &"burn_book": "fire",
 }
 
 const RARITY_COLOR := {
@@ -134,13 +136,16 @@ static func build(card: CardData, enabled: bool, on_press: Callable) -> Button:
 	body.add_theme_stylebox_override("panel", bs)
 	b.add_child(body)
 	# description fills the inset box; shrinks for long text; leaves room for the footer
-	var has_footer := card.swag_gain > 0
+	var has_footer := card.swag_gain > 0 or card.swag_cost > 0
 	var dh := 48 if has_footer else 72
 	var disp_desc := Loc.t(card.description)
 	var dsize := 13 if disp_desc.length() <= 58 else 12
 	_add_label(b, disp_desc, Vector2(9, 120), Vector2(132, dh), dsize, Color(0.87, 0.87, 0.92))
-	if has_footer:
+	if card.swag_gain > 0:
 		_add_label(b, "Aura +%d" % card.swag_gain, Vector2(6, 176), Vector2(138, 16), 13, C_SWAG)
+	elif card.swag_cost > 0:
+		# Aura-cost cards (mini-finishers): the spend reads in gold, where the bank lives.
+		_add_label(b, Loc.t("Spends %d Aura") % card.swag_cost, Vector2(6, 176), Vector2(138, 16), 13, C_GOLD)
 	return b
 
 static func _hover(b: Button, on: bool) -> void:
@@ -161,7 +166,7 @@ static func icon_for(card: CardData) -> StringName:
 		return StringName(ICON_BY_ID[card.id])
 	for e in card.effects:
 		var op := String(e.get("op", ""))
-		if op == "damage_all":
+		if op == "damage_all" or (op == "damage_x_status" and bool(e.get("all", false))):
 			return &"burst"
 		if op == "summon":
 			return &"bones"
@@ -175,8 +180,12 @@ static func icon_for(card: CardData) -> StringName:
 			return &"eye"
 		if op == "damage_x_burn":
 			return &"fire"
-		if op == "apply_status" and StringName(e.get("status", &"")) == &"burn":
+		if op in ["apply_status", "apply_status_all"] and StringName(e.get("status", &"")) == &"burn":
 			return &"fire"
+		if op == "block_x_status":
+			return &"shield"
+		if op == "self_status_x_self" and StringName(e.get("status", &"")) == &"evade":
+			return &"swirl"
 		if op == "self_status" and StringName(e.get("status", &"")) == &"strength":
 			return &"rizz"
 	if card.type == "Attack":

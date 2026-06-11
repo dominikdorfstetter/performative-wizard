@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"put_on_blast"
+title = "Put On Blast"
+description = "Roast ALL opps for 3. Aura +1. everyone gets the smoke."
+cost = 1
+type = "Attack"
+rarity = "Common"
+archetype = &"roast"
+swag_gain = 1
+swag_cost = 0
+unlock_clout = 20
+effects = [{ "op": "apply_status_all", "status": "burn", "amount": 3 }]

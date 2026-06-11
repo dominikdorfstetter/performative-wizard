@@ -4,10 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"glitter_brooch"
-title = "Glitter Brooch"
-emoji = "📿"
+id = &"publicist"
+title = "The Publicist"
+emoji = "📞"
+description = "Once per act, a C grade is spun into a B — no heckler, no flop era. PR is magic."
 rarity = "Rare"
-description = "Aura cards grant +1 Aura."
-passive_id = &"pose_plus_1"
+passive_id = &""
 gold_per_combat = 0
+unlock_clout = 50

@@ -4,10 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"glitter_brooch"
-title = "Glitter Brooch"
-emoji = "📿"
+id = &"royalties"
+title = "Royalties"
+emoji = "💿"
+description = "Finishers refund 25% of the Aura they spend. the hit keeps paying."
 rarity = "Rare"
-description = "Aura cards grant +1 Aura."
-passive_id = &"pose_plus_1"
+passive_id = &"finisher_refund_25"
 gold_per_combat = 0
+unlock_clout = 60

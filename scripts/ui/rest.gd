@@ -1,6 +1,8 @@
 extends Control
 ## Rest site: heal, or visit the tailor to remove (thin) a card from your deck.
 
+var _removed_this_visit := 0   # closet_cleanout relic: Get Snatched yeets 2 per visit
+
 func _ready() -> void:
 	NodeUI.background(self)
 	_menu()
@@ -25,12 +27,21 @@ func _remove_menu() -> void:
 	NodeUI.title(self, "Yeet which card?", Color(0.4, 0.7, 0.9))
 	NodeUI.sub(self, Loc.t("%d cards — yeeting removes one copy") % GameState.deck.size())
 	NodeUI.card_picker(self, GameState.deck, _do_remove)
-	var back := NodeUI.small_button("Cancel", _menu)
+	# After the cleanout's first yeet the rest action is SPENT — backing out must
+	# leave the site, or Cancel would re-open the menu for a bonus heal/upgrade.
+	var back := NodeUI.small_button("Cancel", _menu) if _removed_this_visit == 0 else NodeUI.small_button("Done", _to_map)
 	back.position = Vector2(486, 604)
 	add_child(back)
 
 func _do_remove(id: StringName) -> void:
 	GameState.deck.erase(id)
+	_removed_this_visit += 1
+	# closet_cleanout relic: the first yeet re-opens the picker for one more.
+	if GameState.has_artifact(&"closet_cleanout") and _removed_this_visit < 2 and GameState.deck.size() > 1:
+		Audio.play("card", -4.0)
+		_remove_menu()
+		NodeUI.sub(self, Loc.t("Closet Cleanout: pick ONE more to yeet"), 134.0)
+		return
 	_to_map()
 
 func _has_upgradeable() -> bool:

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"camera_roll"
+title = "Camera Roll"
+emoji = "📸"
+description = "Your hand never auto-discards (10-card cap still applies). delete NOTHING."
+rarity = "Legendary"
+passive_id = &"retain_hand_always"
+gold_per_combat = 0
+unlock_clout = 150

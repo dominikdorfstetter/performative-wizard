@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"left_on_read"
+title = "Left on Read"
+description = "Gain Ghosted = your Rizz (max 4): dodge that many hits this round. seen. no reply."
+cost = 1
+type = "Skill"
+rarity = "Rare"
+archetype = &"ramp"
+swag_gain = 0
+swag_cost = 0
+unlock_clout = 70
+effects = [{ "op": "self_status_x_self", "status": "evade", "from": "strength", "mult": 1.0, "cap": 4 }]
