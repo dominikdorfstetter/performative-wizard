@@ -76,6 +76,7 @@ var discard_pile: Array[CardData] = []
 var retain_hand := false        # set by the "retain" op; consumed at end_turn
 var pending_pick_n := 0         # how many top-of-pile cards a "peek_pick" laid out
 var pose_strike_used := false   # fan_behavior relic: first Pose per turn triggers the Goons
+var summoned_ids := {}          # summon_ally "once" bookkeeping: id -> true (per fight)
 
 var passives: Array[StringName] = []
 # Gold-thief fights (The IRS): the player's purse, seeded by the view from
@@ -120,6 +121,7 @@ func start_combat(p: Combatant, encounter: Array, deck: Array[CardData], drip_va
 	peak_undead = 0
 	encore = 0
 	booed = false
+	summoned_ids = {}
 	state = State.PLAYER_TURN
 	_apply_combat_start_passives()
 	peak_swag = swag                 # seed the high-water mark after outfit seeding
@@ -728,7 +730,12 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 		"summon_ally":
 			var sid := StringName(intent.get("enemy", &""))
 			var ed := Database.get_enemy(sid)
-			if ed != null and living_enemies().size() < 4:
+			# "once": this ally takes the booking a single time per fight — kill it
+			# and it STAYS gone (the Talent Agent's clients have other gigs).
+			if bool(intent.get("once", false)) and summoned_ids.has(sid):
+				_say(Loc.t("%s makes a call... no one picks up.") % name)
+			elif ed != null and living_enemies().size() < 4:
+				summoned_ids[sid] = true
 				enemies.append(_make_enemy(ed))
 				_say(Loc.t("%s called backup: %s pulled up!") % [name, Loc.t(ed.title)])
 		"steal_gold":

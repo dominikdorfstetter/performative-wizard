@@ -7,5 +7,5 @@ script = ExtResource("1")
 id = &"the_talent_agent"
 title = "The Talent Agent"
 emoji = "💼"
-max_hp = 145
-intents = [{ "op": "summon_ally", "enemy": "critic_jr" }, { "op": "attack", "amount": 10 }, { "op": "summon_ally", "enemy": "bouncer_jr" }, { "op": "drain_swag", "amount": 5 }, { "op": "summon_ally", "enemy": "algo_jr" }, { "op": "attack", "amount": 12 }, { "op": "buff", "status": "strength", "amount": 2 }, { "op": "attack", "amount": 8, "hits": 2 }]
+max_hp = 125
+intents = [{ "op": "summon_ally", "enemy": "critic_jr", "once": true }, { "op": "attack", "amount": 10 }, { "op": "drain_swag", "amount": 5 }, { "op": "summon_ally", "enemy": "bouncer_jr", "once": true }, { "op": "attack", "amount": 12 }, { "op": "buff", "status": "strength", "amount": 1 }, { "op": "summon_ally", "enemy": "algo_jr", "once": true }, { "op": "attack", "amount": 8, "hits": 2 }]

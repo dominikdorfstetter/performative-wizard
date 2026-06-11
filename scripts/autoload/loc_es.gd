@@ -146,6 +146,7 @@ const TABLE := {
 	"%s files your case and DIPS with %d gold!": "¡%s archiva tu caso y SE PIRA con %d de oro!",
 	"%s files your case and dips.": "%s archiva tu caso y se pira.",
 	"your refund came through: +%d gold": "llegó tu reembolso: +%d de oro",
+	"%s makes a call... no one picks up.": "%s hace una llamada... nadie contesta.",
 	# --- artifacts ---
 	"Bone Charm": "Amuleto de Hueso",
 	"Designer Purse": "Bolso de Diseño",
