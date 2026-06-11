@@ -4,10 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"glitter_brooch"
-title = "Glitter Brooch"
-emoji = "📿"
+id = &"set_spray"
+title = "Set Spray"
+emoji = "😌"
+description = "Keep up to 6 Block between turns. the look stays SET."
 rarity = "Rare"
-description = "Aura cards grant +1 Aura."
-passive_id = &"pose_plus_1"
+passive_id = &"block_carryover_6"
 gold_per_combat = 0
+unlock_clout = 70

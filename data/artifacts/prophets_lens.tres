@@ -7,6 +7,7 @@ script = ExtResource("1")
 id = &"prophets_lens"
 title = "Cat-Eye Glasses"
 emoji = "🕶️"
+rarity = "Epic"
 description = "Draw +1 card each turn."
 passive_id = &"draw_plus_1"
 gold_per_combat = 0

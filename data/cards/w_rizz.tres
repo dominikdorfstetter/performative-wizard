@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"w_rizz"
+title = "W Rizz"
+description = "Deal 2, five times. Pose: +2 Aura. five chances to be him."
+cost = 2
+type = "Attack"
+rarity = "Legendary"
+archetype = &"storm"
+swag_gain = 2
+swag_cost = 0
+unlock_clout = 150
+effects = [{ "op": "damage", "amount": 2, "target": "enemy" }, { "op": "damage", "amount": 2, "target": "enemy" }, { "op": "damage", "amount": 2, "target": "enemy" }, { "op": "damage", "amount": 2, "target": "enemy" }, { "op": "damage", "amount": 2, "target": "enemy" }]

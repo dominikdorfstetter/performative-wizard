@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"soft_launch"
+title = "Soft Launch"
+description = "Spend 6 Aura: deal 9 to ALL opps. a lil teaser before the reveal."
+cost = 1
+type = "Attack"
+rarity = "Epic"
+archetype = &"viral"
+swag_gain = 0
+swag_cost = 6
+unlock_clout = 80
+effects = [{ "op": "damage_all", "amount": 9 }]

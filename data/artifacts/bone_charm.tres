@@ -7,6 +7,7 @@ script = ExtResource("1")
 id = &"bone_charm"
 title = "Bone Charm"
 emoji = "🦴"
+rarity = "Rare"
 description = "Summons summon +1 Goon."
 passive_id = &"undead_plus_1_on_summon"
 gold_per_combat = 0

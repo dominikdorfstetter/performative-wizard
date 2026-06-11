@@ -60,7 +60,8 @@ func _open(rng: RandomNumberGenerator) -> void:
 func _reveal_artifact(aid: StringName) -> void:
 	var a := Database.get_artifact(aid)
 	NodeUI.sub(self, "W — you looted an artefact:", 180)
-	NodeUI.item_reveal(self, SpriteBank.artifact_texture(aid), a.title, [a.description])
+	NodeUI.item_reveal(self, SpriteBank.artifact_texture(aid), a.title, [a.description],
+		Vector2(406, 236), CardView.rarity_color(a.rarity))
 
 func _reveal_card(cid: StringName) -> void:
 	NodeUI.sub(self, "a spare card fell out", 190)
@@ -81,13 +82,8 @@ func _pop(node: Control) -> void:
 	var tw := create_tween()
 	tw.tween_property(node, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
-func _unowned(rng: RandomNumberGenerator) -> StringName:
-	var all := Database.all_artifact_ids().duplicate()
-	all.shuffle()
-	for aid in all:
-		if not GameState.has_artifact(aid) and GameState.artifact_unlocked(aid):
-			return aid
-	return &""
+func _unowned(_rng: RandomNumberGenerator) -> StringName:
+	return GameState.random_unowned_artifact()
 
 func _to_map() -> void:
 	Fader.change_scene("res://scenes/map/map.tscn")

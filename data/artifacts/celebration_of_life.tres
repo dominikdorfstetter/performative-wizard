@@ -4,10 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"iron_corset"
-title = "Iron Corset"
-emoji = "🩹"
+id = &"celebration_of_life"
+title = "Celebration of Life"
+emoji = "🥀"
+description = "Each Goon you sacrifice tips +1 Aura on the way out. what a sendoff."
 rarity = "Common"
-description = "When an enemy hits you, deal 3 back."
-passive_id = &"thorns_3"
+passive_id = &"sac_swag_1"
 gold_per_combat = 0
+unlock_clout = 30

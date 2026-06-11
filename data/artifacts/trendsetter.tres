@@ -4,10 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"coin_purse"
-title = "Designer Purse"
-emoji = "👛"
+id = &"trendsetter"
+title = "Trendsetter"
+emoji = "✨"
+description = "The Feed adores you — a Trend never LOWERS your Aura income. flop era? not yours."
 rarity = "Common"
-description = "Gain 8 gold after each combat."
 passive_id = &""
-gold_per_combat = 8
+gold_per_combat = 0
+unlock_clout = 30

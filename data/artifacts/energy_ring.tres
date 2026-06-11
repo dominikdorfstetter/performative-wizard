@@ -7,6 +7,7 @@ script = ExtResource("1")
 id = &"energy_ring"
 title = "Ring of Excess"
 emoji = "💍"
+rarity = "Epic"
 description = "+1 Energy each turn."
 passive_id = &"energy_plus_1"
 gold_per_combat = 0

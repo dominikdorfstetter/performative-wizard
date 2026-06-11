@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"unspoken_rizz"
+title = "Unspoken Rizz"
+description = "Deal 2× your Rizz. (then Rizz adds itself again. it's unspoken.)"
+cost = 1
+type = "Attack"
+rarity = "Epic"
+archetype = &"ramp"
+swag_gain = 0
+swag_cost = 0
+unlock_clout = 90
+effects = [{ "op": "damage_x_status", "status": "strength", "mult": 2, "of": "self", "target": "enemy" }]
