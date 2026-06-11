@@ -11,4 +11,4 @@ description = "Card rewards offer 4 picks instead of 3. the algorithm KNOWS you.
 rarity = "Common"
 passive_id = &""
 gold_per_combat = 0
-unlock_clout = 20
+unlock_clout = 60

@@ -29,8 +29,8 @@ const STATUS_DESC := {
 	&"strength": "Rizz — adds its value to the damage of every attack.",
 	&"vulnerable": "Cooked — takes +50% damage while it lasts.",
 	&"weak": "Mid — deals 25% less damage while it lasts.",
-	&"burn": "Roasted — takes this much at the start of its turn, then ramps down 1. Ignores Block.",
-	&"poison": "Toxic — takes this much at turn start (ignores Block), then ramps down 1.",
+	&"burn": "Roasted — takes this much at the start of its turn, then burns DOWN 1. Ignores Block — detonate it while it's hot.",
+	&"poison": "Toxic — takes this much at turn start (ignores Block). Never fades: cleanse it or outlive it.",
 	&"undead": "Goons — at end of turn each hits a random enemy for 2, and they soak hits against you.",
 	&"jinx": "Jinxed — −10% crit chance per stack.",
 	&"frail": "Exposed — you gain 25% less Block while it lasts.",
@@ -1546,6 +1546,14 @@ func _end_label(panel: Panel, text: String, y: float, fs: int, color: Color, dis
 	panel.add_child(l)
 	return l
 
+## The line above the CTA row: a fresh S/A is the moment a player actually
+## rates, so the ask names the grade while it still feels earned.
+func _cta_lead_in() -> String:
+	var r := GameState.critic_last_rating
+	if r == "S" or r == "A":
+		return Loc.t("the Critic gave you an %s — agree? a rating helps a solo dev:") % r
+	return Loc.t("enjoying the demo? every rating helps a solo dev:")
+
 func _cta_row(panel: Panel, y: float) -> void:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1554,7 +1562,7 @@ func _cta_row(panel: Panel, y: float) -> void:
 	row.size = Vector2(540, 40)
 	panel.add_child(row)
 	var links := [
-		[Loc.t("follow on itch.io"), GameState.LINK_ITCH, Color(0.95, 0.45, 0.55)],
+		[Loc.t("rate it on itch ★"), GameState.LINK_ITCH + "/rate", Color(0.95, 0.45, 0.55)],
 		[Loc.t("join the Discord"), GameState.LINK_DISCORD, Color(0.55, 0.6, 0.95)],
 		[Loc.t("report a bug"), GameState.LINK_ISSUES, Color(0.5, 0.62, 0.7)],
 	]
@@ -1578,7 +1586,7 @@ func _run_end_panel(victory: bool, earned: int, lifetime_before: int) -> void:
 	if GameState.critic_last_rating != "":
 		_end_label(panel, Loc.t("THE CRITIC:  ") + GameState.critic_quip(GameState.critic_last_rating), 108, 16, Color(0.95, 0.7, 0.85))
 	_end_label(panel, Loc.t("+%d Clout earned   (lifetime %d)") % [earned, GameState.clout_earned], 156, 22, C_GOLD)
-	var fresh := GameState.unlocks_between(lifetime_before, GameState.clout_earned)
+	var fresh := GameState.unlocks_between(lifetime_before, GameState.clout_earned, GameState.wizard_id, GameState.wizard_clout(GameState.wizard_id) - (GameState.clout_earned - lifetime_before), GameState.wizard_clout(GameState.wizard_id))
 	if not fresh.is_empty():
 		_end_label(panel, Loc.t("NEW UNLOCKS: %s") % ", ".join(fresh), 196, 16, Color(0.6, 0.95, 0.7))
 	var nxt := GameState.next_wizard_unlock()
@@ -1598,7 +1606,7 @@ func _run_end_panel(victory: bool, earned: int, lifetime_before: int) -> void:
 	var menu := NodeUI.menu_button(Loc.t("Main Menu"), func(): Fader.change_scene("res://scenes/hub/main_menu.tscn"), Color(0.5, 0.55, 0.7), 250.0)
 	menu.position = Vector2(300, 320)
 	panel.add_child(menu)
-	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 388, 14, Color(0.6, 0.6, 0.68))
+	_end_label(panel, _cta_lead_in(), 388, 14, Color(0.6, 0.6, 0.68))
 	_cta_row(panel, 414)
 	panel.pivot_offset = panel.size * 0.5
 	panel.scale = Vector2(0.7, 0.7)
@@ -1618,7 +1626,7 @@ func _act_clear_panel(cleared_act: int) -> void:
 	var cont := NodeUI.menu_button(Loc.t("onward — Act %d") % GameState.act, func(): Fader.change_scene("res://scenes/map/map.tscn"), Color(0.45, 0.82, 0.55), 280.0)
 	cont.position = Vector2(150, 230)
 	panel.add_child(cont)
-	_end_label(panel, Loc.t("enjoying the demo? every follow helps a solo dev:"), 330, 14, Color(0.6, 0.6, 0.68))
+	_end_label(panel, _cta_lead_in(), 330, 14, Color(0.6, 0.6, 0.68))
 	_cta_row(panel, 358)
 	panel.pivot_offset = panel.size * 0.5
 	panel.scale = Vector2(0.7, 0.7)

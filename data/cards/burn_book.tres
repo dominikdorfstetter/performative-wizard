@@ -13,5 +13,5 @@ rarity = "Legendary"
 archetype = &"roast"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 150
+unlock_clout = 450
 effects = [{ "op": "damage_x_status", "status": "burn", "mult": 2, "all": true }, { "op": "apply_status_all", "status": "burn", "amount": 2 }]

@@ -282,11 +282,11 @@ func _ready() -> void:
 	ppo.hp = 72
 	cmpo.start_combat(ppo, [Database.get_enemy(&"garden_gnome")], [Database.get_card(&"spread_rumors")], 0, true)
 	cmpo.hand = [Database.get_card(&"spread_rumors")]
-	cmpo.play_card(cmpo.hand[0])               # apply poison 4
+	cmpo.play_card(cmpo.hand[0])               # apply Toxic 3 (rumors are forever)
 	var ehp0: int = cmpo.enemies[0].hp
-	cmpo.end_turn()                            # enemy turn: poison ticks 4, then ->3
-	_check("poison ticked 4", ehp0 - cmpo.enemies[0].hp, 4)
-	_check("poison ramped to 3", cmpo.enemies[0].status(&"poison"), 3)
+	cmpo.end_turn()                            # enemy turn: toxic ticks 3 and PERSISTS
+	_check("toxic ticked 3", ehp0 - cmpo.enemies[0].hp, 3)
+	_check("toxic never ramps down", cmpo.enemies[0].status(&"poison"), 3)
 
 	# enrage: gym_rat gains Strength when hit
 	var cme := CombatManager.new()
@@ -308,7 +308,7 @@ func _ready() -> void:
 	_check("Spotlight: enemy starts Cooked", cmap.enemies[0].status(&"vulnerable"), 1)
 	cmap.hand = [Database.get_card(&"spread_rumors")]
 	cmap.play_card(cmap.hand[0])
-	_check("Venom Vial: poison 4->5", cmap.enemies[0].status(&"poison"), 5)
+	_check("Venom Vial: toxic 3->4", cmap.enemies[0].status(&"poison"), 4)
 
 	# --- Power cards: persistent start-of-turn effects -----------------------
 	print("--- powers ---")
@@ -343,13 +343,18 @@ func _ready() -> void:
 	GameState.clout_earned = 320
 	_check("rizz unlocks at 320", GameState.wizard_unlocked(&"rizz"), true)
 	GameState.clout_earned = 0
-	_check("ember always unlocked", GameState.card_unlocked(&"ember"), true)
-	_check("inferno locked at 0", GameState.card_unlocked(&"inferno"), false)
-	GameState.clout_earned = 50
-	_check("inferno unlocks (40<=50)", GameState.card_unlocked(&"inferno"), true)
-	_check("combust still locked (90>50)", GameState.card_unlocked(&"combust"), false)
-	var fpool: Array = GameState.unlocked_cards([&"ember", &"inferno", &"combust"])
+	GameState.clout_by_wizard = {&"fire": 0}
+	_check("ember always unlocked", GameState.card_unlocked(&"ember", &"fire"), true)
+	_check("inferno locked at 0", GameState.card_unlocked(&"inferno", &"fire"), false)
+	GameState.clout_by_wizard = {&"fire": 150}
+	_check("inferno unlocks (120<=150)", GameState.card_unlocked(&"inferno", &"fire"), true)
+	_check("combust still locked (270>150)", GameState.card_unlocked(&"combust", &"fire"), false)
+	var fpool: Array = GameState.unlocked_cards([&"ember", &"inferno", &"combust"], &"fire")
 	_check("pool filters to unlocked", fpool.size(), 2)
+	# unlocks are PER WIZARD: Vesper's grind opens nothing on Morticia's rack
+	_check("fire clout does not unlock necro cards", GameState.card_unlocked(&"gravecall", &"necro"), false)
+	GameState.clout_by_wizard[&"necro"] = 150
+	_check("necro clout unlocks necro cards", GameState.card_unlocked(&"gravecall", &"necro"), true)
 	# card upgrade: Glow Up makes a card cost 1 less
 	var infc := Database.get_card(&"inferno")
 	_check("base cost 2", GameState.card_cost(infc), 2)
@@ -766,12 +771,12 @@ func _ready() -> void:
 	_check("smoulder aura engine ticks +1", cmsm.swag >= sw0 + 1, true)
 
 	# unlock gate respects the new cards
-	var saved_ce2: int = GameState.clout_earned
-	GameState.clout_earned = 0
-	_check("double_tap locked at 0 clout", GameState.card_unlocked(&"double_tap"), false)
-	GameState.clout_earned = 30
-	_check("double_tap unlocks by 30 clout", GameState.card_unlocked(&"double_tap"), true)
-	GameState.clout_earned = saved_ce2
+	var saved_cbw2: Dictionary = GameState.clout_by_wizard.duplicate()
+	GameState.clout_by_wizard = {&"rizz": 0}
+	_check("double_tap locked at 0 clout", GameState.card_unlocked(&"double_tap", &"rizz"), false)
+	GameState.clout_by_wizard = {&"rizz": 60}
+	_check("double_tap unlocks by 60 clout", GameState.card_unlocked(&"double_tap", &"rizz"), true)
+	GameState.clout_by_wizard = saved_cbw2
 
 	# --- archetypes slice 3: vanilla starters + draft bias ---
 	print("--- starters + draft bias ---")
@@ -868,12 +873,12 @@ func _ready() -> void:
 	_check("flashpoint then applies 3 Roast (4->7)", cmfp.enemies[0].status(&"burn"), 7)
 	# Legendary rarity + 150 unlock gate
 	_check("flashpoint is Legendary", Database.get_card(&"flashpoint").rarity, "Legendary")
-	var saved_ce4: int = GameState.clout_earned
-	GameState.clout_earned = 100
-	_check("Legendary locked at 100 clout", GameState.card_unlocked(&"flashpoint"), false)
-	GameState.clout_earned = 150
-	_check("Legendary unlocks at 150 clout", GameState.card_unlocked(&"flashpoint"), true)
-	GameState.clout_earned = saved_ce4
+	var saved_cbw4: Dictionary = GameState.clout_by_wizard.duplicate()
+	GameState.clout_by_wizard = {&"fire": 300}
+	_check("Legendary locked at 300 clout", GameState.card_unlocked(&"flashpoint", &"fire"), false)
+	GameState.clout_by_wizard = {&"fire": 450}
+	_check("Legendary unlocks at 450 clout", GameState.card_unlocked(&"flashpoint", &"fire"), true)
+	GameState.clout_by_wizard = saved_cbw4
 
 	# --- archetypes slice 5: wide-S path + Necro swarm fingerprint ---
 	print("--- wide-S + swarm fingerprint ---")
@@ -1769,6 +1774,78 @@ func _ready() -> void:
 	_check("a dead client stays gone (once)", tacm.enemies.size(), 2)
 	tacm._resolve_intent(tacm.enemies[0], {"op": "summon_ally", "enemy": "algo_jr", "once": true})
 	_check("a different client still answers", tacm.enemies.size(), 3)
+
+	print("--- relic class-gating + unlock pacing ---")
+	var sv_wid: StringName = GameState.wizard_id
+	var sv_ce9: int = GameState.clout_earned
+	var sv_arts9: Array[StringName] = GameState.run_artifacts.duplicate()
+	GameState.clout_earned = 9999
+	GameState.run_artifacts = []
+	GameState.wizard_id = &"fire"
+	var fire_hits := 0
+	for i in 60:
+		var pick := GameState.random_unowned_artifact()
+		if pick in [&"bone_charm", &"ouija_board", &"celebration_of_life", &"fan_behavior", &"venom_vial"]:
+			fire_hits += 1
+	_check("fire is never offered necro-kit relics", fire_hits, 0)
+	GameState.wizard_id = &"necro"
+	var necro_ember := 0
+	for i in 60:
+		if GameState.random_unowned_artifact() == &"ember_pin":
+			necro_ember += 1
+	_check("necro is never offered the fire pin", necro_ember, 0)
+	var open_gates := 0
+	for aid in Database.artifacts:
+		if (Database.artifacts[aid] as ArtifactData).wizards.is_empty():
+			open_gates += 1
+	_check("most relics stay open to everyone", open_gates, 24)
+	GameState.wizard_id = sv_wid
+	GameState.clout_earned = sv_ce9
+	GameState.run_artifacts = sv_arts9
+
+	print("--- enemy block + toxic identity (owner-reported) ---")
+	var bp1 := Combatant.new()
+	bp1.max_hp = 80
+	bp1.hp = 80
+	var bcm := CombatManager.new()
+	var bdeck: Array[CardData] = [Database.get_card(&"ember")]
+	bcm.start_combat(bp1, [Database.get_enemy(&"garden_gnome")], bdeck, 0, true)
+	bcm.end_turn()                              # gnome's first intent: Block 8
+	_check("enemy block survives into your turn", bcm.enemies[0].block, 8)
+	var bhp0: int = bcm.enemies[0].hp
+	bcm.hand = [Database.get_card(&"ember")]
+	bcm.play_card(bcm.hand[0])                  # ember 6 into block 8
+	_check("enemy block actually blocks", bhp0 - bcm.enemies[0].hp, 0)
+	_check("the block absorbed it", bcm.enemies[0].block, 2)
+	bcm.end_turn()                              # gnome acts again: stale block cleared first
+	_check("stale enemy block cleared on its next action", bcm.enemies[0].block, 0)
+	# toxic counterplay: cleanse cures the rumor
+	var bp2 := Combatant.new()
+	bp2.max_hp = 80
+	bp2.hp = 80
+	var bcm2 := CombatManager.new()
+	bcm2.start_combat(bp2, [Database.get_enemy(&"alley_cat")], bdeck, 0, true)
+	bp2.add_status(&"poison", 4)
+	bcm2.hand = [Database.get_card(&"touch_grass")]
+	bcm2.play_card(bcm2.hand[0])
+	_check("cleanse cures Toxic", bp2.status(&"poison"), 0)
+
+	print("--- per-wizard unlock persistence ---")
+	var sv_cbw: Dictionary = GameState.clout_by_wizard.duplicate()
+	var sv_ce10: int = GameState.clout_earned
+	GameState.clout_by_wizard = {&"fire": 120, &"necro": 45}
+	var meta := GameState._meta_to_dict()
+	GameState.clout_by_wizard = {}
+	GameState._meta_from_dict(meta)
+	_check("per-wizard clout survives the save round-trip", [GameState.wizard_clout(&"fire"), GameState.wizard_clout(&"necro")], [120, 45])
+	var legacy := GameState._meta_to_dict()
+	legacy.erase("clout_by_wizard")
+	legacy["clout_earned"] = 200
+	GameState._meta_from_dict(legacy)
+	_check("legacy saves credit the starter wizard", GameState.wizard_clout(&"fire"), 200)
+	_check("legacy saves do not credit the others", GameState.wizard_clout(&"necro"), 0)
+	GameState.clout_by_wizard = sv_cbw
+	GameState.clout_earned = sv_ce10
 
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

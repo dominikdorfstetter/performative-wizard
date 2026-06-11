@@ -15,4 +15,4 @@ swag_gain = 0
 swag_cost = 0
 effects = [{ "op": "self_status", "status": "strength", "amount": 3 }, { "op": "draw", "amount": 1 }]
 
-unlock_clout = 110
+unlock_clout = 330

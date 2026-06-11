@@ -13,5 +13,5 @@ rarity = "Rare"
 archetype = &"roast"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 60
+unlock_clout = 180
 effects = [{ "op": "block", "amount": 3 }, { "op": "block_x_status", "status": "burn", "mult": 2, "of": "target" }]

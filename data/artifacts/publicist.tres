@@ -11,4 +11,4 @@ description = "Once per act, a C grade is spun into a B — no heckler, no flop 
 rarity = "Rare"
 passive_id = &""
 gold_per_combat = 0
-unlock_clout = 50
+unlock_clout = 150

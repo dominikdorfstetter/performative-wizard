@@ -50,7 +50,10 @@ const BOUTIQUE: Array[Dictionary] = [
 var unlocked_outfits: Array[StringName] = []
 var equipped: Dictionary = {}
 var clout := 0                               # meta currency, spent in the Boutique
-var clout_earned := 0                        # lifetime Clout (never spent down) — gates unlocks
+var clout_earned := 0
+# Lifetime Clout earned PLAYING each wizard — cards unlock per wizard, so you
+# open Morticia's pool by running Morticia, not by farming Vesper.
+var clout_by_wizard := {}                        # lifetime Clout (never spent down) — gates unlocks
 var ascension := 0                           # highest cleared difficulty tier
 var critic_score := 0                        # lifetime style score from The Critic's reviews
 var sfx_on := true
@@ -170,6 +173,7 @@ func new_game() -> void:
 	equipped = DEFAULT_EQUIP.duplicate()
 	clout = 0
 	clout_earned = 0
+	clout_by_wizard = {}
 	ascension = 0
 	critic_score = 0
 	run_artifacts = []
@@ -268,19 +272,23 @@ func card_cost(card: CardData) -> int:
 		return 0
 	return max(0, card.cost - (1 if upgrade_mode(card.id) == "cost" else 0))
 
-func card_unlocked(id: StringName) -> bool:
+## Clout earned while playing this specific wizard (their card-pool key).
+func wizard_clout(wid: StringName) -> int:
+	return int(clout_by_wizard.get(wid, 0))
+
+func card_unlocked(id: StringName, wid: StringName = wizard_id) -> bool:
 	var c := Database.get_card(id)
-	return c != null and clout_earned >= c.unlock_clout
+	return c != null and wizard_clout(wid) >= c.unlock_clout
 
 func artifact_unlocked(id: StringName) -> bool:
 	var a := Database.get_artifact(id)
 	return a != null and clout_earned >= a.unlock_clout
 
 ## Filter a card-id list down to what the player has unlocked (for reward/shop pools).
-func unlocked_cards(ids: Array) -> Array:
+func unlocked_cards(ids: Array, wid: StringName = wizard_id) -> Array:
 	var out: Array = []
 	for id in ids:
-		if card_unlocked(id):
+		if card_unlocked(id, wid):
 			out.append(id)
 	return out
 
@@ -401,6 +409,8 @@ func random_unowned_artifact(weights: Dictionary = RELIC_WEIGHTS_NORMAL) -> Stri
 		if aid in run_artifacts or not artifact_unlocked(aid):
 			continue
 		var a: ArtifactData = Database.artifacts[aid]
+		if not a.wizards.is_empty() and wizard_id not in a.wizards:
+			continue   # class-kit relic — dead weight on this wizard's run
 		if not buckets.has(a.rarity):
 			buckets[a.rarity] = []
 		buckets[a.rarity].append(aid)
@@ -599,8 +609,10 @@ func finish_run(victory: bool) -> void:
 	if victory:
 		earned += 80 + asc_level * 10
 	var before := clout_earned
+	var wbefore := wizard_clout(wizard_id)
 	clout += earned
 	clout_earned += earned
+	clout_by_wizard[wizard_id] = wbefore + earned
 	if victory and asc_level >= ascension:
 		ascension = asc_level + 1   # banked a new difficulty tier
 	message = "Run over. +%d Clout (total %d)." % [earned, clout]
@@ -621,13 +633,18 @@ func _wizards_unlocked_between(lo: int, hi: int) -> Array:
 
 ## EVERYTHING that unlocked when lifetime Clout moved (lo, hi] — wizards, cards,
 ## relics. The game computed these forever but never announced them anywhere.
-func unlocks_between(lo: int, hi: int) -> Array[String]:
+func unlocks_between(lo: int, hi: int, wid: StringName = &"", wlo: int = -1, whi: int = -1) -> Array[String]:
 	var out: Array[String] = []
 	out.append_array(_wizards_unlocked_between(lo, hi))
-	for cid in Database.cards:
-		var c: CardData = Database.cards[cid]
-		if c.unlock_clout > lo and c.unlock_clout <= hi:
-			out.append(Loc.t(c.title))
+	# cards are per-wizard: only THIS wizard's pool, against THEIR earnings
+	var w := Database.get_wizard(wid if wid != &"" else wizard_id)
+	var clo := wlo if wlo >= 0 else lo
+	var chi := whi if whi >= 0 else hi
+	if w != null:
+		for cid in w.reward_pool:
+			var c := Database.get_card(cid)
+			if c != null and c.unlock_clout > clo and c.unlock_clout <= chi:
+				out.append(Loc.t(c.title))
 	for aid in Database.artifacts:
 		var a: ArtifactData = Database.artifacts[aid]
 		if a.unlock_clout > lo and a.unlock_clout <= hi:
@@ -854,6 +871,15 @@ func _meta_from_dict(data: Dictionary) -> void:
 	clout = int(data.get("clout", 0))
 	# legacy saves: treat current Clout as already-earned so nothing re-locks
 	clout_earned = int(data.get("clout_earned", clout))
+	clout_by_wizard = {}
+	if data.has("clout_by_wizard"):
+		var cbw: Dictionary = data["clout_by_wizard"]
+		for k in cbw:
+			clout_by_wizard[StringName(String(k))] = int(cbw[k])
+	elif clout_earned > 0:
+		# pre-split saves can't attribute earnings — credit the starter wizard so
+		# nothing the player has already seen re-locks on their main.
+		clout_by_wizard[&"fire"] = clout_earned
 	ascension = int(data.get("ascension", 0))
 	critic_score = int(data.get("critic_score", 0))
 	sfx_on = bool(data.get("sfx_on", true))
@@ -876,6 +902,12 @@ func save_meta() -> void:
 		return
 	f.store_string(JSON.stringify(_meta_to_dict(), "\t"))
 
+func _cbw_payload() -> Dictionary:
+	var out := {}
+	for k in clout_by_wizard:
+		out[String(k)] = int(clout_by_wizard[k])
+	return out
+
 func _meta_to_dict() -> Dictionary:
 	var owned: Array[String] = []
 	for id in unlocked_outfits:
@@ -883,7 +915,7 @@ func _meta_to_dict() -> Dictionary:
 	var eq := {}
 	for slot in equipped:
 		eq[slot] = String(equipped[slot])
-	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale, "seen_tutorial": seen_tutorial, "fullscreen_on": fullscreen_on, "effects_on": effects_on, "music_vol": music_vol, "sfx_vol": sfx_vol}
+	var payload := {"save_version": SAVE_VERSION, "unlocked_outfits": owned, "equipped": eq, "clout": clout, "clout_earned": clout_earned, "clout_by_wizard": _cbw_payload(), "ascension": ascension, "critic_score": critic_score, "sfx_on": sfx_on, "music_on": music_on, "locale": locale, "seen_tutorial": seen_tutorial, "fullscreen_on": fullscreen_on, "effects_on": effects_on, "music_vol": music_vol, "sfx_vol": sfx_vol}
 	if not _run_snapshot.is_empty():
 		payload["run"] = _run_snapshot
 	return payload

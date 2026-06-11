@@ -13,5 +13,5 @@ rarity = "Epic"
 archetype = &"swarm"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 80
+unlock_clout = 240
 effects = [{ "op": "self_status", "status": "hive_mind", "amount": 1 }]

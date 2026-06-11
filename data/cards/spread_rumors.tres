@@ -6,12 +6,12 @@
 script = ExtResource("1")
 id = &"spread_rumors"
 title = "Spread Rumors"
-description = "Apply 4 Toxic. it ramps down each turn but it hurts."
+description = "Apply 3 Toxic. it never dies down. rumors are forever."
 cost = 1
 type = "Skill"
 rarity = "Rare"
 archetype = &"swarm"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 50
-effects = [{ "op": "apply_status", "status": "poison", "amount": 4, "target": "enemy" }]
+unlock_clout = 150
+effects = [{ "op": "apply_status", "status": "poison", "amount": 3, "target": "enemy" }]

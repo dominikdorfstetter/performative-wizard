@@ -13,5 +13,5 @@ rarity = "Rare"
 archetype = &"roast"
 swag_gain = 0
 swag_cost = 0
-unlock_clout = 30
+unlock_clout = 90
 effects = [{ "op": "self_status", "status": "aura_engine", "amount": 2 }]

@@ -15,4 +15,4 @@ swag_gain = 2
 swag_cost = 0
 effects = [{ "op": "apply_status", "status": "burn", "amount": 8, "target": "enemy" }]
 
-unlock_clout = 40
+unlock_clout = 120

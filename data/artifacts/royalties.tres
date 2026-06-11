@@ -11,4 +11,4 @@ description = "Finishers refund 25% of the Aura they spend. the hit keeps paying
 rarity = "Rare"
 passive_id = &"finisher_refund_25"
 gold_per_combat = 0
-unlock_clout = 60
+unlock_clout = 180
