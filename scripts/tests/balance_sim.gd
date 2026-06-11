@@ -278,9 +278,9 @@ func _sweep(label: String, wid: StringName, enc_kind: String, act: int, asc: int
 	for i in K:
 		var enc_ids: Array
 		match enc_kind:
-			"elite": enc_ids = Encounters.elite(_rng)
-			"boss": enc_ids = Encounters.boss(_rng)
-			_: enc_ids = Encounters.normal(depth, _rng)
+			"elite": enc_ids = Encounters.elite(act, _rng)
+			"boss": enc_ids = Encounters.boss(act, _rng)
+			_: enc_ids = Encounters.normal(act, depth, _rng)
 		var row := int(depth * 9)
 		var sc := _scales(act, asc, "Boss" if enc_kind == "boss" else ("Elite" if enc_kind == "elite" else "Combat"), row)
 		results.append(_sim_combat(wid, enc_ids, deck, drip, [], sc[0], sc[1], "balanced", i, 0))
@@ -301,7 +301,7 @@ func _attrition(wid: StringName, act: int, asc: int) -> void:
 		var hp := w.max_hp
 		var fights := 0
 		for f in 8:
-			var enc_ids := Encounters.normal(depth, _rng)
+			var enc_ids := Encounters.normal(act, depth, _rng)
 			var sc := _scales(act, asc, "Combat", int(depth * 9))
 			var r := _sim_combat(wid, enc_ids, deck, drip, [], sc[0], sc[1], "balanced", f, hp)
 			if r.win:
@@ -381,7 +381,7 @@ func _persona(label: String, wid: StringName, act: int, passives: Array, drip: i
 	var deck := _build_deck(wid, act)
 	var results: Array = []
 	for i in K:
-		var enc_ids := Encounters.normal(0.5, _rng)
+		var enc_ids := Encounters.normal(act, 0.5, _rng)
 		var sc := _scales(act, 0, "Combat", 4)
 		results.append(_sim_combat(wid, enc_ids, deck, drip, passives, sc[0], sc[1], policy, i, 0))
 	var a := _agg(results)

@@ -1,5 +1,13 @@
 # Enemy Redesign Plan
 
+> **Superseded (2026-06-11):** the "ordinary modern thing turned hostile" theme below
+> was the playtest placeholder. The roster is now organized into per-act FLOORS with
+> their own casts, backdrops, and headliner bosses — Act 1 "the Block" (hexed domestic
+> things), Act 2 "the Scene" (the venue — ends on The Bouncer), Act 3 "the Feed"
+> (terminally online — ends on The Algorithm or The Talent Agent, who books weaker
+> versions of the other bosses). See `scripts/run/encounters.gd` for the pools and
+> the table of truth.
+
 Fixes the two problems from `DESIGN_REVIEW.md §1`: **off-theme/lazy designs** and
 **samey attack patterns**. Theme rule: *every enemy is an ordinary modern thing
 (object, animal, or online archetype) turned hostile.* No high-fantasy goblins.

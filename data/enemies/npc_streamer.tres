@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"npc_streamer"
+title = "NPC Streamer"
+emoji = "🎧"
+max_hp = 32
+intents = [{ "op": "attack", "amount": 5 }, { "op": "attack", "amount": 5 }, { "op": "block", "amount": 6 }, { "op": "attack", "amount": 5 }]

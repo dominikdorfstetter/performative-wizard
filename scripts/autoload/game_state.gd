@@ -233,7 +233,7 @@ func start_run(wid: StringName) -> void:
 	publicist_used = false
 	critic_last_rating = ""
 	_roll_trend()
-	map = MapGenerator.generate(randi())
+	map = MapGenerator.generate(randi(), act)
 	pos_row = -1
 	pos_col = -1
 
@@ -653,7 +653,7 @@ func advance_act() -> bool:
 	gold += 15
 	publicist_used = false   # the Publicist takes one call per act
 	_roll_trend()
-	map = MapGenerator.generate(randi())
+	map = MapGenerator.generate(randi(), act)
 	pos_row = -1
 	pos_col = -1
 	message = "— ACT %d —  the gauntlet escalates." % act

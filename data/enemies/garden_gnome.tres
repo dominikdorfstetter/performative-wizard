@@ -9,3 +9,4 @@ title = "Garden Gnome"
 emoji = "🗿"
 max_hp = 42
 intents = [{ "op": "block", "amount": 8 }, { "op": "attack", "amount": 9 }, { "op": "attack", "amount": 9 }]
+enrage = 1

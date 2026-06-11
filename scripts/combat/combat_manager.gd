@@ -78,6 +78,9 @@ var pending_pick_n := 0         # how many top-of-pile cards a "peek_pick" laid 
 var pose_strike_used := false   # fan_behavior relic: first Pose per turn triggers the Goons
 
 var passives: Array[StringName] = []
+# Gold-thief fights (The IRS): the player's purse, seeded by the view from
+# GameState and synced back after _finish — the manager itself stays pure.
+var player_gold := 0
 var enemy_dmg_scale := 1.0
 var enemy_hp_scale := 1.0
 var upgrades: Dictionary = {}        # card_id -> "cost"|"value" (legacy true == "cost")
@@ -728,6 +731,23 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 			if ed != null and living_enemies().size() < 4:
 				enemies.append(_make_enemy(ed))
 				_say(Loc.t("%s called backup: %s pulled up!") % [name, Loc.t(ed.title)])
+		"steal_gold":
+			# The IRS: garnishes a CUT of your purse. Kill it before it flees and
+			# the refund comes back at the end of the fight.
+			var pct := int(intent.get("percent", 25))
+			var take := int(player_gold * pct / 100.0)
+			if take > 0:
+				player_gold -= take
+				src.stolen_gold += take
+				_say(Loc.t("%s garnished %d gold. straight to collections.") % [name, take])
+			else:
+				_say(Loc.t("%s audits you... you're already broke. embarrassing.") % name)
+		"flee":
+			src.fled = true
+			if src.stolen_gold > 0:
+				_say(Loc.t("%s files your case and DIPS with %d gold!") % [name, src.stolen_gold])
+			else:
+				_say(Loc.t("%s files your case and dips.") % name)
 		_:
 			push_warning("[CombatManager] unknown intent: " + String(intent.get("op", "")))
 
@@ -877,6 +897,17 @@ func _log_card(card: CardData, dmg: int, blk: int, burn_added: int, swag_delta: 
 
 func _finish(victory: bool) -> void:
 	state = State.WIN if victory else State.LOSE
+	# Gold-thief settlement: anything a KILLED thief garnished comes back; what a
+	# FLED thief took is gone for good.
+	if victory:
+		var refund := 0
+		for e in enemies:
+			if e.stolen_gold > 0 and not e.fled:
+				refund += e.stolen_gold
+				e.stolen_gold = 0
+		if refund > 0:
+			player_gold += refund
+			_say(Loc.t("your refund came through: +%d gold") % refund)
 	_say(Loc.t("BIG W!") if victory else Loc.t("you took an L."))
 	# Emit the final UI update first (death poofs/popups run while the combat scene
 	# is still in the tree), THEN signal the end — which may change scene and detach us.

@@ -16,7 +16,7 @@ extends RefCounted
 const ROWS := 10
 const ONE_PER_ROW := ["Rest", "Shop", "Chest"]
 
-static func generate(seed_val: int) -> Array:
+static func generate(seed_val: int, act: int = 1) -> Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_val
 	var rows: Array = []
@@ -30,32 +30,32 @@ static func generate(seed_val: int) -> Array:
 			width = rng.randi_range(2, 4)
 		var row: Array = []
 		for c in width:
-			row.append(_make_node(r, c, rng))
+			row.append(_make_node(r, c, rng, act))
 		if r != ROWS - 2:   # the pre-boss row is ALL Rest by design — leave it
-			_dedupe_row(row, rng)
+			_dedupe_row(row, rng, act)
 		rows.append(row)
 	for r in ROWS - 1:
 		_connect(rows[r], rows[r + 1], rng)
-	_repair_consecutive(rows, rng)
-	_ensure_shop(rows, rng)
+	_repair_consecutive(rows, rng, act)
+	_ensure_shop(rows, rng, act)
 	return rows
 
-static func _make_node(r: int, c: int, rng: RandomNumberGenerator) -> Dictionary:
+static func _make_node(r: int, c: int, rng: RandomNumberGenerator, act: int = 1) -> Dictionary:
 	var node := {"row": r, "col": c, "type": "", "links": [], "enemies": [], "visited": false}
-	_set_type(node, _pick_type(r, rng), rng)
+	_set_type(node, _pick_type(r, rng), rng, act)
 	return node
 
 ## Type changes always go through here so the encounter list stays in sync.
-static func _set_type(node: Dictionary, t: String, rng: RandomNumberGenerator) -> void:
+static func _set_type(node: Dictionary, t: String, rng: RandomNumberGenerator, act: int = 1) -> void:
 	node.type = t
 	var depth := float(node.row) / float(ROWS - 1)
 	match t:
 		"Combat":
-			node.enemies = Encounters.normal(depth, rng)
+			node.enemies = Encounters.normal(act, depth, rng)
 		"Elite":
-			node.enemies = Encounters.elite(rng)
+			node.enemies = Encounters.elite(act, rng)
 		"Boss":
-			node.enemies = Encounters.boss(rng)
+			node.enemies = Encounters.boss(act, rng)
 		_:
 			node.enemies = []
 
@@ -83,13 +83,13 @@ static func _pick_type(r: int, rng: RandomNumberGenerator) -> String:
 	return "Rest" if r != ROWS - 3 else "Event"
 
 ## A second Rest/Shop/Chest in the same row dilutes the choice — re-roll it.
-static func _dedupe_row(row: Array, rng: RandomNumberGenerator) -> void:
+static func _dedupe_row(row: Array, rng: RandomNumberGenerator, act: int = 1) -> void:
 	var seen := {}
 	for node in row:
 		var t: String = node.type
 		if t in ONE_PER_ROW:
 			if seen.has(t):
-				_set_type(node, "Combat" if rng.randf() < 0.6 else "Event", rng)
+				_set_type(node, "Combat" if rng.randf() < 0.6 else "Event", rng, act)
 			else:
 				seen[t] = true
 
@@ -117,7 +117,7 @@ static func _connect(cur: Array, nxt: Array, rng: RandomNumberGenerator) -> void
 
 ## The same special twice along one path is a dead choice ("two rests in a row")
 ## — the child becomes a Combat. Runs edge-by-edge after connection.
-static func _repair_consecutive(rows: Array, rng: RandomNumberGenerator) -> void:
+static func _repair_consecutive(rows: Array, rng: RandomNumberGenerator, act: int = 1) -> void:
 	for r in rows.size() - 1:
 		for node in rows[r]:
 			var t: String = node.type
@@ -126,10 +126,10 @@ static func _repair_consecutive(rows: Array, rng: RandomNumberGenerator) -> void
 			for l in node.links:
 				var child: Dictionary = rows[r + 1][l]
 				if child.type == t:
-					_set_type(child, "Combat", rng)
+					_set_type(child, "Combat", rng, act)
 
 ## An act with no shop strands your gold; convert a mid-act Combat if needed.
-static func _ensure_shop(rows: Array, rng: RandomNumberGenerator) -> void:
+static func _ensure_shop(rows: Array, rng: RandomNumberGenerator, act: int = 1) -> void:
 	for r in range(1, rows.size() - 1):
 		for node in rows[r]:
 			if node.type == "Shop":
@@ -140,4 +140,4 @@ static func _ensure_shop(rows: Array, rng: RandomNumberGenerator) -> void:
 		if node.type == "Combat":
 			cands.append(node)
 	if not cands.is_empty():
-		_set_type(cands[rng.randi_range(0, cands.size() - 1)], "Shop", rng)
+		_set_type(cands[rng.randi_range(0, cands.size() - 1)], "Shop", rng, act)

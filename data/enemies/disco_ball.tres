@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"disco_ball"
+title = "Possessed Disco Ball"
+emoji = "🪩"
+max_hp = 36
+intents = [{ "op": "apply_status", "status": "jinx", "amount": 1, "target": "player" }, { "op": "attack", "amount": 7 }, { "op": "apply_status", "status": "vulnerable", "amount": 1, "target": "player" }, { "op": "attack", "amount": 10 }]
