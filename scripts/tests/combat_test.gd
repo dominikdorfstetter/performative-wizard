@@ -296,8 +296,8 @@ func _ready() -> void:
 	cme.start_combat(pe, [Database.get_enemy(&"gym_rat")], [Database.get_card(&"ember")], 0, true)
 	_check("gym rat starts at 0 Rizz", cme.enemies[0].status(&"strength"), 0)
 	cme.hand = [Database.get_card(&"ember")]
-	cme.play_card(cme.hand[0])                 # deal 6 -> enrage +2
-	_check("gym rat enraged +2", cme.enemies[0].status(&"strength"), 2)
+	cme.play_card(cme.hand[0])                 # deal 6 -> enrage +1 (softened in the floor-pool rebalance)
+	_check("gym rat enraged +1", cme.enemies[0].status(&"strength"), 1)
 
 	# artifact passives: poison_plus_1 + enemies_start_vulnerable
 	var cmap := CombatManager.new()
@@ -1392,6 +1392,82 @@ func _ready() -> void:
 		if c.rarity not in ladder or not CardView.RARITY_COLOR.has(c.rarity):
 			bad_rarity.append("%s=%s" % [cid, c.rarity])
 	_check("all cards have a valid rarity+colour", bad_rarity, [])
+
+	# --- floor-themed world: act pools, thematic bosses, The IRS, new enemies ---
+	print("--- floors: roster & pools ---")
+	var new_foes := [&"disco_ball", &"npc_streamer", &"reply_guy", &"engagement_farmer",
+		&"the_irs", &"the_bouncer", &"the_talent_agent", &"critic_jr", &"bouncer_jr", &"algo_jr"]
+	var missing_foes: Array = []
+	for fid in new_foes:
+		if Database.get_enemy(fid) == null:
+			missing_foes.append(fid)
+	_check("all new enemies load", missing_foes, [])
+	var bad_pool_ids: Array = []
+	for fact in [1, 2, 3]:
+		for stage in ["early", "mid", "late"]:
+			for grp in Encounters.NORMAL[fact][stage]:
+				for fid2 in grp:
+					if Database.get_enemy(fid2) == null:
+						bad_pool_ids.append(fid2)
+		for grp2 in Encounters.ELITE[fact]:
+			for fid3 in grp2:
+				if Database.get_enemy(fid3) == null:
+					bad_pool_ids.append(fid3)
+	_check("every act-pool id resolves", bad_pool_ids, [])
+	_check("act 1 boss is the Critic", Encounters.boss(1), [&"the_critic"])
+	_check("act 2 boss is the Bouncer", Encounters.boss(2), [&"the_bouncer"])
+	var frng := RandomNumberGenerator.new()
+	frng.seed = 7
+	var act3_boss: Array = Encounters.boss(3, frng)
+	_check("act 3 serves the machine or the industry", act3_boss[0] in [&"the_algorithm", &"the_talent_agent"], true)
+	# the Talent Agent's roster must resolve too (summon_ally targets)
+	var agent := Database.get_enemy(&"the_talent_agent")
+	var bad_summons: Array = []
+	for it in agent.intents:
+		if String(it.get("op", "")) == "summon_ally" and Database.get_enemy(StringName(it.get("enemy", ""))) == null:
+			bad_summons.append(it.get("enemy"))
+	_check("the agent's understudies all exist", bad_summons, [])
+	# every enemy in the game has a sprite definition
+	var spriteless: Array = []
+	for eid in Database.enemies:
+		if not SpriteBank.DEF.has(eid):
+			spriteless.append(eid)
+	_check("every enemy has a sprite DEF", spriteless, [])
+
+	print("--- floors: The IRS ---")
+	var ip := Combatant.new()
+	ip.max_hp = 80
+	ip.hp = 80
+	var icm := CombatManager.new()
+	var ideck: Array[CardData] = [Database.get_card(&"ember")]
+	icm.start_combat(ip, [Database.get_enemy(&"the_irs")], ideck, 0, true)
+	icm.player_gold = 100
+	icm.end_turn()   # turn 1: opening audit (attack 5)
+	_check("audit hits for 5", ip.hp, 75)
+	icm.end_turn()   # turn 2: garnish 25%
+	_check("the IRS garnishes 25%", icm.player_gold, 75)
+	_check("the thief holds the stolen gold", icm.enemies[0].stolen_gold, 25)
+	# kill it before the flee turn → refund lands at the win
+	icm.enemies[0].hp = 1
+	icm.hand = [Database.get_card(&"ember")]
+	icm.play_card(icm.hand[0])
+	_check("killing the thief wins the fight", icm.state, CombatManager.State.WIN)
+	_check("your refund came through", icm.player_gold, 100)
+
+	var ip2 := Combatant.new()
+	ip2.max_hp = 80
+	ip2.hp = 80
+	var icm2 := CombatManager.new()
+	icm2.start_combat(ip2, [Database.get_enemy(&"the_irs")], ideck, 0, true)
+	icm2.player_gold = 100
+	icm2.end_turn()   # audit
+	icm2.end_turn()   # garnish (75 left)
+	icm2.end_turn()   # attack 7
+	icm2.end_turn()   # FLEE
+	_check("the IRS flees with the gold", icm2.enemies[0].fled, true)
+	_check("a fled thief ends the fight", icm2.state, CombatManager.State.WIN)
+	_check("fled gold is gone for good", icm2.player_gold, 75)
+	_check("a fled enemy reads as out of the fight", icm2.enemies[0].is_dead(), true)
 
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

@@ -231,7 +231,7 @@ func start_run(wid: StringName) -> void:
 	pending_freshness = 1.0
 	critic_last_rating = ""
 	_roll_trend()
-	map = MapGenerator.generate(randi())
+	map = MapGenerator.generate(randi(), act)
 	pos_row = -1
 	pos_col = -1
 
@@ -597,7 +597,7 @@ func advance_act() -> bool:
 	act += 1
 	gold += 15
 	_roll_trend()
-	map = MapGenerator.generate(randi())
+	map = MapGenerator.generate(randi(), act)
 	pos_row = -1
 	pos_col = -1
 	message = "— ACT %d —  the gauntlet escalates." % act

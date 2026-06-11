@@ -151,24 +151,25 @@ func _combat_track() -> String:
 			var v: int = int(node.get("row", 0)) + node.get("enemies", []).size()
 			return "combat2" if v % 2 == 1 else "combat"
 
-# Backdrop biome by depth, with bosses/elites getting dramatic skies.
+# Backdrop biome per ACT (each floor has its own look), deepening within the act.
+# Act 1 the Block: night streets into dusk. Act 2 the Scene: dusk arrival into the
+# neon club. Act 3 the Feed: the server dungeon into the void. Bosses get the void
+# (except the Bouncer, who owns the neon door); elites get their act's late look.
 func _bg_theme() -> String:
 	var node := GameState.current_node()
 	var t := String(node.get("type", "Combat"))
 	if t == "Boss":
-		return "void"
-	if t == "Elite":
-		return "neon"
+		return "neon" if GameState.act == 2 else "void"
 	var row := int(node.get("row", 0))
 	var total: int = max(1, GameState.map.size())
-	var depth := row / float(total)
-	if depth < 0.25:
-		return "night"
-	elif depth < 0.5:
-		return "dusk"
-	elif depth < 0.75:
-		return "dungeon"
-	return "void"
+	var late := t == "Elite" or row / float(total) >= 0.5
+	match GameState.act:
+		1:
+			return "dusk" if late else "night"
+		2:
+			return "neon" if late else "dusk"
+		_:
+			return "void" if late else "dungeon"
 
 func _start_fight() -> void:
 	var node := GameState.current_node()
@@ -200,6 +201,7 @@ func _start_fight() -> void:
 	cm.goons_attacked.connect(_on_goons_attacked)
 	_build_pile_counters()
 	cm.start_combat(player, encounter, deck, GameState.effective_drip(), false, GameState.active_passives(), scales[0], scales[1], GameState.card_upgrades)
+	cm.player_gold = GameState.gold   # gold-thief enemies garnish from (and refund to) this
 	_build_player_widget(w)
 	_build_fit_strip()
 	_build_artifact_strip()
@@ -1293,6 +1295,14 @@ func _fill_intent(box: HBoxContainer, e: Combatant) -> void:
 			icon = "bones"
 			text = "backup"
 			col = Color(0.8, 0.7, 0.95)
+		"steal_gold":
+			icon = "coin"
+			text = "-%d%%" % int(it.get("percent", 25))
+			col = Color(0.95, 0.82, 0.4)
+		"flee":
+			icon = "boot"
+			text = "dips"
+			col = Color(0.7, 0.75, 0.85)
 		_:
 			text = "?"
 	if icon != "":
@@ -1340,6 +1350,10 @@ func _intent_desc(it: Dictionary) -> String:
 			return Loc.t("Taxes %d Aura if you're hoarding above a threshold.") % amt
 		"summon_ally":
 			return Loc.t("Summons backup into the fight.")
+		"steal_gold":
+			return Loc.t("Garnishes %d%% of your gold. Kill it before it flees to get a refund.") % int(it.get("percent", 25))
+		"flee":
+			return Loc.t("About to flee the fight — taking everything it stole with it.")
 	return Loc.t("Bides its time.")
 
 # The Aura meter: three tiers that light/unlight live so a glance reads which
@@ -1449,6 +1463,7 @@ func _on_end_turn() -> void:
 	cm.end_turn()
 
 func _on_combat_ended(victory: bool) -> void:
+	GameState.gold = max(0, cm.player_gold)   # bank thefts/refunds from the fight
 	# Every kill gets savored: the finisher keeps its trailer shot, any other win
 	# pops a BIG W banner — the killing blow used to hard-cut away on the same frame.
 	if victory:

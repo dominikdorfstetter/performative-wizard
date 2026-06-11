@@ -8,4 +8,4 @@ id = &"feral_houseplant"
 title = "Feral Houseplant"
 emoji = "🪴"
 max_hp = 34
-intents = [{ "op": "apply_status", "status": "vulnerable", "amount": 1, "target": "player" }, { "op": "attack", "amount": 8 }, { "op": "attack", "amount": 8 }]
+intents = [{ "op": "apply_status", "status": "poison", "amount": 3, "target": "player" }, { "op": "attack", "amount": 8 }, { "op": "apply_status", "status": "vulnerable", "amount": 1, "target": "player" }, { "op": "attack", "amount": 8 }]

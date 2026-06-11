@@ -1,0 +1,12 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"engagement_farmer"
+title = "Engagement Farmer"
+emoji = "📈"
+max_hp = 72
+intents = [{ "op": "drain_swag", "amount": 6 }, { "op": "buff", "status": "strength", "amount": 2 }, { "op": "attack", "amount": 6, "hits": 2 }, { "op": "tax", "amount": 6, "threshold": 12 }, { "op": "attack", "amount": 16 }]
+enrage = 1

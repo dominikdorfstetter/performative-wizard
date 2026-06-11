@@ -10,4 +10,4 @@ emoji = "🏋️"
 max_hp = 72
 intents = [{ "op": "buff", "status": "strength", "amount": 3 }, { "op": "attack", "amount": 5, "hits": 3 }, { "op": "attack", "amount": 14 }, { "op": "block", "amount": 8 }]
 
-enrage = 2
+enrage = 1

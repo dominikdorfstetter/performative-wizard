@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"the_bouncer"
+title = "The Bouncer"
+emoji = "🚷"
+max_hp = 150
+intents = [{ "op": "block", "amount": 14 }, { "op": "apply_status", "status": "frail", "amount": 2, "target": "player" }, { "op": "attack", "amount": 16 }, { "op": "tax", "amount": 6, "threshold": 12 }, { "op": "attack", "amount": 8, "hits": 2 }, { "op": "buff", "status": "strength", "amount": 2 }]

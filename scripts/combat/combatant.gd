@@ -12,6 +12,11 @@ var statuses: Dictionary = {}    # StringName -> int (stacks)
 var data: EnemyData = null
 var intent_index: int = 0
 
+# Gold-thief mechanics (The IRS): what it has garnished from you so far, and
+# whether it already fled the fight. Kill it BEFORE it flees → full refund.
+var stolen_gold: int = 0
+var fled: bool = false
+
 func take_damage(amount: int, pierce: bool = false) -> void:
 	var remaining := amount
 	if block > 0 and not pierce:
@@ -34,4 +39,6 @@ func status(id: StringName) -> int:
 	return int(statuses.get(id, 0))
 
 func is_dead() -> bool:
-	return hp <= 0
+	# A fled enemy is out of the fight for every purpose (targeting, win checks) —
+	# it just doesn't refund what it stole.
+	return hp <= 0 or fled

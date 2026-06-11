@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"algo_jr"
+title = "Beta Algorithm"
+emoji = "📟"
+max_hp = 30
+intents = [{ "op": "tax", "amount": 4, "threshold": 12 }, { "op": "attack", "amount": 4, "hits": 2 }]

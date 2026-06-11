@@ -20,11 +20,11 @@ const DEF := {
 	&"cursed_mirror": {"c": "acc4d4", "shape": "square", "feat": "none", "eye": "c08ce0", "angry": false},
 	&"possessed_mannequin": {"c": "d8c2a2", "shape": "tall", "feat": "none", "eye": "241a30", "angry": true, "cyclops": true},
 	&"rabid_roomba": {"c": "4a4f57", "shape": "blob", "feat": "antenna", "eye": "ff5a5a", "angry": true},
-	&"goblin_gremlin": {"c": "6f9a3a", "shape": "imp", "feat": "fangs", "eye": "ffd24a", "angry": true},
+	&"goblin_gremlin": {"c": "3aa07a", "shape": "imp", "feat": "fangs", "eye": "5fd0e0", "angry": true},
 	&"gargoyle_cherub": {"bulk": 1.2, "c": "9aa0a8", "shape": "wide", "feat": "wings", "eye": "ffffff", "angry": true},
 	&"black_cat": {"c": "2c2735", "shape": "round", "feat": "ears", "eye": "ffd24a", "angry": true},
 	&"shade_thrower": {"c": "5b4a78", "shape": "floaty", "feat": "crest", "eye": "ff6b8f", "angry": true},
-	&"clout_goblin": {"c": "7aa83a", "shape": "imp", "feat": "fangs", "eye": "ffd24a", "angry": true},
+	&"clout_goblin": {"c": "d08a4a", "shape": "tall", "feat": "phone", "eye": "ffffff", "angry": false},
 	&"ringlight_wraith": {"c": "d8d2e8", "shape": "diamond", "feat": "halo", "eye": "ff5ab0", "angry": true},
 	&"wifi_router": {"c": "2c3a4a", "shape": "square", "feat": "antenna", "eye": "5fd0e0", "angry": true},
 	&"vending_machine": {"bulk": 1.3, "c": "c0423c", "shape": "tall", "feat": "slots", "eye": "ffd24a", "angry": true},
@@ -34,6 +34,19 @@ const DEF := {
 	&"heckler": {"bulk": 0.9, "c": "9a5fbf", "shape": "round", "feat": "mouth", "eye": "ffd24a", "angry": true},
 	# Summoned minion ("goon") for the necromancer's Undead stacks.
 	&"goon": {"bulk": 0.8, "c": "7fa86a", "shape": "round", "feat": "tufts", "eye": "ff4d4d", "angry": true},
+	# --- Act 2, the Scene ---
+	&"disco_ball": {"c": "c8d4e8", "shape": "diamond", "feat": "sparkle", "eye": "ff5ab0", "angry": false},
+	&"the_bouncer": {"bulk": 1.9, "c": "2e2e3a", "shape": "wide", "feat": "shades", "eye": "ffffff", "angry": true},
+	# --- Act 3, the Feed ---
+	&"npc_streamer": {"c": "8a7ae0", "shape": "square", "feat": "headset", "eye": "ffffff", "angry": false},
+	&"reply_guy": {"c": "5f7ad0", "shape": "floaty", "feat": "mouth", "eye": "ffffff", "angry": true},
+	&"engagement_farmer": {"bulk": 1.2, "c": "3a9a5a", "shape": "wide", "feat": "phone", "eye": "ffd24a", "angry": true},
+	&"the_irs": {"c": "8a8f9a", "shape": "tall", "feat": "tie", "eye": "ffffff", "angry": false},
+	&"the_talent_agent": {"bulk": 1.9, "c": "6a4a8a", "shape": "tall", "feat": "phone", "eye": "ffd24a", "angry": false},
+	# The Talent Agent's roster: weaker understudies of the other headliners.
+	&"critic_jr": {"bulk": 0.85, "c": "b23b3b", "shape": "round", "feat": "horns", "eye": "ffd24a", "angry": true},
+	&"bouncer_jr": {"bulk": 0.9, "c": "2e2e3a", "shape": "wide", "feat": "shades", "eye": "ffffff", "angry": true},
+	&"algo_jr": {"bulk": 0.85, "c": "26243a", "shape": "square", "feat": "antenna", "eye": "ff5ab0", "angry": true},
 }
 
 # wizards: humanoid sprites (pointy hat, face, robe)
@@ -241,6 +254,75 @@ const ITEM := {
 		["b", [[5, 7, 8], [6, 6, 9], [7, 6, 9], [8, 7, 8], [9, 7, 8]]],
 		["l", [[6, 7, 7], [7, 7, 7]]],
 	],
+	# --- per-item silhouette variants (ITEM_VARIANT below picks them by id), so
+	# two pieces in the same slot never read as the same shape with a new tint ---
+	"Hat_cap": [
+		["b", [[4, 5, 10], [5, 4, 11], [6, 4, 11], [7, 4, 11], [8, 4, 11]]],
+		["d", [[3, 7, 8], [9, 4, 14], [10, 9, 14]]],
+		["l", [[5, 5, 6], [6, 5, 5]]],
+	],
+	"Hat_brim": [
+		["b", [[3, 6, 9], [4, 5, 10], [5, 5, 10], [6, 5, 10]]],
+		["l", [[7, 5, 10]]],
+		["d", [[8, 2, 13], [9, 3, 12]]],
+	],
+	"Hat_veil": [
+		["b", [[2, 6, 9], [3, 5, 10], [4, 5, 10], [7, 4, 10], [8, 4, 9], [9, 4, 8], [10, 4, 7], [11, 4, 6], [12, 4, 5]]],
+		["d", [[5, 4, 11], [6, 4, 11]]],
+		["l", [[3, 5, 5], [7, 4, 4]]],
+	],
+	"Hat_shades": [
+		["d", [[7, 2, 13]]],
+		["b", [[8, 3, 6], [9, 3, 6], [8, 9, 12], [9, 9, 12]]],
+		["l", [[8, 4, 4], [8, 10, 10]]],
+	],
+	"Robe_jacket": [
+		["b", [[3, 4, 6], [4, 4, 6], [5, 4, 6], [6, 4, 6], [7, 3, 6], [8, 3, 6], [9, 3, 6], [10, 3, 6], [11, 3, 6], [12, 3, 6], [13, 3, 6], [3, 9, 11], [4, 9, 11], [5, 9, 11], [6, 9, 11], [7, 9, 12], [8, 9, 12], [9, 9, 12], [10, 9, 12], [11, 9, 12], [12, 9, 12], [13, 9, 12]]],
+		["d", [[2, 6, 9], [4, 7, 8], [5, 7, 8], [6, 7, 8], [7, 7, 8], [8, 7, 8], [9, 7, 8], [10, 7, 8], [11, 7, 8], [12, 7, 8]]],
+		["l", [[3, 6, 6], [4, 6, 6], [3, 9, 9], [4, 9, 9]]],
+	],
+	"Robe_gown": [
+		["b", [[3, 7, 8], [4, 6, 9], [5, 6, 9], [6, 5, 10], [7, 5, 10], [8, 4, 11], [9, 4, 11], [10, 3, 12], [11, 3, 12], [12, 2, 13]]],
+		["d", [[13, 2, 13]]],
+		["l", [[4, 6, 6], [6, 5, 5], [8, 4, 4], [10, 3, 3]]],
+	],
+	"Staff_scepter": [
+		["d", [[5, 6, 10], [6, 8, 8], [7, 8, 8], [8, 8, 8], [9, 8, 8], [10, 8, 8], [11, 8, 8], [12, 8, 8], [13, 8, 8]]],
+		["b", [[2, 7, 9], [3, 6, 10], [4, 6, 10]]],
+		["l", [[2, 7, 7], [3, 6, 7]]],
+	],
+	"Staff_stick": [
+		["d", [[12, 4, 5], [11, 5, 6], [10, 6, 7], [9, 7, 8], [8, 8, 9], [7, 9, 10]]],
+		["b", [[3, 9, 13], [4, 9, 13], [5, 9, 13], [6, 9, 13]]],
+		["l", [[4, 10, 12], [5, 10, 12]]],
+	],
+	"Staff_cannon": [
+		["b", [[6, 3, 12], [7, 3, 12], [8, 3, 12], [9, 3, 12]]],
+		["d", [[10, 4, 7], [11, 5, 6]]],
+		["l", [[6, 11, 12], [7, 11, 12], [8, 11, 12], [5, 13, 13], [7, 14, 14], [9, 13, 13]]],
+	],
+	"Boots_heels": [
+		["b", [[6, 4, 6], [7, 4, 6], [8, 4, 6], [9, 4, 6], [10, 4, 7], [6, 9, 11], [7, 9, 11], [8, 9, 11], [9, 9, 11], [10, 9, 12]]],
+		["d", [[11, 6, 7], [12, 6, 6], [11, 11, 12], [12, 11, 11]]],
+		["l", [[6, 4, 4], [7, 4, 4], [6, 9, 9], [7, 9, 9]]],
+	],
+	"Trinket_ring": [
+		["b", [[4, 6, 9], [5, 5, 6], [5, 9, 10], [6, 4, 5], [6, 10, 11], [7, 4, 5], [7, 10, 11], [8, 5, 6], [8, 9, 10]]],
+		["d", [[9, 6, 9]]],
+		["l", [[2, 7, 8], [3, 7, 8]]],
+	],
+}
+
+# Which pieces wear a variant silhouette instead of their slot's base shape.
+const ITEM_VARIANT := {
+	&"lucky_cap": "Hat_cap", &"showstopper_hat": "Hat_brim",
+	&"mourning_veil": "Hat_veil", &"mirror_shades": "Hat_shades",
+	&"snakeskin_jacket": "Robe_jacket", &"robe_of_excess": "Robe_gown",
+	&"phoenix_gown": "Robe_gown",
+	&"bone_scepter": "Staff_scepter", &"selfie_stick": "Staff_stick",
+	&"flash_cannon": "Staff_cannon",
+	&"catwalk_heels": "Boots_heels", &"diva_heels": "Boots_heels",
+	&"influencer_ring": "Trinket_ring",
 }
 
 var _cache := {}
@@ -329,6 +411,14 @@ func _inside(shape: String, x: int, y: int) -> bool:
 
 func _eyes(img: Image, d: Dictionary) -> void:
 	var iris := Color(d.eye)
+	if d.get("feat", "") == "shades":
+		# the eyes ARE the shades: one unreadable dark band with a glint
+		for x in range(4, 12):
+			img.set_pixel(x, 7, Color("16141c"))
+			img.set_pixel(x, 8, Color("16141c"))
+		img.set_pixel(5, 7, Color("4a5a6c"))
+		img.set_pixel(10, 7, Color("4a5a6c"))
+		return
 	if d.get("cyclops", false):
 		_blot(img, 6, 7, 4, 3, Color("f4f4fa"))
 		_blot(img, 7, 8, 2, 1, iris)
@@ -418,6 +508,27 @@ func _feature(img: Image, d: Dictionary, body: Color) -> void:
 				img.set_pixel(hx, 0, Color("ffe89a"))
 			img.set_pixel(4, 1, Color("ffe89a"))
 			img.set_pixel(11, 1, Color("ffe89a"))
+		"phone":
+			# always on the phone — a lit screen held off the right shoulder
+			_blot(img, 12, 7, 2, 4, Color("16141c"))
+			_blot(img, 12, 8, 2, 2, Color("5fd0e8"))
+		"headset":
+			# streamer band over the head + ear cups
+			for hx2 in range(5, 11):
+				img.set_pixel(hx2, 3, Color("2a2433"))
+			_blot(img, 3, 7, 2, 3, Color("2a2433"))
+			_blot(img, 11, 7, 2, 3, Color("2a2433"))
+			img.set_pixel(3, 8, Color("ff5ab0"))
+		"sparkle":
+			# mirror-ball glints around the silhouette
+			for sp in [[4, 5], [11, 4], [3, 10], [12, 11], [7, 2], [9, 13]]:
+				img.set_pixel(sp[0], sp[1], Color("f4f8ff"))
+		"tie":
+			# the official's tie: knot + tail down the suit
+			img.set_pixel(7, 9, Color("8a2430"))
+			img.set_pixel(8, 9, Color("8a2430"))
+			for ty in range(10, 13):
+				img.set_pixel(7, ty, Color("6a1a24"))
 		_:
 			pass
 
@@ -477,7 +588,7 @@ func item_texture(id: StringName) -> Texture2D:
 	var tex: Texture2D = null
 	if piece != null:
 		var col: Color = Color(ITEM_TINT[id]) if ITEM_TINT.has(id) else Color(ELEM_BASE.get(piece.element, "8a90a6"))
-		tex = ImageTexture.create_from_image(_item(piece.slot, col))
+		tex = ImageTexture.create_from_image(_item(ITEM_VARIANT.get(id, piece.slot), col))
 	_cache[key] = tex
 	return tex
 
