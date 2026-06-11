@@ -180,6 +180,13 @@ const TABLE := {
 	"  (none)": "  (keine)",
 	"(nothing owned)": "(nichts vorhanden)",
 	"let's get it": "los geht's",
+	"THE DRESSING ROOM": "DIE UMKLEIDE",
+	"(nothing)": "(nichts)",
+	"(nothing owned — the Boutique sells %s drip)": "(nichts vorhanden — die Boutique verkauft %s-Drip)",
+	"%d owned": "%d im Besitz",
+	"scroll for more drip": "scroll für mehr Drip",
+	"click to jump to the %s rack": "klicken: zum %s-Regal springen",
+	"+%d card": "+%d Karte(n)",
 	# --- combat HUD ---
 	"THEIR TURN": "GEGNER AM ZUG",
 	"TURN %d": "ZUG %d",
