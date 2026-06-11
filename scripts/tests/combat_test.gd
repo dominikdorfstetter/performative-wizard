@@ -282,11 +282,11 @@ func _ready() -> void:
 	ppo.hp = 72
 	cmpo.start_combat(ppo, [Database.get_enemy(&"garden_gnome")], [Database.get_card(&"spread_rumors")], 0, true)
 	cmpo.hand = [Database.get_card(&"spread_rumors")]
-	cmpo.play_card(cmpo.hand[0])               # apply poison 4
+	cmpo.play_card(cmpo.hand[0])               # apply Toxic 3 (rumors are forever)
 	var ehp0: int = cmpo.enemies[0].hp
-	cmpo.end_turn()                            # enemy turn: poison ticks 4, then ->3
-	_check("poison ticked 4", ehp0 - cmpo.enemies[0].hp, 4)
-	_check("poison ramped to 3", cmpo.enemies[0].status(&"poison"), 3)
+	cmpo.end_turn()                            # enemy turn: toxic ticks 3 and PERSISTS
+	_check("toxic ticked 3", ehp0 - cmpo.enemies[0].hp, 3)
+	_check("toxic never ramps down", cmpo.enemies[0].status(&"poison"), 3)
 
 	# enrage: gym_rat gains Strength when hit
 	var cme := CombatManager.new()
@@ -308,7 +308,7 @@ func _ready() -> void:
 	_check("Spotlight: enemy starts Cooked", cmap.enemies[0].status(&"vulnerable"), 1)
 	cmap.hand = [Database.get_card(&"spread_rumors")]
 	cmap.play_card(cmap.hand[0])
-	_check("Venom Vial: poison 4->5", cmap.enemies[0].status(&"poison"), 5)
+	_check("Venom Vial: toxic 3->4", cmap.enemies[0].status(&"poison"), 4)
 
 	# --- Power cards: persistent start-of-turn effects -----------------------
 	print("--- powers ---")
@@ -1797,6 +1797,33 @@ func _ready() -> void:
 	GameState.wizard_id = sv_wid
 	GameState.clout_earned = sv_ce9
 	GameState.run_artifacts = sv_arts9
+
+	print("--- enemy block + toxic identity (owner-reported) ---")
+	var bp1 := Combatant.new()
+	bp1.max_hp = 80
+	bp1.hp = 80
+	var bcm := CombatManager.new()
+	var bdeck: Array[CardData] = [Database.get_card(&"ember")]
+	bcm.start_combat(bp1, [Database.get_enemy(&"garden_gnome")], bdeck, 0, true)
+	bcm.end_turn()                              # gnome's first intent: Block 8
+	_check("enemy block survives into your turn", bcm.enemies[0].block, 8)
+	var bhp0: int = bcm.enemies[0].hp
+	bcm.hand = [Database.get_card(&"ember")]
+	bcm.play_card(bcm.hand[0])                  # ember 6 into block 8
+	_check("enemy block actually blocks", bhp0 - bcm.enemies[0].hp, 0)
+	_check("the block absorbed it", bcm.enemies[0].block, 2)
+	bcm.end_turn()                              # gnome acts again: stale block cleared first
+	_check("stale enemy block cleared on its next action", bcm.enemies[0].block, 0)
+	# toxic counterplay: cleanse cures the rumor
+	var bp2 := Combatant.new()
+	bp2.max_hp = 80
+	bp2.hp = 80
+	var bcm2 := CombatManager.new()
+	bcm2.start_combat(bp2, [Database.get_enemy(&"alley_cat")], bdeck, 0, true)
+	bp2.add_status(&"poison", 4)
+	bcm2.hand = [Database.get_card(&"touch_grass")]
+	bcm2.play_card(bcm2.hand[0])
+	_check("cleanse cures Toxic", bp2.status(&"poison"), 0)
 
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)
