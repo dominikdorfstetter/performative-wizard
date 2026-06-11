@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"backstage_pass"
+title = "Backstage Pass"
+emoji = "🎫"
+description = "Your attacks pierce Block from 12 Aura instead of 18. walk right past security."
+rarity = "Epic"
+passive_id = &"pierce_at_12"
+gold_per_combat = 0
+unlock_clout = 90

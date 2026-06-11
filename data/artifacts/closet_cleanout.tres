@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"closet_cleanout"
+title = "Closet Cleanout"
+emoji = "🧹"
+description = "Get Snatched at rest sites yeets 2 cards instead of 1. decluttering is a personality."
+rarity = "Epic"
+passive_id = &""
+gold_per_combat = 0
+unlock_clout = 100

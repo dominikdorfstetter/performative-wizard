@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"set_spray"
+title = "Set Spray"
+emoji = "😌"
+description = "Keep up to 6 Block between turns. the look stays SET."
+rarity = "Rare"
+passive_id = &"block_carryover_6"
+gold_per_combat = 0
+unlock_clout = 70

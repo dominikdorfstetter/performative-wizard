@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"its_giving_mid"
+title = "It's Giving Mid"
+description = "ALL opps get Mid 1 — they deal -25%. Pose: +2 Aura. reviewed the lobby. mid."
+cost = 1
+type = "Skill"
+rarity = "Common"
+archetype = &"storm"
+swag_gain = 2
+swag_cost = 0
+unlock_clout = 30
+effects = [{ "op": "apply_status_all", "status": "weak", "amount": 1 }]

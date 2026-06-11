@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fan_behavior"
+title = "Fan Behavior"
+emoji = "😤"
+description = "Your first Pose each turn commands an immediate Goon strike. the fans canNOT be controlled."
+rarity = "Legendary"
+passive_id = &"goons_strike_on_pose"
+gold_per_combat = 0
+unlock_clout = 150

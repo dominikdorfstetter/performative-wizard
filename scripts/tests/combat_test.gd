@@ -1099,8 +1099,8 @@ func _ready() -> void:
 			missing_cards.append(nid)
 	_check("all nine new cards load", missing_cards, [])
 	var rizz_pool: Array = Database.get_wizard(&"rizz").reward_pool
-	_check("rizz pool grew to 25", rizz_pool.size(), 25)
-	_check("necro pool grew to 29", Database.get_wizard(&"necro").reward_pool.size(), 29)
+	_check("rizz pool grew to 30", rizz_pool.size(), 30)
+	_check("necro pool grew to 30", Database.get_wizard(&"necro").reward_pool.size(), 30)
 	_check("rizz pool has the new commons", &"side_eye" in rizz_pool and &"love_bomb" in rizz_pool and &"glow_check" in rizz_pool, true)
 	var fire_pool: Array = Database.get_wizard(&"fire").reward_pool
 	_check("neutral utilities reach fire too", &"vision_board" in fire_pool and &"saved_drafts" in fire_pool, true)
@@ -1468,6 +1468,293 @@ func _ready() -> void:
 	_check("a fled thief ends the fight", icm2.state, CombatManager.State.WIN)
 	_check("fled gold is gone for good", icm2.player_gold, 75)
 	_check("a fled enemy reads as out of the fight", icm2.enemies[0].is_dead(), true)
+	# --- expansion: 30/30/30 pools + 30 relics, new ops, Ghosted, swag_cost, hooks ---
+	print("--- expansion: content counts ---")
+	_check("76 cards loaded", Database.cards.size(), 76)
+	_check("30 relics loaded", Database.artifacts.size(), 30)
+	_check("fire pool is 30", Database.get_wizard(&"fire").reward_pool.size(), 30)
+	var bad_arti_rarity: Array = []
+	for xaid in Database.artifacts:
+		var xa: ArtifactData = Database.artifacts[xaid]
+		if xa.rarity not in ["Common", "Rare", "Epic", "Legendary"]:
+			bad_arti_rarity.append("%s=%s" % [xaid, xa.rarity])
+	_check("all relics have a valid rarity", bad_arti_rarity, [])
+
+	print("--- expansion: new ops ---")
+	var xp1 := Combatant.new()
+	xp1.max_hp = 80
+	xp1.hp = 80
+	var xcm1 := CombatManager.new()
+	var xdeck: Array[CardData] = [Database.get_card(&"ember")]
+	xcm1.start_combat(xp1, [Database.get_enemy(&"alley_cat"), Database.get_enemy(&"alley_cat"), Database.get_enemy(&"alley_cat")], xdeck, 0, true)
+	xcm1.hand = [Database.get_card(&"put_on_blast")]
+	xcm1.play_card(xcm1.hand[0])
+	_check("apply_status_all roasts every opp", [xcm1.enemies[0].status(&"burn"), xcm1.enemies[1].status(&"burn"), xcm1.enemies[2].status(&"burn")], [3, 3, 3])
+	_check("apply_status_all counts as an AoE play", xcm1.aoe_plays, 1)
+	# ember_pin boosts the room-wide apply PER enemy
+	var xp2 := Combatant.new()
+	xp2.max_hp = 80
+	xp2.hp = 80
+	var xcm2 := CombatManager.new()
+	xcm2.start_combat(xp2, [Database.get_enemy(&"alley_cat"), Database.get_enemy(&"alley_cat")], xdeck, 0, true, [&"burn_plus_1"])
+	xcm2.hand = [Database.get_card(&"put_on_blast")]
+	xcm2.play_card(xcm2.hand[0])
+	_check("burn_plus_1 boosts apply_status_all per enemy", [xcm2.enemies[0].status(&"burn"), xcm2.enemies[1].status(&"burn")], [4, 4])
+
+	# damage_x_status of:"self" — Unspoken Rizz at 5 Rizz: 5*2 + strength again = 15
+	var xp3 := Combatant.new()
+	xp3.max_hp = 80
+	xp3.hp = 80
+	var xcm3 := CombatManager.new()
+	xcm3.start_combat(xp3, [Database.get_enemy(&"alley_cat")], xdeck, 0, true)
+	xp3.add_status(&"strength", 5)
+	var xhp0 := xcm3.enemies[0].hp
+	xcm3.hand = [Database.get_card(&"unspoken_rizz")]
+	xcm3.play_card(xcm3.hand[0])
+	_check("unspoken_rizz deals (mult+1)x rizz", xhp0 - xcm3.enemies[0].hp, 15)
+
+	# damage_x_status all:true — Burn Book reads each opp's OWN roast, then re-roasts
+	var xp4 := Combatant.new()
+	xp4.max_hp = 80
+	xp4.hp = 80
+	var xcm4 := CombatManager.new()
+	xcm4.start_combat(xp4, [Database.get_enemy(&"alley_cat"), Database.get_enemy(&"alley_cat"), Database.get_enemy(&"alley_cat")], xdeck, 0, true)
+	xcm4.enemies[0].add_status(&"burn", 4)
+	xcm4.enemies[2].add_status(&"burn", 2)
+	var xhps: Array = [xcm4.enemies[0].hp, xcm4.enemies[1].hp, xcm4.enemies[2].hp]
+	xcm4.hand = [Database.get_card(&"burn_book")]
+	xcm4.play_card(xcm4.hand[0])
+	_check("burn_book hits 2x each opp's own roast", [xhps[0] - xcm4.enemies[0].hp, xhps[1] - xcm4.enemies[1].hp, xhps[2] - xcm4.enemies[2].hp], [8, 0, 4])
+	_check("burn_book re-roasts the room", [xcm4.enemies[0].status(&"burn"), xcm4.enemies[1].status(&"burn"), xcm4.enemies[2].status(&"burn")], [6, 2, 4])
+	_check("burn_book counts as an AoE play", xcm4.aoe_plays, 1)
+
+	# block_x_status of:"self" — Block Party scales with the Goon board
+	var xp5 := Combatant.new()
+	xp5.max_hp = 80
+	xp5.hp = 80
+	var xcm5 := CombatManager.new()
+	xcm5.start_combat(xp5, [Database.get_enemy(&"alley_cat")], xdeck, 0, true)
+	xp5.add_status(&"undead", 3)
+	xcm5.hand = [Database.get_card(&"block_party")]
+	xcm5.play_card(xcm5.hand[0])
+	_check("block_party: 3 goons = 9 block", xp5.block, 9)
+	_check("block_party leaves the goons alive", xp5.status(&"undead"), 3)
+	xp5.block = 0
+	xp5.add_status(&"undead", 1)
+	xp5.add_status(&"frail", 1)
+	xcm5.energy = 3
+	xcm5.hand = [Database.get_card(&"block_party")]
+	xcm5.play_card(xcm5.hand[0])
+	_check("exposed softens both block parts", xp5.block, 8)
+	# value-Glow flows through the flat op only (judge ruling: no whitelist change)
+	var xp6 := Combatant.new()
+	xp6.max_hp = 80
+	xp6.hp = 80
+	var xcm6 := CombatManager.new()
+	xcm6.start_combat(xp6, [Database.get_enemy(&"alley_cat")], xdeck, 0, true, [], 1.0, 1.0, {&"block_party": "value"})
+	xp6.add_status(&"undead", 2)
+	xcm6.hand = [Database.get_card(&"block_party")]
+	xcm6.play_card(xcm6.hand[0])
+	_check("value-glow'd block_party: (3+2) flat + 4 scaled", xp6.block, 9)
+
+	# self_status_x_self — Left on Read converts Rizz to Ghosted, capped at 4
+	var xp7 := Combatant.new()
+	xp7.max_hp = 80
+	xp7.hp = 80
+	var xcm7 := CombatManager.new()
+	xcm7.start_combat(xp7, [Database.get_enemy(&"alley_cat")], xdeck, 0, true)
+	xp7.add_status(&"strength", 3)
+	xcm7.hand = [Database.get_card(&"left_on_read")]
+	xcm7.play_card(xcm7.hand[0])
+	_check("left_on_read: ghosted = rizz", xp7.status(&"evade"), 3)
+	xp7.statuses.erase(&"evade")
+	xp7.add_status(&"strength", 4)   # now 7
+	xcm7.energy = 3
+	xcm7.hand = [Database.get_card(&"left_on_read")]
+	xcm7.play_card(xcm7.hand[0])
+	_check("left_on_read caps at 4", xp7.status(&"evade"), 4)
+	var xp8 := Combatant.new()
+	xp8.max_hp = 80
+	xp8.hp = 80
+	var xcm8 := CombatManager.new()
+	xcm8.start_combat(xp8, [Database.get_enemy(&"alley_cat")], xdeck, 0, true)
+	xcm8.hand = [Database.get_card(&"left_on_read")]
+	xcm8.play_card(xcm8.hand[0])
+	_check("left_on_read is dead at 0 rizz", xp8.status(&"evade"), 0)
+
+	print("--- expansion: Ghosted ---")
+	var xp9 := Combatant.new()
+	xp9.max_hp = 80
+	xp9.hp = 80
+	var xcm9 := CombatManager.new()
+	xcm9.start_combat(xp9, [Database.get_enemy(&"alley_cat")], xdeck, 0, true)
+	xp9.add_status(&"evade", 2)
+	xcm9.swag = 20   # hoarding above pierce — a dodged hit must NOT count as a flex
+	xcm9._resolve_intent(xcm9.enemies[0], {"op": "attack", "amount": 5, "hits": 3})
+	_check("ghosted eats 2 of 3 hits", xp9.hp, 75)
+	_check("ghosted stacks consumed", xp9.status(&"evade"), 0)
+	_check("dodged hits are not a flex", xcm9.flexed, true)   # 3rd hit landed while hoarding
+	var xp10 := Combatant.new()
+	xp10.max_hp = 80
+	xp10.hp = 80
+	var xcm10 := CombatManager.new()
+	xcm10.start_combat(xp10, [Database.get_enemy(&"alley_cat")], xdeck, 0, true)
+	xp10.add_status(&"evade", 3)
+	xcm10.swag = 20
+	xcm10._resolve_intent(xcm10.enemies[0], {"op": "attack", "amount": 5, "hits": 2})
+	_check("full dodge leaves hp untouched", xp10.hp, 80)
+	_check("a fully dodged turn never flexes", xcm10.flexed, false)
+	xcm10.end_turn()
+	_check("ghosted wiped at next turn start", xp10.status(&"evade"), 0)
+
+	print("--- expansion: swag_cost ---")
+	var xp11 := Combatant.new()
+	xp11.max_hp = 80
+	xp11.hp = 80
+	var xcm11 := CombatManager.new()
+	xcm11.start_combat(xp11, [Database.get_enemy(&"alley_cat")], xdeck, 0, true)
+	xcm11.swag = 5
+	_check("hard_launch unplayable below its aura cost", xcm11.can_play(Database.get_card(&"hard_launch")), false)
+	xcm11.gain_swag(13)   # 5 -> 18, through gain_swag so the peak tracks
+	var xhp1 := xcm11.enemies[0].hp
+	xcm11.hand = [Database.get_card(&"hard_launch")]
+	xcm11.play_card(xcm11.hand[0])
+	_check("hard_launch spends AFTER the threshold snapshot (18+2 dmg)", xhp1 - xcm11.enemies[0].hp, 20)
+	_check("hard_launch leaves the rest banked", xcm11.swag, 10)
+	_check("aura spend is not pose_swag", xcm11.pose_swag, 0)
+	_check("aura spend never lowers the peak", xcm11.peak_swag, 18)
+
+	print("--- expansion: relic hooks ---")
+	var xp12 := Combatant.new()
+	xp12.max_hp = 80
+	xp12.hp = 80
+	var xcm12 := CombatManager.new()
+	xcm12.start_combat(xp12, [Database.get_enemy(&"alley_cat")], xdeck, 0, true, [&"no_boo"])
+	xcm12.encore = 2
+	xcm12.swag = 10
+	xcm12.end_turn()
+	_check("velvet_rope: no boo, no aura loss", [xcm12.booed, xcm12.swag >= 10, xcm12.encore], [false, true, 0])
+
+	var xp13 := Combatant.new()
+	xp13.max_hp = 80
+	xp13.hp = 80
+	var xcm13 := CombatManager.new()
+	xcm13.start_combat(xp13, [Database.get_enemy(&"alley_cat")], xdeck, 0, true, [&"finisher_refund_25"])
+	xcm13.swag = 16
+	xcm13.hand = [Database.get_card(&"grand_finale")]
+	xcm13.play_card(xcm13.hand[0])
+	_check("royalties refunds a quarter of the spend", xcm13.swag, 4)
+
+	var xp14 := Combatant.new()
+	xp14.max_hp = 80
+	xp14.hp = 80
+	var xcm14 := CombatManager.new()
+	xcm14.start_combat(xp14, [Database.get_enemy(&"alley_cat")], xdeck, 0, true, [&"block_carryover_6"])
+	xp14.block = 20
+	xcm14.end_turn()
+	_check("set_spray keeps up to 6 block", xp14.block, 6)
+
+	var xp15 := Combatant.new()
+	xp15.max_hp = 80
+	xp15.hp = 80
+	var xcm15 := CombatManager.new()
+	xcm15.start_combat(xp15, [Database.get_enemy(&"alley_cat")], xdeck, 0, true, [&"pierce_at_12"])
+	xcm15.gain_swag(12)
+	_check("backstage_pass pierces at 12", xcm15.swag_pierces(), true)
+	_check("critic grading lines unmoved by backstage_pass", xcm15.thresholds_lit(), 2)
+
+	var xp16 := Combatant.new()
+	xp16.max_hp = 80
+	xp16.hp = 80
+	var xcm16 := CombatManager.new()
+	xcm16.start_combat(xp16, [Database.get_enemy(&"possessed_wardrobe")], xdeck, 0, true, [&"goons_strike_on_pose"])
+	xp16.add_status(&"undead", 3)
+	var xhp2 := xcm16.enemies[0].hp
+	xcm16.hand = [Database.get_card(&"serve_face")]
+	xcm16.play_card(xcm16.hand[0])
+	_check("fan_behavior: first pose commands a goon strike", xhp2 - xcm16.enemies[0].hp, 6)
+	xcm16.energy = 3
+	var xhp3 := xcm16.enemies[0].hp
+	xcm16.hand = [Database.get_card(&"strike_a_pose")]
+	xcm16.play_card(xcm16.hand[0])
+	_check("fan_behavior fires once per turn", xhp3 - xcm16.enemies[0].hp, 0)
+
+	var xp17 := Combatant.new()
+	xp17.max_hp = 80
+	xp17.hp = 80
+	var xcm17 := CombatManager.new()
+	xcm17.start_combat(xp17, [Database.get_enemy(&"alley_cat")], xdeck, 0, true, [&"retain_hand_always"])
+	var xkeep := Database.get_card(&"ember")
+	xcm17.hand = [xkeep]
+	xcm17.end_turn()
+	_check("camera_roll keeps the hand", xkeep in xcm17.hand, true)
+
+	var xp18 := Combatant.new()
+	xp18.max_hp = 80
+	xp18.hp = 80
+	var xcm18 := CombatManager.new()
+	xcm18.start_combat(xp18, [Database.get_enemy(&"alley_cat")], xdeck, 0, true, [&"borrowed_drip"])
+	_check("borrowed_designer: +12 aura, exposed 2", [xcm18.swag, xp18.status(&"frail"), xcm18.peak_swag], [12, 2, 12])
+
+	var xp19 := Combatant.new()
+	xp19.max_hp = 80
+	xp19.hp = 80
+	var xcm19 := CombatManager.new()
+	xcm19.start_combat(xp19, [Database.get_enemy(&"alley_cat")], xdeck, 0, true, [&"sac_swag_1"])
+	xp19.add_status(&"undead", 1)
+	var xswag0 := xcm19.swag
+	xcm19.hand = [Database.get_card(&"bone_offering")]
+	xcm19.play_card(xcm19.hand[0])
+	_check("celebration_of_life tips +1 aura per sac", xcm19.swag - xswag0, 4)
+	_check("the sendoff counts as pose_swag", xcm19.pose_swag, 1)
+
+	print("--- expansion: meta relics ---")
+	var sv_arts: Array[StringName] = GameState.run_artifacts.duplicate()
+	var sv_fat: Dictionary = GameState.critic_fatigue.duplicate()
+	var sv_rating := GameState.critic_last_rating
+	var sv_pending := GameState.pending_critic
+	var sv_trend: StringName = GameState.trend
+	var sv_pub := GameState.publicist_used
+	GameState.run_artifacts = [&"publicist"]
+	GameState.publicist_used = false
+	GameState.record_show_rating({"rating": "C", "signature": &"grind"})
+	_check("publicist spins the first C into a B", GameState.critic_last_rating, "B")
+	_check("publicist took the call", GameState.publicist_used, true)
+	GameState.record_show_rating({"rating": "C", "signature": &"grind"})
+	_check("publicist works once per act", GameState.critic_last_rating, "C")
+	var xsnap := GameState._run_to_dict()
+	GameState.publicist_used = false
+	_check("publicist_used survives the run snapshot", bool(xsnap.get("publicist_used", false)), true)
+	GameState.run_artifacts = [&"parasocial"]
+	GameState.critic_fatigue = {}
+	GameState.record_show_rating({"rating": "S", "signature": &"spread"})
+	GameState.record_show_rating({"rating": "S", "signature": &"spread"})
+	_check("parasocial: fatigue never builds", GameState.critic_fatigue.is_empty(), true)
+	_check("parasocial: freshness pinned at 1.0", GameState.critic_last_freshness, 1.0)
+	GameState.run_artifacts = []
+	GameState.trend = &"flop_era"
+	_check("flop_era drains 1 without trendsetter", GameState.trend_drip_mod(), -1)
+	GameState.run_artifacts = [&"trendsetter"]
+	_check("trendsetter floors a negative trend at 0", GameState.trend_drip_mod(), 0)
+	GameState.trend = &"its_giving"
+	_check("trendsetter leaves positive trends alone", GameState.trend_drip_mod(), 1)
+	var sv_clout := GameState.clout_earned
+	GameState.clout_earned = 9999
+	GameState.run_artifacts = []
+	var xpick := GameState.random_unowned_artifact()
+	_check("weighted picker returns a real relic", Database.get_artifact(xpick) != null, true)
+	var xall: Array[StringName] = []
+	for xid in Database.artifacts:
+		xall.append(xid)
+	GameState.run_artifacts = xall
+	_check("weighted picker returns nothing when you own it all", GameState.random_unowned_artifact(), &"")
+	GameState.clout_earned = sv_clout
+	GameState.run_artifacts = sv_arts
+	GameState.critic_fatigue = sv_fat
+	GameState.critic_last_rating = sv_rating
+	GameState.pending_critic = sv_pending
+	GameState.trend = sv_trend
+	GameState.publicist_used = sv_pub
 
 	print("=== result: %d passed, %d failed ===" % [_pass, _fail])
 	get_tree().quit(1 if _fail > 0 else 0)

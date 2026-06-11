@@ -267,7 +267,7 @@ func _outcome_item(text: String, aid: StringName) -> void:
 	_outcome(text)
 	var a := Database.get_artifact(aid)
 	if a != null:
-		NodeUI.item_reveal(self, SpriteBank.artifact_texture(aid), a.title, [a.description], Vector2(406, 280))
+		NodeUI.item_reveal(self, SpriteBank.artifact_texture(aid), a.title, [a.description], Vector2(406, 280), CardView.rarity_color(a.rarity))
 
 func _outcome(text: String) -> void:
 	for c in get_children():
@@ -284,12 +284,7 @@ func _hurt(n: int) -> void:
 	GameState.player_hp = max(1, GameState.player_hp - n)
 
 func _unowned() -> StringName:
-	var all := Database.all_artifact_ids().duplicate()
-	all.shuffle()
-	for aid in all:
-		if not GameState.has_artifact(aid) and GameState.artifact_unlocked(aid):
-			return aid
-	return &""
+	return GameState.random_unowned_artifact()
 
 func _to_map() -> void:
 	Fader.change_scene("res://scenes/map/map.tscn")

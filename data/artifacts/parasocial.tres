@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"parasocial"
+title = "Parasocial"
+emoji = "💘"
+description = "The Critic never tires of your style — repeat finishes stay 100% fresh. she's obsessed with you."
+rarity = "Legendary"
+passive_id = &""
+gold_per_combat = 0
+unlock_clout = 150

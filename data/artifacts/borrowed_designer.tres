@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"borrowed_designer"
+title = "Borrowed Designer"
+emoji = "🏷️"
+description = "Start every combat with +12 Aura but Exposed 2 — the fit is borrowed and NOT insured."
+rarity = "Legendary"
+passive_id = &"borrowed_drip"
+gold_per_combat = 0
+unlock_clout = 150

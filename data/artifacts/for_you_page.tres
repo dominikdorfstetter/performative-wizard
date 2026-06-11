@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"for_you_page"
+title = "For You Page"
+emoji = "📱"
+description = "Card rewards offer 4 picks instead of 3. the algorithm KNOWS you."
+rarity = "Common"
+passive_id = &""
+gold_per_combat = 0
+unlock_clout = 20

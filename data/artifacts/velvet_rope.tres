@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/artifact_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"velvet_rope"
+title = "Velvet Rope"
+emoji = "🚧"
+description = "You can never get Booed — leaving the spotlight costs no Aura. exit on YOUR terms."
+rarity = "Common"
+passive_id = &"no_boo"
+gold_per_combat = 0
+unlock_clout = 0

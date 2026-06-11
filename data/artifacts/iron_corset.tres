@@ -7,6 +7,7 @@ script = ExtResource("1")
 id = &"iron_corset"
 title = "Iron Corset"
 emoji = "🩹"
+rarity = "Common"
 description = "When an enemy hits you, deal 3 back."
 passive_id = &"thorns_3"
 gold_per_combat = 0

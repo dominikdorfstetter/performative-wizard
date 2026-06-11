@@ -7,6 +7,7 @@ script = ExtResource("1")
 id = &"coin_purse"
 title = "Designer Purse"
 emoji = "👛"
+rarity = "Common"
 description = "Gain 8 gold after each combat."
 passive_id = &""
 gold_per_combat = 8

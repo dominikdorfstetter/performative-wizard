@@ -227,6 +227,11 @@ const ARTI := {
 	"prophets_lens": "5fb0d8", "coin_purse": "ffcf4a", "loaded_dice": "ffd24a",
 	"venom_vial": "6ad06a", "spotlight": "ffe089",
 	"ouija_board": "b08ad8", "hype_reel": "ff5ab0",
+	"velvet_rope": "c8344a", "girl_math": "ff9ad0", "for_you_page": "5fd0e8",
+	"celebration_of_life": "8a6aa8", "trendsetter": "ffe6a8", "publicist": "6a8ae8",
+	"royalties": "c0c8d8", "set_spray": "a8e0d8", "backstage_pass": "ffb84a",
+	"closet_cleanout": "90b890", "camera_roll": "e8e0d0", "parasocial": "ff6a8a",
+	"fan_behavior": "e85a3a", "borrowed_designer": "d8a8ff",
 }
 const ITEM := {
 	"Hat": [

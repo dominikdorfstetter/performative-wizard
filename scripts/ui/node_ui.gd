@@ -164,14 +164,14 @@ static func hbox(parent: Control, y: float, sep := 30) -> HBoxContainer:
 ## The canonical "you got an item" reveal: pixel icon, gold title, effect text.
 ## Every acquisition moment (chest, events, elite loot) uses this SAME panel so
 ## a new item always teaches what it does. Returns the panel (pre-popped).
-static func item_reveal(parent: Control, icon_tex: Texture2D, item_title: String, lines: Array, pos := Vector2(406, 236)) -> Panel:
+static func item_reveal(parent: Control, icon_tex: Texture2D, item_title: String, lines: Array, pos := Vector2(406, 236), accent: Color = GOLD) -> Panel:
 	var panel := Panel.new()
 	panel.position = pos
 	panel.size = Vector2(340, 200 + 20 * max(0, lines.size() - 1))
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.13, 0.11, 0.17)
 	sb.set_border_width_all(2)
-	sb.border_color = GOLD
+	sb.border_color = accent
 	sb.set_corner_radius_all(14)
 	panel.add_theme_stylebox_override("panel", sb)
 	parent.add_child(panel)
@@ -190,7 +190,7 @@ static func item_reveal(parent: Control, icon_tex: Texture2D, item_title: String
 	t.size = Vector2(316, 30)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	t.add_theme_font_size_override("font_size", FS_HEADING)
-	t.add_theme_color_override("font_color", GOLD)
+	t.add_theme_color_override("font_color", accent)
 	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(t)
 	var y := 142.0

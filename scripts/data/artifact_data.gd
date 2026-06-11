@@ -8,6 +8,8 @@ extends Resource
 @export var title: String = ""
 @export var emoji: String = "🔮"
 @export_multiline var description: String = ""
+## Drop-table tier (and shop price band). Default keeps pre-rarity .tres files valid.
+@export_enum("Common", "Rare", "Epic", "Legendary") var rarity: String = "Common"
 @export var passive_id: StringName = &""     # combat passive granted (may be empty)
 @export var gold_per_combat: int = 0         # economy: gold gained after each won combat
 @export var unlock_clout: int = 0            # lifetime Clout to appear in pools (0 = always)

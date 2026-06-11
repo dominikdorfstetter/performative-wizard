@@ -7,6 +7,7 @@ script = ExtResource("1")
 id = &"hype_reel"
 title = "Hype Reel"
 emoji = ""
+rarity = "Rare"
 description = "Your crits serve +1 Aura."
 passive_id = &"swag_on_crit"
 gold_per_combat = 0

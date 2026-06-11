@@ -75,6 +75,7 @@ var hand: Array[CardData] = []
 var discard_pile: Array[CardData] = []
 var retain_hand := false        # set by the "retain" op; consumed at end_turn
 var pending_pick_n := 0         # how many top-of-pile cards a "peek_pick" laid out
+var pose_strike_used := false   # fan_behavior relic: first Pose per turn triggers the Goons
 
 var passives: Array[StringName] = []
 # Gold-thief fights (The IRS): the player's purse, seeded by the view from
@@ -162,6 +163,10 @@ func _apply_combat_start_passives() -> void:
 	if has_passive(&"enemies_start_vulnerable"):
 		for e in enemies:
 			e.add_status(&"vulnerable", 1)
+	if has_passive(&"borrowed_drip"):
+		# borrowed_designer relic: a fat head start in an uninsured fit.
+		swag += 12
+		player.add_status(&"frail", 2)
 	for pas in passives:
 		var ps := String(pas)
 		if ps.begins_with("undead_start_"):
@@ -205,13 +210,21 @@ func swag_extra_draw() -> int:
 	return 1 if swag >= THRESHOLD_DRAW else 0
 
 func swag_pierces() -> bool:
-	return swag >= THRESHOLD_PIERCE
+	return swag >= effective_pierce_line()
+
+## backstage_pass relic moves the pierce BENEFIT down to 12; the Critic's grading
+## lines (thresholds_lit / compute_show_rating) stay at the canonical 6/12/18/24.
+func effective_pierce_line() -> int:
+	return 12 if has_passive(&"pierce_at_12") else THRESHOLD_PIERCE
 
 # --- turn loop -----------------------------------------------------------
 
 func _start_player_turn() -> void:
 	state = State.PLAYER_TURN
 	spells_this_turn = 0
+	pose_strike_used = false
+	# Ghosted never banks across turns: hard wipe, deliberately not part of _decay.
+	player.statuses.erase(&"evade")
 	turn += 1
 	var pois := _tick_poison(player)
 	if pois > 0:
@@ -230,13 +243,18 @@ func _start_player_turn() -> void:
 		encore += 1
 		_say(Loc.t("ENCORE ×%d — the crowd wants MORE") % encore)
 	elif encore >= 2:
-		# Only a REAL built-up Encore (2+) being lost boos you — a 1-turn spotlight
-		# touch that you immediately cash out is not a flop. (Pass #2.)
-		var lost: int = min(swag, BOOED_LOSS)
-		swag = max(0, swag - lost)
-		encore = 0
-		booed = true
-		_say(Loc.t("BOOED OFF — you fell out of the spotlight (-%d Aura)") % lost)
+		if has_passive(&"no_boo"):
+			# velvet_rope relic: leaving the spotlight resets Encore but never boos.
+			encore = 0
+			_say(Loc.t("Velvet Rope: you left the spotlight on YOUR terms"))
+		else:
+			# Only a REAL built-up Encore (2+) being lost boos you — a 1-turn spotlight
+			# touch that you immediately cash out is not a flop. (Pass #2.)
+			var lost: int = min(swag, BOOED_LOSS)
+			swag = max(0, swag - lost)
+			encore = 0
+			booed = true
+			_say(Loc.t("BOOED OFF — you fell out of the spotlight (-%d Aura)") % lost)
 	elif encore > 0:
 		encore = 0   # brief touch, no penalty
 	if has_passive(&"strength_at_10_swag") and swag >= THRESHOLD_DRAW:
@@ -294,7 +312,7 @@ func _effective_effects(card: CardData) -> Array:
 	return out
 
 func can_play(card: CardData) -> bool:
-	return state == State.PLAYER_TURN and energy >= card_cost(card)
+	return state == State.PLAYER_TURN and energy >= card_cost(card) and swag >= card.swag_cost
 
 func play_card(card: CardData) -> bool:
 	if not can_play(card) or card not in hand:
@@ -310,6 +328,11 @@ func play_card(card: CardData) -> bool:
 		if has_passive(&"pose_plus_1"):
 			gain_swag(1)
 			pose_swag += 1
+		# fan_behavior relic: the FIRST Pose each turn commands an immediate Goon strike.
+		if has_passive(&"goons_strike_on_pose") and not pose_strike_used and player.status(&"undead") > 0:
+			pose_strike_used = true
+			_say(Loc.t("FAN BEHAVIOR — the crowd rushes the stage"))
+			goon_strike()
 
 	var tgt := target()
 	var is_attack := card.type == "Attack"
@@ -320,6 +343,11 @@ func play_card(card: CardData) -> bool:
 	if is_attack and first_spell and has_passive(&"first_spell_plus_3"):
 		atk_bonus += 3
 	last_crit = is_attack and randf() < live_crit_chance()
+	# Aura-cost cards (mini-finishers): the spend lands AFTER the threshold snapshot
+	# above (pierce/bonus read the pre-spend bank — same precedent as finishers) and
+	# BEFORE effects resolve. Never counts as pose_swag, never lowers peak_swag.
+	if card.swag_cost > 0:
+		swag = max(0, swag - card.swag_cost)
 	var ctx := {
 		"source": player,
 		"target": tgt,
@@ -379,6 +407,7 @@ func _resolve_finisher(e: Dictionary, ctx: Dictionary) -> void:
 	var tgt: Combatant = ctx.get("target")
 	var bonus := int(ctx.get("bonus_damage", 0))
 	var pierce := bool(ctx.get("pierce", false))
+	var spent_swag := swag
 	var crit := bool(ctx.get("crit", false))
 	var boost := 1.5 if has_passive(&"finisher_boost") else 1.0   # "flash" outfit persona
 	match String(e.get("op", "")):
@@ -417,6 +446,13 @@ func _resolve_finisher(e: Dictionary, ctx: Dictionary) -> void:
 			_mark_finisher(&"drain")
 		_:
 			push_warning("[CombatManager] unknown finisher: " + String(e.get("op", "")))
+	# royalties relic: a finisher that actually spent the bank refunds a quarter of it.
+	# Refund is NOT pose_swag — the Critic only credits Aura you actively performed for.
+	if has_passive(&"finisher_refund_25") and swag < spent_swag:
+		var refund := int(spent_swag * 0.25)
+		if refund > 0:
+			gain_swag(refund)
+			_say(Loc.t("Royalties: the hit keeps paying (+%d Aura)") % refund)
 
 func _finisher_hit(tgt: Combatant, raw: int, crit: bool, pierce: bool) -> int:
 	var dmg := EffectResolver.compute_damage(raw, player, tgt)
@@ -437,7 +473,8 @@ func _classify_play(card: CardData) -> void:
 	var is_single := false
 	for ef in card.effects:
 		var o := String(ef.get("op", ""))
-		if o == "damage_all" or o == "finisher_spread":
+		if o == "damage_all" or o == "finisher_spread" or o == "apply_status_all" \
+				or (o == "damage_x_status" and bool(ef.get("all", false))):
 			is_aoe = true
 		elif o.begins_with("damage") or o == "sacrifice_strike" or o.begins_with("finisher"):
 			is_single = true
@@ -527,7 +564,7 @@ func end_turn() -> void:
 		return
 	if pending_pick_n > 0:
 		resolve_pick(0)   # a turn can't end mid-pick; the top card is the default
-	if retain_hand:
+	if retain_hand or has_passive(&"retain_hand_always"):
 		retain_hand = false
 		_say(Loc.t("you keep the hand — it's all part of the plan"))
 	else:
@@ -617,8 +654,8 @@ func _enemy_turn() -> void:
 		await _beat(step_delay * 0.8)
 	# Block held through the enemy turn (so it absorbed their attacks); clear it now,
 	# right before your next turn — StS-correct. (Was wrongly cleared in end_turn, so
-	# block never protected against enemies.)
-	player.block = 0
+	# block never protected against enemies.) set_spray relic keeps up to 6 of it.
+	player.block = mini(player.block, 6) if has_passive(&"block_carryover_6") else 0
 	_start_player_turn()
 
 func _beat(seconds: float) -> void:
@@ -643,6 +680,12 @@ func _resolve_intent(src: Combatant, intent: Dictionary) -> void:
 			var dmg := int(round(amount * enemy_dmg_scale))
 			var hp0 := player.hp
 			for _h in hits:
+				# Ghosted (evade): each stack dodges one attack HIT entirely. DoT ticks,
+				# status/drain/tax intents are not hits and pass right through.
+				if player.status(&"evade") > 0:
+					player.add_status(&"evade", -1)
+					_say(Loc.t("GHOSTED — you left that hit on read"))
+					continue
 				player.take_damage(EffectResolver.compute_damage(dmg, src, player))
 			if hits > 1:
 				_say(Loc.t("%s went off — %d×%d (%d)") % [name, dmg, hits, hp0 - player.hp])
