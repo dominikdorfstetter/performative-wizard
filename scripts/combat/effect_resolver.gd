@@ -77,7 +77,8 @@ static func _apply_one(e: Dictionary, ctx: Dictionary) -> void:
 				source.add_status(StringName(e.get("status", &"")), amount)
 		"cleanse":
 			if source != null:
-				for s in [&"weak", &"vulnerable", &"jinx"]:
+				# poison included: Toxic never decays now, so cleansing IS the answer
+				for s in [&"weak", &"vulnerable", &"jinx", &"poison"]:
 					source.statuses.erase(s)
 		"summon":
 			if source != null:

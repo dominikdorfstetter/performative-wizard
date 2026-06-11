@@ -638,11 +638,14 @@ func _enemy_turn() -> void:
 			await _beat(step_delay)
 			enemy_acting.emit(enemies.find(e), peek_intent(e))
 			await _beat(step_delay * 0.4)   # windup: the lunge reads before the hit lands
+		# Stale block clears as the enemy takes its NEXT action — block earned by an
+		# intent must survive the player's whole turn (it used to be granted and wiped
+		# in the same breath, so enemy Block never blocked anything).
+		e.block = 0
 		var intent: Dictionary = e.data.intents[e.intent_index % e.data.intents.size()]
 		_resolve_intent(e, intent)
 		e.intent_index += 1
 		_decay(e)
-		e.block = 0
 		# Per-enemy emit: damage numbers, hurt flash, and bar updates land per attacker
 		# instead of one aggregated delta at the end of the whole turn.
 		_emit()
@@ -782,16 +785,14 @@ func _tick_burn(c: Combatant) -> int:
 		c.statuses[&"burn"] = b - 1
 	return b
 
-# Poison: deal stacks as unblockable damage at the victim's turn start, then ramp down 1.
+# Toxic: deal stacks as unblockable damage at the victim's turn start. Unlike
+# Roasted it NEVER ramps down — the rumor doesn't die, you cleanse it or outlive
+# it. (The two DoTs used to be mechanically identical twins.)
 func _tick_poison(c: Combatant) -> int:
 	var p := c.status(&"poison")
 	if p <= 0:
 		return 0
 	c.take_damage(p, true)
-	if p - 1 <= 0:
-		c.statuses.erase(&"poison")
-	else:
-		c.statuses[&"poison"] = p - 1
 	return p
 
 func _decay(c: Combatant) -> void:
